@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Dashboard from './components/Dashboard';
 import AddTransaction from './components/AddTransaction';
@@ -22,24 +22,26 @@ const App: React.FC = () => {
 
   const queryClient = useQueryClient();
 
-  const { isLoading: userLoading } = useQuery({
+  const { data: currentUser, isLoading: userLoading } = useQuery({
     queryKey: ['currentUser'],
     queryFn: authApi.me,
     retry: false,
-    onSuccess: (data) => {
+  });
+
+  useEffect(() => {
+    if (currentUser) {
       setUser({
-        id: data._id,
-        name: data.name,
-        budget: data.budget,
+        id: currentUser._id,
+        name: currentUser.name,
+        budget: currentUser.budget,
       });
-      setBudget(data.budget ?? 0);
+      setBudget(currentUser.budget ?? 0);
       setAuthError(null);
-    },
-    onError: () => {
+    } else if (!userLoading) {
       setUser(null);
       setBudget(0);
-    },
-  });
+    }
+  }, [currentUser, userLoading]);
 
   const {
     data: transactions = [],
