@@ -35,11 +35,11 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
       }));
 
     if (data.length === 0) return (
-        <div className="p-3 bg-gray-50 rounded-xl text-center text-gray-400 text-xs my-2">No recent data to chart</div>
+        <div className="p-3 bg-background rounded-xl text-center text-gray-400 text-xs my-2">No recent data to chart</div>
     );
 
     return (
-      <div className="w-full overflow-hidden bg-gray-50 rounded-[18px] p-4 my-3 border border-gray-100">
+      <div className="w-full overflow-hidden bg-background rounded-[18px] p-4 my-3 border border-gray-100">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Spending Trends</h3>
         </div>
@@ -58,7 +58,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     return (
-                      <div className="bg-gray-900/90 backdrop-blur text-white text-[10px] rounded py-1 px-2 shadow-lg">
+                      <div className="bg-primary/90 backdrop-blur text-white text-[10px] rounded py-1 px-2 shadow-lg">
                         <span className="font-medium">{payload[0].payload.fullDesc}:</span> {payload[0].value}
                       </div>
                     );
@@ -82,7 +82,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
   if (type === 'renderRecentTransactions') {
     const recent = transactions.slice(0, 3);
     return (
-      <div className="bg-gray-50 rounded-[18px] overflow-hidden my-3 border border-gray-100">
+      <div className="bg-background rounded-[18px] overflow-hidden my-3 border border-gray-100">
         <div className="px-4 py-2 border-b border-gray-200/50">
           <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Recent Activity</span>
         </div>
@@ -94,10 +94,10 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
                   {getCategoryIcon(t.category)}
                 </div>
                 <div className="min-w-0 flex flex-col">
-                  <p className="text-xs font-semibold text-gray-900 truncate">{t.description}</p>
+                  <p className="text-xs font-semibold text-primary truncate">{t.description}</p>
                 </div>
               </div>
-              <span className={`text-xs font-bold whitespace-nowrap ${t.type === TransactionType.EXPENSE ? 'text-gray-900' : 'text-[#34C759]'}`}>
+              <span className={`text-xs font-bold whitespace-nowrap ${t.type === TransactionType.EXPENSE ? 'text-primary' : 'text-accent-green'}`}>
                 {t.type === TransactionType.EXPENSE ? '-' : '+'}{t.amount}
               </span>
             </div>
@@ -118,7 +118,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
     return (
        <div className="relative overflow-hidden rounded-[18px] p-4 my-3 text-white shadow-md shadow-blue-500/10 group isolate">
           {/* Background Gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#007AFF] to-[#0062CC] z-0"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-accent-blue to-blue-600 z-0"></div>
           
           <div className="relative z-10 flex justify-between items-center">
              <div>

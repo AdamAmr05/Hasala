@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Dashboard from './components/Dashboard';
-import AddTransaction from './components/AddTransaction';
+import SmartInputSheet from './components/SmartInputSheet';
 import TabBar from './components/UI/TabBar';
 import ChatInterface from './components/Chat/ChatInterface';
 import FamilyView from './components/Family/FamilyView';
 import { Transaction, TransactionType, User } from './types';
-import { authApi, transactionsApi } from './services/api';
+import { authApi, transactionsApi, TransactionPayload } from './services/api';
 
 type AuthMode = 'login' | 'register';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'chat' | 'family'>('home');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'home' | 'chat' | 'analytics' | 'settings'>('home');
+  const [showSmartInput, setShowSmartInput] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
   const [authError, setAuthError] = useState<string | null>(null);
@@ -84,7 +84,7 @@ const App: React.FC = () => {
     mutationFn: transactionsApi.create,
     onSuccess: () => {
       setTransactionError(null);
-      setShowAddModal(false);
+      setShowSmartInput(false);
       setActiveTab('home');
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
@@ -124,19 +124,8 @@ const App: React.FC = () => {
     queryClient.removeQueries({ queryKey: ['currentUser'] });
   };
 
-  const handleAddTransaction = async (payload: Omit<Transaction, 'id'>) => {
-    if (payload.amount <= 0 || !payload.description.trim()) {
-      setTransactionError('Amount and description are required.');
-      return;
-    }
-    await transactionMutation.mutateAsync({
-      amount: payload.amount,
-      description: payload.description,
-      category: payload.category,
-      type: payload.type ?? TransactionType.EXPENSE,
-      date: payload.date,
-      isRecurring: payload.isRecurring,
-    });
+  const handleAddTransaction = async (payload: TransactionPayload) => {
+    await transactionMutation.mutateAsync(payload);
   };
 
   const refreshTransactions = () => {
@@ -144,11 +133,11 @@ const App: React.FC = () => {
   };
 
   const handleTabChange = (tab: string) => {
-    if (tab === 'add') {
-      setShowAddModal(true);
-    } else {
-      setActiveTab(tab as typeof activeTab);
-    }
+     setActiveTab(tab as typeof activeTab);
+  };
+
+  const handleAddClick = () => {
+     setShowSmartInput(true);
   };
 
   if (userLoading) {
@@ -188,7 +177,7 @@ const App: React.FC = () => {
                       Could not load transactions. Pull to refresh.
                     </div>
                   ) : (
-                    <Dashboard transactions={transactions} budget={budget} />
+                    <Dashboard transactions={transactions} budget={budget} user={user} />
                   )}
                 </div>
               )}
@@ -203,23 +192,30 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {activeTab === 'family' && (
+              {activeTab === 'settings' && (
                 <div className="animate-[fadeIn_0.3s_ease-out]">
-                  <FamilyView />
+                   {/* Placeholder for FamilyView or Settings */}
+                   <div className="p-6">
+                      <h2 className="text-xl font-bold mb-4">Family & Settings</h2>
+                      <FamilyView />
+                   </div>
                 </div>
               )}
             </main>
 
-            {showAddModal && (
-              <AddTransaction
-                onAdd={handleAddTransaction}
-                onCancel={() => setShowAddModal(false)}
+            <SmartInputSheet 
+                isOpen={showSmartInput} 
+                onClose={() => setShowSmartInput(false)}
+                onTransactionAdded={handleAddTransaction}
                 isSubmitting={transactionMutation.isPending}
                 submitError={transactionError}
-              />
-            )}
+            />
 
-            <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
+            <TabBar 
+                activeTab={activeTab} 
+                onTabChange={handleTabChange}
+                onAddClick={handleAddClick}
+            />
           </>
         ) : (
           <div className="min-h-screen flex items-center justify-center p-6">

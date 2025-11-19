@@ -28,7 +28,12 @@ export const parseTransactionText = async (req: Request, res: Response) => {
 
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
-      contents: `Extract transaction details from: "${input}". Return JSON only.`,
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: `Extract transaction details from: "${input}". Return JSON only.` }],
+        },
+      ],
       config: {
         responseMimeType: 'application/json',
         responseSchema: TRANSACTION_SCHEMA,
@@ -55,12 +60,15 @@ export const parseTransactionVoice = async (req: Request, res: Response) => {
 
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
-      contents: {
-        parts: [
-          { inlineData: { mimeType: 'audio/wav', data: audio } },
-          { text: 'Extract transaction details (amount, description, category, type) as JSON.' },
-        ],
-      },
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { inlineData: { mimeType: 'audio/webm', data: audio.split(',')[1] || audio } },
+            { text: 'Extract transaction details (amount, description, category, type) as JSON. Default to EGP currency if not specified.' },
+          ],
+        },
+      ],
       config: {
         responseMimeType: 'application/json',
         responseSchema: TRANSACTION_SCHEMA,
