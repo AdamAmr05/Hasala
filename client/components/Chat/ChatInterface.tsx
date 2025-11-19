@@ -36,9 +36,22 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Only scroll when user types or explicitly sends
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isTyping]);
+    if (isTyping) {
+      scrollToBottom();
+    }
+  }, [isTyping]);
+
+  const renderMessageText = (text: string) => {
+    const parts = text.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={index} className="font-bold">{part.slice(2, -2)}</strong>;
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
 
   const handleSend = async () => {
     if (!inputValue.trim()) return;
@@ -54,6 +67,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setMessages(prev => [...prev, userMsg]);
     setInputValue('');
     setIsTyping(true);
+
+    // Scroll immediately when user sends
+    setTimeout(scrollToBottom, 10);
 
     try {
       // Send to Gemini
@@ -123,7 +139,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 : 'bg-white text-primary rounded-[22px] rounded-bl-sm border border-gray-100'}
             `}>
               {/* 1. Render Text */}
-              {msg.text && <span className="whitespace-pre-wrap block">{msg.text}</span>}
+              {msg.text && <span className="whitespace-pre-wrap block">{renderMessageText(msg.text)}</span>}
 
               {/* 2. Render Tools (Generative UI) */}
               {msg.toolCalls?.map((tool, index) => (
