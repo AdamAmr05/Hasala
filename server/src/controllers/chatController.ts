@@ -8,6 +8,8 @@ import {
   TRANSACTION_SCHEMA,
   addTransactionTool,
   renderBudgetOverviewTool,
+  renderCategoryBreakdownTool,
+  renderMonthlyProjectionTool,
   renderRecentTransactionsTool,
   renderSpendingChartTool,
 } from '../utils/geminiConfig';
@@ -145,6 +147,8 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
               renderSpendingChartTool,
               renderRecentTransactionsTool,
               renderBudgetOverviewTool,
+              renderCategoryBreakdownTool,
+              renderMonthlyProjectionTool,
             ],
           },
         ],
@@ -167,13 +171,13 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       toolCalls: toolCalls.length ? toolCalls : undefined,
       createdTransactions: createdTransactions.length
         ? createdTransactions.map((tx) => ({
-            id: tx._id.toString(),
-            amount: tx.amount,
-            description: tx.description,
-            category: tx.category,
-            type: tx.type,
-            date: tx.date.toISOString(),
-          }))
+          id: tx._id.toString(),
+          amount: tx.amount,
+          description: tx.description,
+          category: tx.category,
+          type: tx.type,
+          date: tx.date.toISOString(),
+        }))
         : undefined,
     });
   } catch (error) {

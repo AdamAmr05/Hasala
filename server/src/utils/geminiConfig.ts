@@ -52,3 +52,15 @@ export const renderBudgetOverviewTool: FunctionDeclaration = {
   parameters: { type: Type.OBJECT, properties: {} },
 };
 
+export const renderCategoryBreakdownTool: FunctionDeclaration = {
+  name: 'renderCategoryBreakdown',
+  description: 'Display a donut chart showing spending breakdown by category.',
+  parameters: { type: Type.OBJECT, properties: {} },
+};
+
+export const renderMonthlyProjectionTool: FunctionDeclaration = {
+  name: 'renderMonthlyProjection',
+  description: 'Display a projection of end-of-month balance based on current spending habits.',
+  parameters: { type: Type.OBJECT, properties: {} },
+};
+
