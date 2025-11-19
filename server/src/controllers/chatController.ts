@@ -1,59 +1,16 @@
-import { Response } from 'express';
-import { GoogleGenAI, Type, FunctionDeclaration, Schema, Content } from '@google/genai';
+import { Request, Response } from 'express';
+import { GoogleGenAI, Content } from '@google/genai';
 import Transaction, { Category, ITransaction, TransactionType } from '../models/Transaction';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { ChatRequestBody, ChatSender, ToolCall } from '../types/chat';
-
-const MODEL_NAME = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-
-const TRANSACTION_SCHEMA: Schema = {
-  type: Type.OBJECT,
-  properties: {
-    amount: {
-      type: Type.NUMBER,
-      description: 'The numerical amount in EGP',
-    },
-    description: {
-      type: Type.STRING,
-      description: 'Brief description of what was bought or earned',
-    },
-    category: {
-      type: Type.STRING,
-      enum: Object.values(Category),
-      description: 'The category of the transaction',
-    },
-    type: {
-      type: Type.STRING,
-      enum: Object.values(TransactionType),
-      description: 'Transaction type',
-    },
-  },
-  required: ['amount', 'description', 'category', 'type'],
-};
-
-const addTransactionTool: FunctionDeclaration = {
-  name: 'addTransaction',
-  description: 'Add a new financial transaction (expense or income) to the database.',
-  parameters: TRANSACTION_SCHEMA,
-};
-
-const renderSpendingChartTool: FunctionDeclaration = {
-  name: 'renderSpendingChart',
-  description: 'Display a bar chart visualizing the user’s spending trends over the last week.',
-  parameters: { type: Type.OBJECT, properties: {} },
-};
-
-const renderRecentTransactionsTool: FunctionDeclaration = {
-  name: 'renderRecentTransactions',
-  description: 'Display a list of the most recent transactions.',
-  parameters: { type: Type.OBJECT, properties: {} },
-};
-
-const renderBudgetOverviewTool: FunctionDeclaration = {
-  name: 'renderBudgetOverview',
-  description: 'Display a card showing the remaining budget and progress.',
-  parameters: { type: Type.OBJECT, properties: {} },
-};
+import {
+  MODEL_NAME,
+  TRANSACTION_SCHEMA,
+  addTransactionTool,
+  renderBudgetOverviewTool,
+  renderRecentTransactionsTool,
+  renderSpendingChartTool,
+} from '../utils/geminiConfig';
 
 const buildSystemInstruction = (
   transactions: ITransaction[],
