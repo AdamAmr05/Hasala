@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 5001;
 
 // CORS
 const allowedOrigins = (process.env.ALLOWED_ORIGINS ||
-  'http://localhost:5173,http://localhost:3000,http://localhost:3001,http://192.168.1.7:3001/')
+  'http://localhost:5173,http://localhost:3000,http://localhost:3001,http://192.168.1.7:3001')
   .split(',')
   .map((origin) => origin.trim());
 

@@ -155,18 +155,20 @@ const App: React.FC = () => {
       <div className="max-w-md mx-auto bg-gray-50 min-h-screen relative shadow-2xl overflow-hidden">
         {!showAuthForm ? (
           <>
-            <header className="px-6 py-4 flex justify-between items-center border-b border-gray-200 bg-white/70 backdrop-blur-sm">
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-widest">Welcome back</p>
-                <h1 className="font-bold text-lg text-gray-900">{user?.name}</h1>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="text-xs font-semibold text-primary hover:text-blue-700 transition-colors"
-              >
-                Logout
-              </button>
-            </header>
+            {activeTab !== 'chat' && (
+              <header className="px-6 py-4 flex justify-between items-center border-b border-gray-200 bg-white/70 backdrop-blur-sm">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-widest">Welcome back</p>
+                  <h1 className="font-bold text-lg text-gray-900">{user?.name}</h1>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="text-xs font-semibold text-primary hover:text-blue-700 transition-colors"
+                >
+                  Logout
+                </button>
+              </header>
+            )}
             <main className="h-full pb-32">
               {activeTab === 'home' && (
                 <div className="animate-[fadeIn_0.3s_ease-out]">
