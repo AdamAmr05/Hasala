@@ -158,7 +158,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className="px-4 pb-36 pt-2 bg-gradient-to-t from-[#F2F2F7] to-transparent">
+      <div className="px-4 pb-4 pt-2 bg-gradient-to-t from-[#F2F2F7] to-transparent">
         <div className="bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-1.5 flex items-center border border-gray-200/80 backdrop-blur-sm">
           <input
             type="text"

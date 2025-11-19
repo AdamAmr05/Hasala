@@ -41,8 +41,8 @@ const SpendingRing: React.FC<SpendingRingProps> = ({ transactions, budget }) => 
   const COLORS = [isOverBudget ? '#FF3B30' : '#007AFF', '#F2F2F7'];
 
   return (
-    <div 
-        className="w-full aspect-square max-h-[320px] mx-auto relative cursor-pointer"
+    <div
+        className="w-full aspect-square max-h-[320px] max-w-[320px] mx-auto relative cursor-pointer px-6"
         onClick={() => setViewMode(prev => prev === 'ring' ? 'bar' : 'ring')}
     >
       <AnimatePresence mode='wait'>

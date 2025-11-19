@@ -7,10 +7,13 @@ import {
   TransactionType,
 } from '../types';
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api').replace(
-  /\/$/,
-  '',
-);
+// Auto-detect: use network URL when accessing from network, localhost otherwise
+const isNetworkAccess = window.location.hostname === '192.168.1.7';
+const API_BASE_URL = (
+  isNetworkAccess
+    ? (import.meta.env.VITE_API_BASE_URL_N || 'http://192.168.1.7:5001/api')
+    : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api')
+).replace(/\/$/, '');
 
 export const api = axios.create({
   baseURL: `${API_BASE_URL}`,

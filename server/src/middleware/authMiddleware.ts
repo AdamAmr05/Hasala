@@ -11,6 +11,9 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
 
   token = req.cookies.jwt;
 
+  console.log('Auth check - cookies:', req.cookies);
+  console.log('Auth check - token:', token ? 'present' : 'missing');
+
   if (token) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret') as JwtPayload;
