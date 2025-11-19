@@ -1,0 +1,7 @@
+{
+  "name": "Hasala",
+  "description": "A seamless, AI-powered personal finance tracker for Egyptian students. Features intelligent voice input, auto-categorization, and family monitoring.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

@@ -1,0 +1,307 @@
+import React, { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import Dashboard from './components/Dashboard';
+import AddTransaction from './components/AddTransaction';
+import TabBar from './components/UI/TabBar';
+import ChatInterface from './components/Chat/ChatInterface';
+import FamilyView from './components/Family/FamilyView';
+import { Transaction, TransactionType, User } from './types';
+import { authApi, transactionsApi } from './services/api';
+
+type AuthMode = 'login' | 'register';
+
+const App: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'home' | 'chat' | 'family'>('home');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>('login');
+  const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [transactionError, setTransactionError] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [budget, setBudget] = useState(0);
+
+  const queryClient = useQueryClient();
+
+  const {
+    data: transactions = [],
+    isLoading: transactionsLoading,
+    isError: transactionsError,
+  } = useQuery({
+    queryKey: ['transactions'],
+    queryFn: transactionsApi.list,
+    enabled: Boolean(user),
+  });
+
+  const authMutation = useMutation({
+    mutationFn: async () => {
+      if (authMode === 'login') {
+        return authApi.login({ email: authForm.email.trim(), password: authForm.password });
+      }
+      return authApi.register({
+        name: authForm.name.trim(),
+        email: authForm.email.trim(),
+        password: authForm.password,
+      });
+    },
+    onSuccess: (data) => {
+      setUser({
+        id: data._id,
+        name: data.name,
+        budget: data.budget,
+      });
+      setBudget(data.budget ?? 0);
+      setAuthError(null);
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
+    onError: () => {
+      setAuthError('Authentication failed. Please double-check your details.');
+    },
+  });
+
+  const transactionMutation = useMutation({
+    mutationFn: transactionsApi.create,
+    onSuccess: () => {
+      setTransactionError(null);
+      setShowAddModal(false);
+      setActiveTab('home');
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
+    onError: () => {
+      setTransactionError('Could not save the transaction. Please try again.');
+    },
+  });
+
+  const validateAuthForm = (): string | null => {
+    if (!authForm.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      return 'Enter a valid email address.';
+    }
+    if (authForm.password.length < 6) {
+      return 'Password must be at least 6 characters.';
+    }
+    if (authMode === 'register' && authForm.name.trim().length < 2) {
+      return 'Name must be at least 2 characters.';
+    }
+    return null;
+  };
+
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const validationMessage = validateAuthForm();
+    if (validationMessage) {
+      setAuthError(validationMessage);
+      return;
+    }
+    authMutation.mutate();
+  };
+
+  const handleLogout = async () => {
+    await authApi.logout();
+    setUser(null);
+    setBudget(0);
+    queryClient.removeQueries({ queryKey: ['transactions'] });
+  };
+
+  const handleAddTransaction = async (payload: Omit<Transaction, 'id'>) => {
+    if (payload.amount <= 0 || !payload.description.trim()) {
+      setTransactionError('Amount and description are required.');
+      return;
+    }
+    await transactionMutation.mutateAsync({
+      amount: payload.amount,
+      description: payload.description,
+      category: payload.category,
+      type: payload.type ?? TransactionType.EXPENSE,
+      date: payload.date,
+      isRecurring: payload.isRecurring,
+    });
+  };
+
+  const refreshTransactions = () => {
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+  };
+
+  const handleTabChange = (tab: string) => {
+    if (tab === 'add') {
+      setShowAddModal(true);
+    } else {
+      setActiveTab(tab as typeof activeTab);
+    }
+  };
+
+  const showAuthForm = !user;
+
+  return (
+    <div className="min-h-screen bg-[#F2F2F7] text-gray-900 font-sans selection:bg-primary selection:text-white">
+      <div className="max-w-md mx-auto bg-gray-50 min-h-screen relative shadow-2xl overflow-hidden">
+        {!showAuthForm ? (
+          <>
+            <header className="px-6 py-4 flex justify-between items-center border-b border-gray-200 bg-white/70 backdrop-blur-sm">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-widest">Welcome back</p>
+                <h1 className="font-bold text-lg text-gray-900">{user?.name}</h1>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="text-xs font-semibold text-primary hover:text-blue-700 transition-colors"
+              >
+                Logout
+              </button>
+            </header>
+            <main className="h-full">
+              {activeTab === 'home' && (
+                <div className="animate-[fadeIn_0.3s_ease-out]">
+                  {transactionsLoading ? (
+                    <div className="p-6 text-center text-gray-500">Loading your wallet...</div>
+                  ) : transactionsError ? (
+                    <div className="p-6 text-center text-red-500">
+                      Could not load transactions. Pull to refresh.
+                    </div>
+                  ) : (
+                    <Dashboard transactions={transactions} budget={budget} />
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'chat' && (
+                <div className="animate-[fadeIn_0.3s_ease-out]">
+                  <ChatInterface
+                    transactions={transactions}
+                    budget={budget}
+                    onAddTransaction={refreshTransactions}
+                  />
+                </div>
+              )}
+
+              {activeTab === 'family' && (
+                <div className="animate-[fadeIn_0.3s_ease-out]">
+                  <FamilyView />
+                </div>
+              )}
+            </main>
+
+            {showAddModal && (
+              <AddTransaction
+                onAdd={handleAddTransaction}
+                onCancel={() => setShowAddModal(false)}
+                isSubmitting={transactionMutation.isPending}
+                submitError={transactionError}
+              />
+            )}
+
+            <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
+          </>
+        ) : (
+          <div className="min-h-screen flex items-center justify-center p-6">
+            <form
+              onSubmit={handleAuthSubmit}
+              className="bg-white w-full rounded-3xl p-8 shadow-xl space-y-6"
+            >
+              <div className="text-center space-y-2">
+                <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
+                  {authMode === 'login' ? 'Login' : 'Create Account'}
+                </p>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {authMode === 'login' ? 'Welcome to Hasala' : 'Join Hasala'}
+                </h1>
+                <p className="text-sm text-gray-500">
+                  Frictionless money tracking built for Egyptian students.
+                </p>
+              </div>
+
+              {authMode === 'register' && (
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={authForm.name}
+                    onChange={(e) => setAuthForm((prev) => ({ ...prev, name: e.target.value }))}
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                    placeholder="Youssef Hassan"
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={authForm.email}
+                  onChange={(e) => setAuthForm((prev) => ({ ...prev, email: e.target.value }))}
+                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  placeholder="student@university.edu"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={authForm.password}
+                  onChange={(e) => setAuthForm((prev) => ({ ...prev, password: e.target.value }))}
+                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  placeholder="Minimum 6 characters"
+                />
+              </div>
+
+              {authError && (
+                <p className="text-sm text-red-500 bg-red-50 rounded-2xl px-4 py-2">{authError}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={authMutation.isPending}
+                className="w-full py-4 rounded-2xl bg-primary text-white font-semibold shadow-lg shadow-primary/30 hover:bg-blue-600 transition disabled:opacity-60"
+              >
+                {authMutation.isPending
+                  ? 'Just a sec...'
+                  : authMode === 'login'
+                  ? 'Log into Hasala'
+                  : 'Create Account'}
+              </button>
+
+              <p className="text-xs text-center text-gray-500">
+                {authMode === 'login' ? (
+                  <>
+                    No account yet?{' '}
+                    <button
+                      type="button"
+                      className="text-primary font-semibold"
+                      onClick={() => {
+                        setAuthMode('register');
+                        setAuthError(null);
+                      }}
+                    >
+                      Register
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    Already have an account?{' '}
+                    <button
+                      type="button"
+                      className="text-primary font-semibold"
+                      onClick={() => {
+                        setAuthMode('login');
+                        setAuthError(null);
+                      }}
+                    >
+                      Sign in
+                    </button>
+                  </>
+                )}
+              </p>
+            </form>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default App;
