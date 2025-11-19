@@ -17,11 +17,39 @@ import {
 const buildSystemInstruction = (
   transactions: ITransaction[],
   userName?: string,
-  budget?: number,
+  budget: number = 0,
 ) => {
-  const totalSpent = transactions
-    .filter((t) => t.type === TransactionType.EXPENSE)
-    .reduce((sum, t) => sum + t.amount, 0);
+  // 1. Basic Totals
+  const expenses = transactions.filter((t) => t.type === TransactionType.EXPENSE);
+  const income = transactions.filter((t) => t.type === TransactionType.INCOME);
+
+  const totalSpent = expenses.reduce((sum, t) => sum + t.amount, 0);
+  const totalIncome = income.reduce((sum, t) => sum + t.amount, 0);
+  const effectiveBudget = budget + totalIncome;
+  const remaining = effectiveBudget - totalSpent;
+
+  // 2. Budget Health
+  let healthStatus = 'Healthy';
+  if (remaining < 0) healthStatus = 'Critical (Over Budget)';
+  else if (remaining < effectiveBudget * 0.2) healthStatus = 'Low (Caution)';
+
+  // 3. Top Category
+  const categoryTotals = expenses.reduce((acc, t) => {
+    acc[t.category] = (acc[t.category] || 0) + t.amount;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const topCategory = Object.entries(categoryTotals)
+    .sort(([, a], [, b]) => b - a)[0];
+  const topCategoryName = topCategory ? topCategory[0] : 'None';
+  const topCategoryAmount = topCategory ? topCategory[1] : 0;
+
+  // 4. Projections
+  const today = new Date();
+  const dayOfMonth = today.getDate();
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const dailyAverage = totalSpent / Math.max(1, dayOfMonth);
+  const projectedTotal = dailyAverage * daysInMonth;
 
   const summary = transactions
     .slice(0, 15)
@@ -31,19 +59,34 @@ const buildSystemInstruction = (
     .join('\n');
 
   return `
-You are Hasala AI, a financial assistant for ${userName || 'an Egyptian student'}.
+You are Hasala AI, a witty, insightful, and friendly financial companion for ${userName || 'friend'}.
+Your goal is to help the user understand their financial habits, not just report numbers.
 
-CONTEXT:
-Monthly Budget: ${budget ?? 'Not set'} EGP
-Total Spent (tracked): ${totalSpent} EGP
-Recent Transactions:
-${summary}
+RICH CONTEXT (Use this to give specific advice):
+- Budget Status: ${healthStatus}
+- Remaining: ${remaining.toLocaleString()} / ${effectiveBudget.toLocaleString()} EGP
+- Top Spending: ${topCategoryName} (${topCategoryAmount.toLocaleString()} EGP)
+- Daily Average: ~${Math.round(dailyAverage)} EGP/day
+- End-of-Month Projection: ${Math.round(projectedTotal).toLocaleString()} EGP (Limit: ${effectiveBudget.toLocaleString()})
 
 INSTRUCTIONS:
-1. Persona: Friendly, encouraging, uses light Egyptian Arabic slang ("Ahlan", "Tamam") when natural.
-2. If the user asks for patterns, history, or budget status, respond with the appropriate render tool rather than only text.
-3. If the user wants to log something, call the addTransaction tool with structured JSON.
-4. Keep responses concise (under 90 words) unless the user explicitly asks for detail.`;
+1. **Be a Financial Advisor**: Don't just say "Here is your chart." Explain the *why*.
+   - If they are overspending, warn them kindly and suggest cutting back on ${topCategoryName}.
+   - If they are safe, celebrate their good habits!
+   - Use the "Projection" to warn them about the future if they keep spending like this.
+2. **Conversational Style**: Use natural, encouraging language. You can use light Egyptian slang ("Ya basha", "Ahlan", "Tamam", "Ma3lesh") to sound local and friendly.
+3. **Visuals are Supplementary**:
+   - ALWAYS explain the insight in text FIRST.
+   - THEN use a tool (chart) to *visualize* what you just explained.
+   - Example: "You've spent a lot on Food this week. Here's a breakdown:" -> [renderCategoryBreakdown]
+4. **Tools**:
+   - Use 'renderBudgetOverview' when discussing overall status or limits.
+   - Use 'renderCategoryBreakdown' when discussing *where* money went.
+   - Use 'renderMonthlyProjection' when discussing the *future* or if they will make it to the end of the month.
+   - Use 'renderSpendingChart' for trends over the last few days.
+   - Use 'renderRecentTransactions' when the user asks about specific recent purchases or history.
+5. **Conciseness**: Keep it punchy and helpful. Avoid long lectures.
+`;
 };
 
 const mapHistoryToContents = (history: ChatRequestBody['history'] = []): Content[] => {
