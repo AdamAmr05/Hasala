@@ -2,7 +2,7 @@
 
 @theme {
   --font-sans: 'Cairo', sans-serif;
-  
+
   --color-background: #F5F5F7;
   --color-primary: #1C1C1E;
   --color-accent-green: #34C759;
@@ -23,6 +23,7 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -35,4 +36,68 @@
 
 .glass-dark {
   @apply bg-[#1C1C1E]/85 backdrop-blur-xl;
+}
+
+/* Coin Stack 3D Styles */
+.coin-stack {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column-reverse;
+  /* Stacks from bottom up */
+  align-items: center;
+  perspective: 1000px;
+}
+
+.coin {
+  height: 14px;
+  /* Slightly thicker for better visibility */
+  width: 100%;
+  border-radius: 50%;
+  margin-top: -10px;
+  /* Overlap */
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  /* Bouncy transition */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.coin::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.1) 100%);
+  pointer-events: none;
+}
+
+.coin:hover {
+  /* Removed hover animation as requested */
+}
+
+/* Coin Colors */
+.coin-gold {
+  background: linear-gradient(to right, #FFD700, #FDB931);
+  border-color: #B8860B;
+}
+
+.coin-green {
+  background: linear-gradient(to right, #34C759, #248A3D);
+  border-color: #1E7031;
+}
+
+.coin-red {
+  background: linear-gradient(to right, #FF3B30, #D70015);
+  border-color: #9A000F;
+}
+
+.coin-ghost {
+  background: rgba(229, 231, 235, 0.3);
+  /* Gray-200 with opacity */
+  border-color: rgba(209, 213, 219, 0.5);
+  box-shadow: none;
 }

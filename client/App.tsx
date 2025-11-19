@@ -5,6 +5,7 @@ import SmartInputSheet from './components/SmartInputSheet';
 import TabBar from './components/UI/TabBar';
 import ChatInterface from './components/Chat/ChatInterface';
 import FamilyView from './components/Family/FamilyView';
+import AnalyticsView from './components/Analytics/AnalyticsView';
 import { Transaction, TransactionType, User } from './types';
 import { authApi, transactionsApi, TransactionPayload } from './services/api';
 
@@ -133,11 +134,11 @@ const App: React.FC = () => {
   };
 
   const handleTabChange = (tab: string) => {
-     setActiveTab(tab as typeof activeTab);
+    setActiveTab(tab as typeof activeTab);
   };
 
   const handleAddClick = () => {
-     setShowSmartInput(true);
+    setShowSmartInput(true);
   };
 
   if (userLoading) {
@@ -194,29 +195,25 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {activeTab === 'settings' && (
+              {activeTab === 'analytics' && (
                 <div className="animate-[fadeIn_0.3s_ease-out]">
-                   {/* Placeholder for FamilyView or Settings */}
-                   <div className="p-6">
-                      <h2 className="text-xl font-bold mb-4">Family & Settings</h2>
-                      <FamilyView />
-                   </div>
+                  <AnalyticsView transactions={transactions} />
                 </div>
               )}
             </main>
 
-            <SmartInputSheet 
-                isOpen={showSmartInput} 
-                onClose={() => setShowSmartInput(false)}
-                onTransactionAdded={handleAddTransaction}
-                isSubmitting={transactionMutation.isPending}
-                submitError={transactionError}
+            <SmartInputSheet
+              isOpen={showSmartInput}
+              onClose={() => setShowSmartInput(false)}
+              onTransactionAdded={handleAddTransaction}
+              isSubmitting={transactionMutation.isPending}
+              submitError={transactionError}
             />
 
-            <TabBar 
-                activeTab={activeTab} 
-                onTabChange={handleTabChange}
-                onAddClick={handleAddClick}
+            <TabBar
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              onAddClick={handleAddClick}
             />
           </>
         ) : (
@@ -290,8 +287,8 @@ const App: React.FC = () => {
                 {authMutation.isPending
                   ? 'Just a sec...'
                   : authMode === 'login'
-                  ? 'Log into Hasala'
-                  : 'Create Account'}
+                    ? 'Log into Hasala'
+                    : 'Create Account'}
               </button>
 
               <p className="text-xs text-center text-gray-500">

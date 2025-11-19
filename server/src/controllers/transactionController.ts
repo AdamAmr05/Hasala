@@ -69,3 +69,75 @@ export const deleteTransaction = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// @desc    Get transaction analytics
+// @route   GET /api/transactions/analytics
+// @access  Private
+export const getAnalytics = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    const { period = '30' } = req.query; // Default to last 30 days
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - parseInt(period as string));
+
+    // 1. Total Spent vs Income
+    const totals = await Transaction.aggregate([
+      {
+        $match: {
+          user: userId,
+          date: { $gte: startDate }
+        }
+      },
+      {
+        $group: {
+          _id: '$type',
+          total: { $sum: '$amount' }
+        }
+      }
+    ]);
+
+    // 2. Category Breakdown
+    const categoryBreakdown = await Transaction.aggregate([
+      {
+        $match: {
+          user: userId,
+          type: 'EXPENSE',
+          date: { $gte: startDate }
+        }
+      },
+      {
+        $group: {
+          _id: '$category',
+          total: { $sum: '$amount' }
+        }
+      },
+      { $sort: { total: -1 } }
+    ]);
+
+    // 3. Daily Trend
+    const dailyTrend = await Transaction.aggregate([
+      {
+        $match: {
+          user: userId,
+          type: 'EXPENSE',
+          date: { $gte: startDate }
+        }
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+          total: { $sum: '$amount' }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    res.status(200).json({
+      totals,
+      categoryBreakdown,
+      dailyTrend
+    });
+  } catch (error) {
+    res.status(500).json({ message: (error as Error).message });
+  }
+};

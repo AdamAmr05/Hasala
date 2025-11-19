@@ -1,5 +1,5 @@
 import express from 'express';
-import { getTransactions, addTransaction, deleteTransaction } from '../controllers/transactionController';
+import { getTransactions, addTransaction, deleteTransaction, getAnalytics } from '../controllers/transactionController';
 import { protect } from '../middleware/authMiddleware';
 
 const router = express.Router();
@@ -8,6 +8,8 @@ const router = express.Router();
 router.route('/')
   .get(protect, getTransactions)
   .post(protect, addTransaction);
+
+router.get('/analytics', protect, getAnalytics);
 
 router.route('/:id')
   .delete(protect, deleteTransaction);

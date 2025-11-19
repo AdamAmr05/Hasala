@@ -1,6 +1,6 @@
 import React from 'react';
 import { Transaction } from '../types';
-import SpendingRing from './Dashboard/SpendingRing';
+import CoinStack from './Dashboard/CoinStack';
 import StatsOverview from './Dashboard/StatsOverview';
 import ActivityFeed from './Dashboard/ActivityFeed';
 
@@ -20,14 +20,17 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, budget, user }) => 
           <h1 className="text-2xl font-bold text-primary tracking-tight">{user?.name?.split(' ')[0] || 'Friend'}</h1>
         </div>
         <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm">
-             <div className="w-full h-full bg-gradient-to-br from-accent-blue to-purple-500 flex items-center justify-center text-white font-bold">
-                {user?.name?.[0] || 'H'}
-             </div>
+          <div className="w-full h-full bg-gradient-to-br from-accent-blue to-purple-500 flex items-center justify-center text-white font-bold">
+            {user?.name?.[0] || 'H'}
+          </div>
         </div>
       </div>
 
-      {/* Main Interactive Ring */}
-      <SpendingRing transactions={transactions} budget={budget} />
+      {/* Main Interactive Coin Stack */}
+      <CoinStack
+        totalSpent={transactions.reduce((acc, t) => t.type === 'EXPENSE' ? acc + t.amount : acc, 0)}
+        budget={budget + transactions.reduce((acc, t) => t.type === 'INCOME' ? acc + t.amount : acc, 0)}
+      />
 
       {/* Quick Stats */}
       <StatsOverview transactions={transactions} />
