@@ -94,7 +94,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-100px)]">
+    <div className="flex flex-col h-[calc(100vh-140px)]">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-xl px-6 py-4 border-b border-gray-200 sticky top-0 z-20 flex justify-between items-center">
         <div className="flex items-center gap-3">
@@ -111,7 +111,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 scroll-smooth">
+      <div className="flex-1 overflow-y-auto px-4 py-6 pb-10 space-y-6 scroll-smooth">
         {messages.map((msg) => (
           <div 
             key={msg.id} 
@@ -157,7 +157,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className="px-4 pb-4 pt-2 bg-gradient-to-t from-[#F2F2F7] to-transparent">
+      <div className="px-4 pb-28 pt-2 bg-gradient-to-t from-[#F2F2F7] to-transparent">
         <div className="bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-1.5 flex items-center border border-gray-200/80 backdrop-blur-sm">
           <input
             type="text"

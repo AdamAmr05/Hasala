@@ -1,0 +1,54 @@
+import { Type, FunctionDeclaration, Schema } from '@google/genai';
+import { Category, TransactionType } from '../models/Transaction';
+
+export const MODEL_NAME = process.env.GEMINI_MODEL || 'gemini-flash-latest';
+
+export const TRANSACTION_SCHEMA: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    amount: {
+      type: Type.NUMBER,
+      description: 'The numerical amount in EGP',
+    },
+    description: {
+      type: Type.STRING,
+      description: 'Brief description of what was bought or earned',
+    },
+    category: {
+      type: Type.STRING,
+      enum: Object.values(Category),
+      description: 'The category of the transaction',
+    },
+    type: {
+      type: Type.STRING,
+      enum: Object.values(TransactionType),
+      description: 'Transaction type',
+    },
+  },
+  required: ['amount', 'description', 'category', 'type'],
+};
+
+export const addTransactionTool: FunctionDeclaration = {
+  name: 'addTransaction',
+  description: 'Add a new financial transaction (expense or income) to the database.',
+  parameters: TRANSACTION_SCHEMA,
+};
+
+export const renderSpendingChartTool: FunctionDeclaration = {
+  name: 'renderSpendingChart',
+  description: 'Display a bar chart visualizing the user’s spending trends over the last week.',
+  parameters: { type: Type.OBJECT, properties: {} },
+};
+
+export const renderRecentTransactionsTool: FunctionDeclaration = {
+  name: 'renderRecentTransactions',
+  description: 'Display a list of the most recent transactions.',
+  parameters: { type: Type.OBJECT, properties: {} },
+};
+
+export const renderBudgetOverviewTool: FunctionDeclaration = {
+  name: 'renderBudgetOverview',
+  description: 'Display a card showing the remaining budget and progress.',
+  parameters: { type: Type.OBJECT, properties: {} },
+};
+

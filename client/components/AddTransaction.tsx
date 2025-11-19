@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Category, Transaction, TransactionType } from '../types';
-import { parseTransactionFromInput, processVoiceTransaction } from '../services/geminiService';
+import { aiApi } from '../services/api';
 
 interface AddTransactionProps {
   onAdd: (t: Omit<Transaction, 'id'>) => Promise<void> | void;
@@ -55,15 +55,17 @@ const AddTransaction: React.FC<AddTransactionProps> = ({
     if (!aiInput.trim()) return;
     setLoading(true);
     try {
-      const result = await parseTransactionFromInput(aiInput);
-      if (result.amount && result.description) {
+      const result = await aiApi.parseText(aiInput.trim());
+      if (result?.amount && result?.description) {
         await onAdd({
-          amount: result.amount,
+          amount: Number(result.amount),
           description: result.description,
           category: (result.category as Category) || Category.OTHER,
           date: new Date().toISOString(),
           type: (result.type as TransactionType) || TransactionType.EXPENSE,
         });
+      } else {
+        alert('Could not understand the input. Please try manual mode.');
       }
     } catch (e) {
       alert("Could not understand the input. Please try manual mode.");
@@ -94,15 +96,17 @@ const AddTransaction: React.FC<AddTransactionProps> = ({
           // Strip "data:audio/wav;base64," prefix
           const rawBase64 = base64data.split(',')[1];
           try {
-            const result = await processVoiceTransaction(rawBase64);
-            if (result.amount && result.description) {
+            const result = await aiApi.parseVoice(rawBase64);
+            if (result?.amount && result?.description) {
                await onAdd({
-                amount: result.amount,
+                amount: Number(result.amount),
                 description: result.description,
                 category: (result.category as Category) || Category.OTHER,
                 date: new Date().toISOString(),
                 type: (result.type as TransactionType) || TransactionType.EXPENSE,
               });
+            } else {
+              alert("Could not process voice input.");
             }
           } catch (err) {
             console.error(err);

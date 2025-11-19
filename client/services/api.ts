@@ -7,8 +7,10 @@ import {
   TransactionType,
 } from '../types';
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || 'http://localhost:5001/api';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api').replace(
+  /\/$/,
+  '',
+);
 
 export const api = axios.create({
   baseURL: `${API_BASE_URL}`,
@@ -38,6 +40,10 @@ export const authApi = {
     api.post<AuthResponse>('/auth/login', payload).then((res) => res.data),
 
   logout: () => api.post('/auth/logout'),
+  me: () =>
+    api
+      .get<AuthResponse>('/auth/me')
+      .then((res) => res.data),
 };
 
 interface ApiTransaction {
@@ -107,5 +113,19 @@ export const chatApi = {
         ...res.data,
         createdTransactions: normalizeChatTransactions(res.data.createdTransactions as any),
       })),
+};
+
+type ParsedTransactionResponse = Partial<{
+  amount: number;
+  description: string;
+  category: string;
+  type: TransactionType;
+}>;
+
+export const aiApi = {
+  parseText: (input: string) =>
+    api.post<ParsedTransactionResponse>('/ai/parse-text', { input }).then((res) => res.data),
+  parseVoice: (audio: string) =>
+    api.post<ParsedTransactionResponse>('/ai/parse-voice', { audio }).then((res) => res.data),
 };
 

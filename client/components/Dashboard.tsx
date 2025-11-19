@@ -61,8 +61,8 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, budget }) => {
       {/* Analytics Preview */}
       <div className="bg-white rounded-3xl p-6 shadow-apple">
         <h3 className="font-semibold text-gray-800 mb-4">Spending by Category</h3>
-        <div className="h-48 w-full">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="w-full" style={{ minHeight: 200 }}>
+          <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie
                 data={categoryData}

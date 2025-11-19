@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import User, { IUser } from '../models/User';
+import { AuthRequest } from '../middleware/authMiddleware';
 
 const generateToken = (res: Response, userId: string) => {
   const token = jwt.sign({ userId }, process.env.JWT_SECRET || 'default_secret', {
@@ -85,5 +86,21 @@ export const logoutUser = (req: Request, res: Response) => {
     expires: new Date(0),
   });
   res.status(200).json({ message: 'Logged out successfully' });
+};
+
+// @desc    Get current user
+// @route   GET /api/auth/me
+// @access  Private
+export const getCurrentUser = (req: AuthRequest, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Not authenticated' });
+  }
+
+  return res.json({
+    _id: req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+    budget: req.user.budget,
+  });
 };
 

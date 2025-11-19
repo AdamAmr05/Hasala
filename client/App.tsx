@@ -22,6 +22,25 @@ const App: React.FC = () => {
 
   const queryClient = useQueryClient();
 
+  const { isLoading: userLoading } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: authApi.me,
+    retry: false,
+    onSuccess: (data) => {
+      setUser({
+        id: data._id,
+        name: data.name,
+        budget: data.budget,
+      });
+      setBudget(data.budget ?? 0);
+      setAuthError(null);
+    },
+    onError: () => {
+      setUser(null);
+      setBudget(0);
+    },
+  });
+
   const {
     data: transactions = [],
     isLoading: transactionsLoading,
@@ -52,6 +71,7 @@ const App: React.FC = () => {
       setBudget(data.budget ?? 0);
       setAuthError(null);
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
     },
     onError: () => {
       setAuthError('Authentication failed. Please double-check your details.');
@@ -99,6 +119,7 @@ const App: React.FC = () => {
     setUser(null);
     setBudget(0);
     queryClient.removeQueries({ queryKey: ['transactions'] });
+    queryClient.removeQueries({ queryKey: ['currentUser'] });
   };
 
   const handleAddTransaction = async (payload: Omit<Transaction, 'id'>) => {
@@ -128,6 +149,14 @@ const App: React.FC = () => {
     }
   };
 
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-[#F2F2F7] text-gray-900 font-sans selection:bg-primary selection:text-white flex items-center justify-center">
+        <p className="text-sm text-gray-500 animate-pulse">Checking your session...</p>
+      </div>
+    );
+  }
+
   const showAuthForm = !user;
 
   return (
@@ -147,7 +176,7 @@ const App: React.FC = () => {
                 Logout
               </button>
             </header>
-            <main className="h-full">
+            <main className="h-full pb-32">
               {activeTab === 'home' && (
                 <div className="animate-[fadeIn_0.3s_ease-out]">
                   {transactionsLoading ? (
