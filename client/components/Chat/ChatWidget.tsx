@@ -321,7 +321,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
                 dataKey="amount"
                 stroke={isOverBudget ? '#FF3B30' : '#34C759'}
                 strokeWidth={3}
-                dot={{ r: 4, strokeWidth: 2, fill: 'white' }}
+                dot={{ r: 4, strokeWidth: 2, fill: 'white', strokeDasharray: '' }}
                 strokeDasharray="5 5"
               />
             </LineChart>
