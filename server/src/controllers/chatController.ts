@@ -3,6 +3,8 @@ import { GoogleGenAI, Content } from '@google/genai';
 import Transaction, { Category, ITransaction, TransactionType } from '../models/Transaction';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { ChatRequestBody, ChatSender, ToolCall } from '../types/chat';
+import ChatThread from '../models/ChatThread';
+import ChatMessage from '../models/ChatMessage';
 import {
   MODEL_NAME,
   TRANSACTION_SCHEMA,
@@ -171,7 +173,7 @@ const executeToolCalls = async (
 
 export const chatWithAI = async (req: AuthRequest, res: Response) => {
   try {
-    const { message, history }: ChatRequestBody = req.body;
+    const { message, history, threadId }: ChatRequestBody = req.body;
 
     if (!message) {
       return res.status(400).json({ message: 'Message is required.' });
@@ -215,11 +217,65 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       .map(([name, total]) => `${name}: ${total} EGP`)
       .join(', ');
 
-    const contents = mapHistoryToContents(history);
-    contents.push({
+    // --- PERSISTENCE START ---
+    let currentThreadId = threadId;
+    if (!currentThreadId) {
+      const newThread = await ChatThread.create({
+        user: req.user._id,
+        title: message.substring(0, 50) + (message.length > 50 ? '...' : ''),
+      });
+      currentThreadId = newThread._id.toString();
+    }
+
+    // Save User Message
+    await ChatMessage.create({
+      thread: currentThreadId,
       role: 'user',
-      parts: [{ text: message }],
+      text: message,
     });
+
+    // Update Thread timestamp
+    await ChatThread.findByIdAndUpdate(currentThreadId, { lastMessageAt: new Date() });
+    // --- PERSISTENCE END ---
+
+    // Load history from DB if threadId exists, otherwise fallback to request body (legacy)
+    let contents: Content[] = [];
+    if (currentThreadId) {
+      const dbMessages = await ChatMessage.find({ thread: currentThreadId })
+        .sort({ createdAt: 1 })
+        .limit(20); // Load last 20 messages
+
+      contents = dbMessages.map((msg) => {
+        const parts = [];
+        if (msg.text) {
+          parts.push({ text: msg.text });
+        }
+        // Synthesize tool calls into text context so Gemini remembers what it showed
+        if (msg.toolCalls && msg.toolCalls.length > 0) {
+          const toolDescriptions = msg.toolCalls.map(tc => {
+            if (tc.name === 'addTransaction') return `(I added a transaction: ${JSON.stringify(tc.args)})`;
+            if (tc.name === 'renderSpendingChart') return `(I showed the spending chart)`;
+            if (tc.name === 'renderBudgetOverview') return `(I showed the budget overview)`;
+            if (tc.name === 'renderCategoryBreakdown') return `(I showed the category breakdown)`;
+            if (tc.name === 'renderMonthlyProjection') return `(I showed the monthly projection)`;
+            if (tc.name === 'renderPeopleBreakdown') return `(I showed the people breakdown)`;
+            if (tc.name === 'renderRecentTransactions') return `(I showed recent transactions)`;
+            return `(I used tool: ${tc.name})`;
+          }).join(' ');
+          parts.push({ text: toolDescriptions });
+        }
+        return {
+          role: msg.role === 'user' ? 'user' : 'model',
+          parts,
+        };
+      });
+    } else {
+      contents = mapHistoryToContents(history);
+      contents.push({
+        role: 'user',
+        parts: [{ text: message }],
+      });
+    }
 
     // Calculate accurate monthly totals
     const startOfCurrentMonth = new Date();
@@ -322,6 +378,16 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
 
     const { toolCalls, createdTransactions } = await executeToolCalls(rawToolCalls, req.user._id.toString());
 
+    // --- PERSISTENCE START ---
+    // Save AI Response
+    const aiMessage = await ChatMessage.create({
+      thread: currentThreadId,
+      role: 'model',
+      text: text,
+      toolCalls: toolCalls.length ? toolCalls : [],
+    });
+    // --- PERSISTENCE END ---
+
     return res.json({
       text,
       toolCalls: toolCalls.length ? toolCalls : undefined,
@@ -335,10 +401,63 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
           date: tx.date.toISOString(),
         }))
         : undefined,
+      threadId: currentThreadId,
+      messageId: aiMessage._id,
     });
   } catch (error) {
     console.error('Chat error:', error);
     return res.status(500).json({ message: 'Ma3lesh, I had trouble connecting to Hasala AI.' });
+  }
+};
+
+// --- NEW HANDLERS ---
+
+export const getThreads = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user?._id) return res.status(401).json({ message: 'Unauthorized' });
+
+    const threads = await ChatThread.find({ user: req.user._id })
+      .sort({ lastMessageAt: -1 })
+      .limit(50);
+
+    return res.json(threads);
+  } catch (error) {
+    console.error('Get Threads Error:', error);
+    return res.status(500).json({ message: 'Failed to fetch chat history.' });
+  }
+};
+
+export const getThreadMessages = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user?._id) return res.status(401).json({ message: 'Unauthorized' });
+    const { threadId } = req.params;
+
+    const thread = await ChatThread.findOne({ _id: threadId, user: req.user._id });
+    if (!thread) return res.status(404).json({ message: 'Thread not found.' });
+
+    const messages = await ChatMessage.find({ thread: threadId }).sort({ createdAt: 1 });
+
+    return res.json(messages);
+  } catch (error) {
+    console.error('Get Messages Error:', error);
+    return res.status(500).json({ message: 'Failed to fetch messages.' });
+  }
+};
+
+export const deleteThread = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user?._id) return res.status(401).json({ message: 'Unauthorized' });
+    const { threadId } = req.params;
+
+    const thread = await ChatThread.findOneAndDelete({ _id: threadId, user: req.user._id });
+    if (!thread) return res.status(404).json({ message: 'Thread not found.' });
+
+    await ChatMessage.deleteMany({ thread: threadId });
+
+    return res.json({ message: 'Thread deleted.' });
+  } catch (error) {
+    console.error('Delete Thread Error:', error);
+    return res.status(500).json({ message: 'Failed to delete thread.' });
   }
 };
 

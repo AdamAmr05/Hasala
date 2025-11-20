@@ -226,7 +226,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
     let data: { name: string; value: number }[] = [];
 
     if (propsData?.categories) {
-      data = propsData.categories as { name: string; value: number }[];
+      data = (propsData.categories as any[]).map(c => ({ name: c.name, value: Number(c.value) }));
     } else {
       // Fallback to local calculation
       const expenses = transactions.filter(t => t.type === TransactionType.EXPENSE);
@@ -236,8 +236,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
       }, {} as Record<string, number>);
 
       data = Object.entries(byCategory)
-        .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => (b.value as number) - (a.value as number));
+        .map(([name, value]): { name: string; value: number } => ({ name, value: Number(value) }))
+        .sort((a, b) => b.value - a.value);
     }
 
     data = data.slice(0, 5);
@@ -359,7 +359,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
     let data: { name: string; value: number }[] = [];
 
     if (propsData?.people) {
-      data = propsData.people as { name: string; value: number }[];
+      data = (propsData.people as any[]).map(p => ({ name: p.name, value: Number(p.value) }));
     } else {
       const expenses = transactions.filter(t => t.type === TransactionType.EXPENSE && t.relatedPerson);
       const byPerson = expenses.reduce((acc, t) => {
@@ -369,8 +369,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
       }, {} as Record<string, number>);
 
       data = Object.entries(byPerson)
-        .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => (b.value as number) - (a.value as number));
+        .map(([name, value]): { name: string; value: number } => ({ name, value: Number(value) }))
+        .sort((a, b) => b.value - a.value);
     }
 
     data = data.slice(0, 5);

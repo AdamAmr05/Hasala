@@ -12,6 +12,7 @@ export enum Category {
   EDUCATION = 'Education',
   INCOME = 'Income',
   GIVING = 'Giving',
+  HOUSING = 'Housing',
   OTHER = 'Other',
 }
 
@@ -64,4 +65,6 @@ export interface ChatResponse {
   text: string;
   toolCalls?: ToolCall[];
   createdTransactions?: Transaction[];
+  threadId?: string;
+  messageId?: string;
 }
