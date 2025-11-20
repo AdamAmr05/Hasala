@@ -32,7 +32,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading } = useQuery({
     queryKey: ['monthlyStats', currentDate.getMonth(), currentDate.getFullYear()],
     queryFn: () => transactionsApi.getAnalytics(30, currentDate.getMonth(), currentDate.getFullYear()),
     placeholderData: (previousData) => previousData,
@@ -75,9 +75,11 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* Main Interactive Coin Stack */}
+      {/* Main Interactive Coin Stack */}
       <CoinStack
         totalSpent={expense}
         budget={budget + income}
+        isLoading={isLoading}
       />
 
       {/* Quick Stats */}

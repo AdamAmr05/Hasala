@@ -226,18 +226,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
 
     const data = Object.entries(byCategory)
       .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => (b.value as number) - (a.value as number));
-
-    // Ensure Giving is in the top 5 if it exists
-    const givingIndex = data.findIndex(d => d.name === Category.GIVING);
-    let top5 = data.slice(0, 5);
-
-    if (givingIndex > 4) {
-      // If Giving is present but not in top 5, replace the last one
-      top5[4] = data[givingIndex];
-    }
-
-    const finalData = top5;
+      .sort((a, b) => (b.value as number) - (a.value as number))
+      .slice(0, 5);
 
     return (
       <motion.div
@@ -251,14 +241,14 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={finalData}
+                  data={data}
                   innerRadius={35}
                   outerRadius={55}
                   paddingAngle={5}
                   dataKey="value"
                   stroke="none"
                 >
-                  {finalData.map((entry, index) => (
+                  {data.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -267,7 +257,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
           </div>
 
           <div className="flex-1 space-y-2">
-            {finalData.map((entry, index) => (
+            {data.map((entry, index) => (
               <div key={index} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
