@@ -4,9 +4,10 @@ import { motion } from 'framer-motion';
 interface CoinStackProps {
     totalSpent: number;
     budget: number;
+    isLoading?: boolean;
 }
 
-const CoinStack: React.FC<CoinStackProps> = ({ totalSpent, budget }) => {
+const CoinStack: React.FC<CoinStackProps> = ({ totalSpent, budget, isLoading = false }) => {
     // 1. Calculate percentage (capped at 100% for visual stack height, but color logic handles overflow)
     const percentage = Math.min((totalSpent / budget) * 100, 100);
     const remaining = Math.max(0, budget - totalSpent);
@@ -31,16 +32,18 @@ const CoinStack: React.FC<CoinStackProps> = ({ totalSpent, budget }) => {
             <div className="relative w-32 h-48 flex flex-col justify-end items-center">
 
                 {/* Floating Badge */}
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="absolute -top-8 z-20 flex flex-col items-center"
-                >
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Remaining</span>
-                    <span className={`text-2xl font-bold ${isOverBudget ? 'text-red-500' : 'text-primary'}`}>
-                        {remaining.toLocaleString()} <span className="text-xs font-normal text-gray-400">EGP</span>
-                    </span>
-                </motion.div>
+                {!isLoading && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="absolute -top-8 z-20 flex flex-col items-center"
+                    >
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Remaining</span>
+                        <span className={`text-2xl font-bold ${isOverBudget ? 'text-red-500' : 'text-primary'}`}>
+                            {remaining.toLocaleString()} <span className="text-xs font-normal text-gray-400">EGP</span>
+                        </span>
+                    </motion.div>
+                )}
 
                 {/* The Stack */}
                 <div className="coin-stack w-24">
@@ -58,7 +61,7 @@ const CoinStack: React.FC<CoinStackProps> = ({ totalSpent, budget }) => {
                     ))}
 
                     {/* Active Coins (The actual fill) */}
-                    {Array.from({ length: MAX_COINS }).map((_, i) => {
+                    {!isLoading && Array.from({ length: MAX_COINS }).map((_, i) => {
                         // Logic: Bottom coins are Red (spent), Top coins are Green (remaining)
                         // Stack builds from bottom (index 0) to top (index MAX-1)
                         // So if redCoinsCount is 3, indices 0, 1, 2 are Red. 3 to 11 are Green.
