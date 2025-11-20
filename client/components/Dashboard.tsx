@@ -79,6 +79,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Activity Feed */}
       <ActivityFeed
         transactions={transactions}
+        categories={stats?.categoryBreakdown}
         onLoadMore={onLoadMore}
         hasMore={hasMore}
       />

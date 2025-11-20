@@ -5,6 +5,7 @@ import { ShoppingBag, Coffee, Home, Car, Zap, MoreHorizontal, Loader2, HandHeart
 
 interface ActivityFeedProps {
     transactions: Transaction[];
+    categories?: { _id: string; total: number }[];
     onLoadMore: () => void;
     hasMore: boolean;
 }
@@ -19,15 +20,46 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
     'Other': <MoreHorizontal size={18} />,
 };
 
-const ActivityFeed: React.FC<ActivityFeedProps> = ({ transactions, onLoadMore, hasMore }) => {
+const ActivityFeed: React.FC<ActivityFeedProps> = ({ transactions, categories, onLoadMore, hasMore }) => {
     const [activeTab, setActiveTab] = useState<'recent' | 'categories'>('recent');
+    const [visibleCategoriesCount, setVisibleCategoriesCount] = useState(10);
     const observerTarget = useRef<HTMLDivElement>(null);
+
+    // Reset visible categories when switching tabs or when categories change
+    useEffect(() => {
+        if (activeTab === 'categories') {
+            setVisibleCategoriesCount(10);
+        }
+    }, [activeTab, categories]);
+
+    // Prepare category data
+    const allCategoryData = React.useMemo(() => {
+        if (categories) {
+            return categories.map(c => [c._id, c.total] as [string, number]);
+        }
+        // Fallback to deriving from transactions (legacy/fallback)
+        return Object.entries(
+            transactions
+                .filter(t => t.type === TransactionType.EXPENSE)
+                .reduce((acc: Record<string, number>, curr) => {
+                    acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+                    return acc;
+                }, {})
+        ).sort(([, a]: [string, number], [, b]: [string, number]) => b - a);
+    }, [categories, transactions]);
+
+    const displayedCategories = allCategoryData.slice(0, visibleCategoriesCount);
+    const hasMoreCategories = allCategoryData.length > visibleCategoriesCount;
 
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
-                if (entries[0].isIntersecting && hasMore) {
-                    onLoadMore();
+                if (entries[0].isIntersecting) {
+                    if (activeTab === 'recent' && hasMore) {
+                        onLoadMore();
+                    } else if (activeTab === 'categories' && hasMoreCategories) {
+                        setVisibleCategoriesCount(prev => prev + 10);
+                    }
                 }
             },
             { threshold: 1.0 }
@@ -42,17 +74,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ transactions, onLoadMore, h
                 observer.unobserve(observerTarget.current);
             }
         };
-    }, [hasMore, onLoadMore]);
-
-    // Group by category
-    const categoryData = Object.entries(
-        transactions
-            .filter(t => t.type === TransactionType.EXPENSE)
-            .reduce((acc: Record<string, number>, curr) => {
-                acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
-                return acc;
-            }, {})
-    ).sort(([, a]: [string, number], [, b]: [string, number]) => b - a); // Sort descending
+    }, [hasMore, onLoadMore, activeTab, hasMoreCategories]);
 
     return (
         <div className="px-6 pb-24">
@@ -112,7 +134,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ transactions, onLoadMore, h
                             ))}
                             {transactions.length === 0 && <p className="text-center text-gray-400 py-8">No transactions yet.</p>}
 
-                            {/* Infinite Scroll Sentinel */}
+                            {/* Infinite Scroll Sentinel for Transactions */}
                             {hasMore && (
                                 <div ref={observerTarget} className="flex justify-center py-4">
                                     <Loader2 className="animate-spin text-gray-400" size={20} />
@@ -127,7 +149,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ transactions, onLoadMore, h
                             exit={{ opacity: 0, y: -10 }}
                             className="space-y-3"
                         >
-                            {categoryData.map(([category, amount], index) => (
+                            {displayedCategories.map(([category, amount], index) => (
                                 <div key={category} className="flex items-center justify-between py-2">
                                     <div className="flex items-center gap-4">
                                         <div className="w-8 h-8 rounded-full bg-blue-50 text-accent-blue flex items-center justify-center font-bold text-xs">
@@ -138,7 +160,14 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ transactions, onLoadMore, h
                                     <span className="font-bold text-sm text-primary">{amount} EGP</span>
                                 </div>
                             ))}
-                            {categoryData.length === 0 && <p className="text-center text-gray-400 py-8">No spending data yet.</p>}
+                            {allCategoryData.length === 0 && <p className="text-center text-gray-400 py-8">No spending data yet.</p>}
+
+                            {/* Infinite Scroll Sentinel for Categories */}
+                            {hasMoreCategories && (
+                                <div ref={observerTarget} className="flex justify-center py-4">
+                                    <Loader2 className="animate-spin text-gray-400" size={20} />
+                                </div>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>
