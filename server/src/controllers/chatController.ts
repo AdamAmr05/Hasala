@@ -273,13 +273,52 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
     });
 
     const text = response.text || '';
+    // Calculate category breakdown for chart
+    const categoryStats = await Transaction.aggregate([
+      {
+        $match: {
+          user: req.user._id,
+          type: TransactionType.EXPENSE,
+          date: { $gte: startOfCurrentMonth },
+        },
+      },
+      {
+        $group: {
+          _id: '$category',
+          total: { $sum: '$amount' },
+        },
+      },
+      { $sort: { total: -1 } }
+    ]);
+
+    const categoryData = categoryStats.map(s => ({ name: s._id, value: s.total }));
+    const peopleData = Object.entries(peopleMap).map(([name, value]) => ({ name, value }));
+
     const rawToolCalls: ToolCall[] =
       response.functionCalls
         ?.filter((call) => Boolean(call.name))
-        .map((call) => ({
-          name: call.name as string,
-          args: (call.args as Record<string, unknown>) || {},
-        })) || [];
+        .map((call) => {
+          const args = (call.args as Record<string, unknown>) || {};
+
+          // Inject accurate server-side stats
+          if (call.name === 'renderBudgetOverview') {
+            args.totalSpent = totalSpentReal;
+            args.totalIncome = totalIncomeReal;
+            args.budget = req.user?.budget || 0;
+          } else if (call.name === 'renderCategoryBreakdown') {
+            args.categories = categoryData;
+          } else if (call.name === 'renderPeopleBreakdown') {
+            args.people = peopleData;
+          } else if (call.name === 'renderMonthlyProjection') {
+            args.totalSpent = totalSpentReal;
+            args.budget = req.user?.budget || 0;
+          }
+
+          return {
+            name: call.name as string,
+            args,
+          };
+        }) || [];
 
     const { toolCalls, createdTransactions } = await executeToolCalls(rawToolCalls, req.user._id.toString());
 
