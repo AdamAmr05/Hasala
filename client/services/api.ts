@@ -94,9 +94,23 @@ export interface TransactionPayload {
   isRecurring?: boolean;
 }
 
+export interface TransactionListResponse {
+  data: Transaction[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
 export const transactionsApi = {
-  list: () =>
-    api.get<ApiTransaction[]>('/transactions').then((res) => res.data.map(normalizeTransaction)),
+  list: (params?: { page?: number; limit?: number; month?: number; year?: number }) =>
+    api.get<{ data: ApiTransaction[]; meta: any }>('/transactions', { params }).then((res) => ({
+      data: res.data.data.map(normalizeTransaction),
+      meta: res.data.meta,
+    })),
   create: (payload: TransactionPayload) =>
     api.post<ApiTransaction>('/transactions', payload).then((res) => normalizeTransaction(res.data)),
   remove: (id: string) => api.delete(`/transactions/${id}`),

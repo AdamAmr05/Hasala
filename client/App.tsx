@@ -8,6 +8,7 @@ import FamilyView from './components/Family/FamilyView';
 import AnalyticsView from './components/Analytics/AnalyticsView';
 import { Transaction, TransactionType, User } from './types';
 import { authApi, transactionsApi, TransactionPayload } from './services/api';
+import { useMonthlyTransactions } from './hooks/useMonthlyTransactions';
 
 type AuthMode = 'login' | 'register';
 
@@ -45,14 +46,16 @@ const App: React.FC = () => {
   }, [currentUser, userLoading]);
 
   const {
-    data: transactions = [],
+    transactions,
+    currentDate,
     isLoading: transactionsLoading,
     isError: transactionsError,
-  } = useQuery({
-    queryKey: ['transactions'],
-    queryFn: transactionsApi.list,
-    enabled: Boolean(user),
-  });
+    fetchNextPage,
+    hasNextPage,
+    goToPreviousMonth,
+    goToNextMonth,
+    refetch: refreshTransactions
+  } = useMonthlyTransactions(user?.id);
 
   const authMutation = useMutation({
     mutationFn: async () => {
@@ -73,8 +76,8 @@ const App: React.FC = () => {
       });
       setBudget(data.budget ?? 0);
       setAuthError(null);
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      refreshTransactions();
     },
     onError: () => {
       setAuthError('Authentication failed. Please double-check your details.');
@@ -87,7 +90,7 @@ const App: React.FC = () => {
       setTransactionError(null);
       setShowSmartInput(false);
       setActiveTab('home');
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      refreshTransactions();
     },
     onError: () => {
       setTransactionError('Could not save the transaction. Please try again.');
@@ -127,10 +130,6 @@ const App: React.FC = () => {
 
   const handleAddTransaction = async (payload: TransactionPayload) => {
     await transactionMutation.mutateAsync(payload);
-  };
-
-  const refreshTransactions = () => {
-    queryClient.invalidateQueries({ queryKey: ['transactions'] });
   };
 
   const handleTabChange = (tab: string) => {
@@ -173,14 +172,23 @@ const App: React.FC = () => {
             <main className="h-full pb-32">
               {activeTab === 'home' && (
                 <div className="animate-[fadeIn_0.3s_ease-out]">
-                  {transactionsLoading ? (
+                  {transactionsLoading && transactions.length === 0 ? (
                     <div className="p-6 text-center text-gray-500">Loading your wallet...</div>
                   ) : transactionsError ? (
                     <div className="p-6 text-center text-red-500">
                       Could not load transactions. Pull to refresh.
                     </div>
                   ) : (
-                    <Dashboard transactions={transactions} budget={budget} user={user} />
+                    <Dashboard
+                      transactions={transactions}
+                      budget={budget}
+                      user={user}
+                      currentDate={currentDate}
+                      onPrevMonth={goToPreviousMonth}
+                      onNextMonth={goToNextMonth}
+                      onLoadMore={fetchNextPage}
+                      hasMore={hasNextPage}
+                    />
                   )}
                 </div>
               )}

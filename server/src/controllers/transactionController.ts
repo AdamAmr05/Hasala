@@ -12,9 +12,35 @@ interface AuthRequest extends Request {
 // @access  Private
 export const getTransactions = async (req: AuthRequest, res: Response) => {
   try {
-    // Get transactions for the logged-in user, sorted by date (newest first)
-    const transactions = await Transaction.find({ user: req.user?._id }).sort({ date: -1 });
-    res.status(200).json(transactions);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const month = parseInt(req.query.month as string); // 0-11
+    const year = parseInt(req.query.year as string);
+
+    const query: any = { user: req.user?._id };
+
+    if (!isNaN(month) && !isNaN(year)) {
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
+      query.date = { $gte: startDate, $lte: endDate };
+    }
+
+    const total = await Transaction.countDocuments(query);
+    const transactions = await Transaction.find(query)
+      .sort({ date: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.status(200).json({
+      data: transactions,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasMore: page * limit < total
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: (error as Error).message });
   }
