@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import SmartInputSheet from './components/SmartInputSheet';
 import TabBar from './components/UI/TabBar';
 import ChatInterface from './components/Chat/ChatInterface';
+import SettingsPage from './components/Settings/SettingsPage';
 import FamilyView from './components/Family/FamilyView';
 import AnalyticsView from './components/Analytics/AnalyticsView';
 import { Transaction, TransactionType, User } from './types';
@@ -35,6 +36,7 @@ const App: React.FC = () => {
       setUser({
         id: currentUser._id,
         name: currentUser.name,
+        email: currentUser.email,
         budget: currentUser.budget,
       });
       setBudget(currentUser.budget ?? 0);
@@ -72,6 +74,7 @@ const App: React.FC = () => {
       setUser({
         id: data._id,
         name: data.name,
+        email: data.email,
         budget: data.budget,
       });
       setBudget(data.budget ?? 0);
@@ -159,7 +162,7 @@ const App: React.FC = () => {
       <div className="max-w-md mx-auto bg-gray-50 min-h-screen relative shadow-2xl overflow-hidden">
         {!showAuthForm ? (
           <>
-            {activeTab !== 'chat' && (
+            {activeTab !== 'chat' && activeTab !== 'settings' && ( // Exclude header for chat and settings
               <header className="px-6 py-4 flex justify-between items-center border-b border-gray-200 bg-white/70 backdrop-blur-sm">
                 <div>
                   <p className="text-xs text-gray-500 uppercase tracking-widest">Welcome back</p>
@@ -198,6 +201,7 @@ const App: React.FC = () => {
                       onNextMonth={goToNextMonth}
                       onLoadMore={fetchNextPage}
                       hasMore={hasNextPage}
+                      onSettingsClick={() => setActiveTab('settings')}
                     />
                   )}
                 </div>
@@ -216,6 +220,16 @@ const App: React.FC = () => {
               {activeTab === 'analytics' && (
                 <div className="animate-[fadeIn_0.3s_ease-out]">
                   <AnalyticsView transactions={transactions} />
+                </div>
+              )}
+
+              {activeTab === 'settings' && (
+                <div className="animate-[fadeIn_0.3s_ease-out]">
+                  <SettingsPage
+                    user={user}
+                    onLogout={handleLogout}
+                    onBack={() => setActiveTab('home')}
+                  />
                 </div>
               )}
             </main>

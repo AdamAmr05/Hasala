@@ -106,3 +106,34 @@ export const getCurrentUser = (req: AuthRequest, res: Response) => {
   });
 };
 
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+export const updateUserProfile = async (req: AuthRequest, res: Response) => {
+  const user = await User.findById(req.user?._id);
+
+  if (user) {
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+
+    if (req.body.budget !== undefined) {
+      user.budget = req.body.budget;
+    }
+
+    if (req.body.password) {
+      user.password = req.body.password;
+    }
+
+    const updatedUser = await user.save();
+
+    res.json({
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      budget: updatedUser.budget,
+    });
+  } else {
+    res.status(404).json({ message: 'User not found' });
+  }
+};
+
