@@ -5,15 +5,29 @@ import {
     BarChart, Bar, Cell, PieChart, Pie
 } from 'recharts';
 import { transactionsApi } from '../../services/api';
-import { TrendingUp, Calendar, PieChart as PieIcon, Users, AlertCircle } from 'lucide-react';
+import { TrendingUp, Calendar, PieChart as PieIcon, Users, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const AnalyticsView: React.FC = () => {
-    const [period, setPeriod] = useState(30);
+    const [currentDate, setCurrentDate] = useState(new Date());
 
-    const { data, isLoading, isError } = useQuery({
-        queryKey: ['analytics', period],
-        queryFn: () => transactionsApi.getAnalytics(period),
+    const month = currentDate.getMonth();
+    const year = currentDate.getFullYear();
+    const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+    const { data, isLoading, isError, refetch } = useQuery({
+        queryKey: ['analytics', month, year],
+        queryFn: () => transactionsApi.getAnalytics(30, month, year),
+        placeholderData: (previousData) => previousData,
     });
+
+    const onPrevMonth = () => {
+        setCurrentDate(new Date(year, month - 1, 1));
+    };
+
+    const onNextMonth = () => {
+        setCurrentDate(new Date(year, month + 1, 1));
+    };
 
     if (isLoading) {
         return (
@@ -25,9 +39,15 @@ const AnalyticsView: React.FC = () => {
 
     if (isError || !data) {
         return (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-                <AlertCircle size={32} className="mb-2 text-red-500" />
+            <div className="flex flex-col items-center justify-center h-64 text-gray-500 space-y-4">
+                <AlertCircle size={32} className="text-red-500" />
                 <p>Could not load analytics.</p>
+                <button
+                    onClick={() => refetch()}
+                    className="px-4 py-2 bg-gray-100 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-200 transition-colors"
+                >
+                    Retry
+                </button>
             </div>
         );
     }
@@ -63,21 +83,29 @@ const AnalyticsView: React.FC = () => {
 
     return (
         <div className="pb-32 pt-8 space-y-8 animate-[fadeIn_0.5s_ease-out]">
-            {/* Header */}
-            <div className="px-6 flex justify-between items-end">
+            {/* Header & Month Navigation */}
+            <div className="px-6 space-y-4">
                 <div>
                     <h1 className="text-2xl font-bold text-primary tracking-tight">Analytics</h1>
                     <p className="text-sm text-gray-500">Deep dive into your spending habits.</p>
                 </div>
-                <select
-                    value={period}
-                    onChange={(e) => setPeriod(Number(e.target.value))}
-                    className="bg-gray-100 border-none text-sm font-medium text-gray-600 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-primary/20"
-                >
-                    <option value={7}>Last 7 Days</option>
-                    <option value={30}>Last 30 Days</option>
-                    <option value={90}>Last 3 Months</option>
-                </select>
+
+                <div className="flex items-center justify-between bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
+                    <button onClick={onPrevMonth} className="p-2 hover:bg-gray-50 rounded-xl transition-colors">
+                        <ChevronLeft size={20} className="text-gray-500" />
+                    </button>
+                    <motion.h2
+                        key={monthName}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-lg font-bold text-primary"
+                    >
+                        {monthName}
+                    </motion.h2>
+                    <button onClick={onNextMonth} className="p-2 hover:bg-gray-50 rounded-xl transition-colors">
+                        <ChevronRight size={20} className="text-gray-500" />
+                    </button>
+                </div>
             </div>
 
             {/* 0. People Section */}
@@ -95,9 +123,9 @@ const AnalyticsView: React.FC = () => {
                             {peopleData.map((person, index) => (
                                 <div key={person.name} className="flex flex-col items-center space-y-2 min-w-[80px]">
                                     <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md bg-gradient-to-br ${index === 0 ? 'from-yellow-400 to-orange-500' :
-                                            index === 1 ? 'from-gray-300 to-gray-400' :
-                                                index === 2 ? 'from-orange-300 to-orange-400' :
-                                                    'from-blue-400 to-indigo-500'
+                                        index === 1 ? 'from-gray-300 to-gray-400' :
+                                            index === 2 ? 'from-orange-300 to-orange-400' :
+                                                'from-blue-400 to-indigo-500'
                                         }`}>
                                         {person.name[0].toUpperCase()}
                                     </div>

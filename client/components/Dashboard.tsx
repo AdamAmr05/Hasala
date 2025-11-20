@@ -35,6 +35,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const { data: stats } = useQuery({
     queryKey: ['monthlyStats', currentDate.getMonth(), currentDate.getFullYear()],
     queryFn: () => transactionsApi.getAnalytics(30, currentDate.getMonth(), currentDate.getFullYear()),
+    placeholderData: (previousData) => previousData,
   });
 
   const income = stats?.totals.find(t => t._id === 'INCOME')?.total || 0;
