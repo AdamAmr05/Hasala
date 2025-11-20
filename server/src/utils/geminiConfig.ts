@@ -17,7 +17,7 @@ export const TRANSACTION_SCHEMA: Schema = {
     category: {
       type: Type.STRING,
       enum: Object.values(Category),
-      description: 'The category of the transaction. Use "Giving" when the user gives money to someone.',
+      description: 'The category of the transaction. Use "Giving" when the user supports someone financially (e.g. family, friends, charity). Do NOT use for buying gifts.',
     },
     type: {
       type: Type.STRING,
@@ -65,6 +65,12 @@ export const renderCategoryBreakdownTool: FunctionDeclaration = {
 export const renderMonthlyProjectionTool: FunctionDeclaration = {
   name: 'renderMonthlyProjection',
   description: 'Display a projection of end-of-month balance based on current spending habits.',
+  parameters: { type: Type.OBJECT, properties: {} },
+};
+
+export const renderPeopleBreakdownTool: FunctionDeclaration = {
+  name: 'renderPeopleBreakdown',
+  description: 'Display a visual breakdown of money given to specific people.',
   parameters: { type: Type.OBJECT, properties: {} },
 };
 

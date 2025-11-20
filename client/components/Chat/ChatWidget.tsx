@@ -8,7 +8,7 @@ import {
 import { motion } from 'framer-motion';
 import {
   TrendingUp, TrendingDown, Calendar, AlertCircle, CheckCircle2,
-  ShoppingBag, Coffee, Home, Car, Zap, MoreHorizontal
+  ShoppingBag, Coffee, Home, Car, Zap, MoreHorizontal, HandHeart
 } from 'lucide-react';
 
 interface ChatWidgetProps {
@@ -28,6 +28,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   [Category.EDUCATION]: <MoreHorizontal size={18} />, // No specific icon, using MoreHorizontal
   [Category.ENTERTAINMENT]: <MoreHorizontal size={18} />, // No specific icon, using MoreHorizontal
   [Category.INCOME]: <MoreHorizontal size={18} />, // No specific icon, using MoreHorizontal
+  [Category.GIVING]: <HandHeart size={18} />,
   'Other': <MoreHorizontal size={18} />,
 };
 
@@ -225,8 +226,18 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
 
     const data = Object.entries(byCategory)
       .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => (b.value as number) - (a.value as number))
-      .slice(0, 5);
+      .sort((a, b) => (b.value as number) - (a.value as number));
+
+    // Ensure Giving is in the top 5 if it exists
+    const givingIndex = data.findIndex(d => d.name === Category.GIVING);
+    let top5 = data.slice(0, 5);
+
+    if (givingIndex > 4) {
+      // If Giving is present but not in top 5, replace the last one
+      top5[4] = data[givingIndex];
+    }
+
+    const finalData = top5;
 
     return (
       <motion.div
@@ -240,14 +251,14 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={data}
+                  data={finalData}
                   innerRadius={35}
                   outerRadius={55}
                   paddingAngle={5}
                   dataKey="value"
                   stroke="none"
                 >
-                  {data.map((entry, index) => (
+                  {finalData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -256,7 +267,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
           </div>
 
           <div className="flex-1 space-y-2">
-            {data.map((entry, index) => (
+            {finalData.map((entry, index) => (
               <div key={index} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
@@ -333,6 +344,53 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
             At your current rate of <span className="font-bold text-primary">{Math.round(dailyAvg)} EGP/day</span>,
             you will spend <span className="font-bold text-primary">{Math.round(projectedTotal)} EGP</span> by month end.
           </p>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // 6. People Breakdown Widget (Bubbles)
+  if (type === 'renderPeopleBreakdown') {
+    const expenses = transactions.filter(t => t.type === TransactionType.EXPENSE && t.relatedPerson);
+    const byPerson = expenses.reduce((acc, t) => {
+      const person = t.relatedPerson!;
+      acc[person] = (acc[person] || 0) + t.amount;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const data = Object.entries(byPerson)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => (b.value as number) - (a.value as number))
+      .slice(0, 5);
+
+    if (data.length === 0) return (
+      <div className="p-3 bg-gray-50 rounded-xl text-center text-gray-400 text-xs my-2">No people tracked yet.</div>
+    );
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-[24px] p-5 my-3 shadow-sm border border-gray-100"
+      >
+        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">People You Support</h3>
+
+        <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
+          {data.map((person, index) => (
+            <div key={person.name} className="flex flex-col items-center space-y-2 min-w-[80px]">
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md bg-gradient-to-br ${index === 0 ? 'from-yellow-400 to-orange-500' :
+                index === 1 ? 'from-gray-300 to-gray-400' :
+                  index === 2 ? 'from-orange-300 to-orange-400' :
+                    'from-blue-400 to-indigo-500'
+                }`}>
+                {person.name[0].toUpperCase()}
+              </div>
+              <div className="text-center">
+                <p className="text-xs font-bold text-gray-900 truncate max-w-[80px]">{person.name}</p>
+                <p className="text-[10px] text-gray-500 font-medium">{person.value.toLocaleString()} EGP</p>
+              </div>
+            </div>
+          ))}
         </div>
       </motion.div>
     );
