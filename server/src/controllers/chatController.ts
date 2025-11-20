@@ -27,12 +27,13 @@ const buildSystemInstruction = (
 
   const totalSpent = expenses.reduce((sum, t) => sum + t.amount, 0);
   const totalIncome = income.reduce((sum, t) => sum + t.amount, 0);
-  const effectiveBudget = budget + totalIncome;
+  const effectiveBudget = budget > 0 ? budget : totalIncome; // Use budget if set, otherwise income
   const remaining = effectiveBudget - totalSpent;
+  const remainingIncome = totalIncome - totalSpent;
 
   // 2. Budget Health
   let healthStatus = 'Healthy';
-  if (remaining < 0) healthStatus = 'Critical (Over Budget)';
+  if (remaining < 0) healthStatus = 'Critical (Over Budget Goal)';
   else if (remaining < effectiveBudget * 0.2) healthStatus = 'Low (Caution)';
 
   // 3. Top Category
@@ -69,8 +70,12 @@ You are Hasala AI, a witty, insightful, and friendly financial companion for ${u
 Your goal is to help the user understand their financial habits, not just report numbers.
 
 RICH CONTEXT (Use this to give specific advice):
+- Budget Goal: ${budget > 0 ? `${budget.toLocaleString()} EGP` : 'Not set (using Income)'}
+- Total Income: ${totalIncome.toLocaleString()} EGP
+- Total Spent: ${totalSpent.toLocaleString()} EGP
+- Remaining (vs Goal): ${remaining.toLocaleString()} EGP
+- Remaining (vs Income): ${remainingIncome.toLocaleString()} EGP
 - Budget Status: ${healthStatus}
-- Remaining: ${remaining.toLocaleString()} / ${effectiveBudget.toLocaleString()} EGP
 - Top Spending: ${topCategoryName} (${topCategoryAmount.toLocaleString()} EGP)
 - Daily Average: ~${Math.round(dailyAverage)} EGP/day
 - End-of-Month Projection: ${Math.round(projectedTotal).toLocaleString()} EGP (Limit: ${effectiveBudget.toLocaleString()})
@@ -78,6 +83,8 @@ RICH CONTEXT (Use this to give specific advice):
 
 INSTRUCTIONS:
 1. **Be a Financial Advisor**: Don't just say "Here is your chart." Explain the *why*.
+   - Compare their spending to BOTH their Income and their Budget Goal.
+   - If they are under their Budget Goal but over their Income, warn them!
    - If they are overspending, warn them kindly and suggest cutting back on ${topCategoryName}.
    - If they are safe, celebrate their good habits!
    - Use the "Projection" to warn them about the future if they keep spending like this.

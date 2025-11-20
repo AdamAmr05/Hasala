@@ -5,6 +5,7 @@ import {
   ChatResponse,
   Category,
   TransactionType,
+  User,
 } from '../types';
 
 // Auto-detect: use network URL when accessing from network, localhost otherwise
@@ -43,10 +44,14 @@ export const authApi = {
     api.post<AuthResponse>('/auth/login', payload).then((res) => res.data),
 
   logout: () => api.post('/auth/logout'),
-  me: () =>
-    api
-      .get<AuthResponse>('/auth/me')
-      .then((res) => res.data),
+  me: async () => {
+    const response = await api.get<AuthResponse>('/auth/me');
+    return response.data;
+  },
+  updateProfile: async (data: Partial<User>) => {
+    const response = await api.put<AuthResponse>('/auth/profile', data);
+    return response.data;
+  },
 };
 
 interface ApiTransaction {
