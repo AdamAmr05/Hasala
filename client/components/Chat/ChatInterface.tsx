@@ -148,6 +148,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   type={tool.name}
                   transactions={transactions}
                   budget={budget}
+                  data={tool.args}
                 />
               ))}
             </div>

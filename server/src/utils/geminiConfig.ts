@@ -53,24 +53,67 @@ export const renderRecentTransactionsTool: FunctionDeclaration = {
 export const renderBudgetOverviewTool: FunctionDeclaration = {
   name: 'renderBudgetOverview',
   description: 'Display a card showing the remaining budget and progress.',
-  parameters: { type: Type.OBJECT, properties: {} },
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      totalSpent: { type: Type.NUMBER, description: 'Total amount spent this month' },
+      totalIncome: { type: Type.NUMBER, description: 'Total income this month' },
+      budget: { type: Type.NUMBER, description: 'The user defined budget goal' },
+    },
+  },
 };
 
 export const renderCategoryBreakdownTool: FunctionDeclaration = {
   name: 'renderCategoryBreakdown',
   description: 'Display a donut chart showing spending breakdown by category.',
-  parameters: { type: Type.OBJECT, properties: {} },
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      categories: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            name: { type: Type.STRING },
+            value: { type: Type.NUMBER },
+          },
+        },
+        description: 'List of categories and their total spending',
+      },
+    },
+  },
 };
 
 export const renderMonthlyProjectionTool: FunctionDeclaration = {
   name: 'renderMonthlyProjection',
   description: 'Display a projection of end-of-month balance based on current spending habits.',
-  parameters: { type: Type.OBJECT, properties: {} },
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      totalSpent: { type: Type.NUMBER, description: 'Total amount spent this month' },
+      budget: { type: Type.NUMBER, description: 'The user defined budget goal' },
+    },
+  },
 };
 
 export const renderPeopleBreakdownTool: FunctionDeclaration = {
   name: 'renderPeopleBreakdown',
   description: 'Display a visual breakdown of money given to specific people.',
-  parameters: { type: Type.OBJECT, properties: {} },
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      people: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            name: { type: Type.STRING },
+            value: { type: Type.NUMBER },
+          },
+        },
+        description: 'List of people and total amount given',
+      },
+    },
+  },
 };
 

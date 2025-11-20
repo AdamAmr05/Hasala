@@ -15,6 +15,7 @@ interface ChatWidgetProps {
   type: string;
   transactions: Transaction[];
   budget: number;
+  data?: Record<string, any>;
 }
 
 const COLORS = ['#007AFF', '#5E5CE6', '#FF2D55', '#FF9500', '#FFCC00', '#34C759', '#AF52DE'];
@@ -32,7 +33,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   'Other': <MoreHorizontal size={18} />,
 };
 
-const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) => {
+const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, data: propsData }) => {
 
   // 1. Spending Chart Widget (Area Chart)
   if (type === 'renderSpendingChart') {
@@ -146,15 +147,18 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
 
   // 3. Budget Overview Widget (3D Card)
   if (type === 'renderBudgetOverview') {
-    const spent = transactions
+    // Use injected data if available, otherwise fallback to local calculation (legacy)
+    const spent = propsData?.totalSpent ?? transactions
       .filter(t => t.type === TransactionType.EXPENSE)
       .reduce((sum, t) => sum + t.amount, 0);
 
-    const income = transactions
+    const income = propsData?.totalIncome ?? transactions
       .filter(t => t.type === TransactionType.INCOME)
       .reduce((sum, t) => sum + t.amount, 0);
 
-    const effectiveBudget = budget + income;
+    const budgetGoal = propsData?.budget ?? budget;
+
+    const effectiveBudget = budgetGoal > 0 ? budgetGoal : income;
     const progress = Math.min((spent / effectiveBudget) * 100, 100);
     const remaining = effectiveBudget - spent;
 
@@ -218,16 +222,25 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
 
   // 4. Category Breakdown Widget (Donut Chart)
   if (type === 'renderCategoryBreakdown') {
-    const expenses = transactions.filter(t => t.type === TransactionType.EXPENSE);
-    const byCategory = expenses.reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount;
-      return acc;
-    }, {} as Record<string, number>);
+    // Use injected data if available
+    let data: { name: string; value: number }[] = [];
 
-    const data = Object.entries(byCategory)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => (b.value as number) - (a.value as number))
-      .slice(0, 5);
+    if (propsData?.categories) {
+      data = propsData.categories as { name: string; value: number }[];
+    } else {
+      // Fallback to local calculation
+      const expenses = transactions.filter(t => t.type === TransactionType.EXPENSE);
+      const byCategory = expenses.reduce((acc, t) => {
+        acc[t.category] = (acc[t.category] || 0) + t.amount;
+        return acc;
+      }, {} as Record<string, number>);
+
+      data = Object.entries(byCategory)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => (b.value as number) - (a.value as number));
+    }
+
+    data = data.slice(0, 5);
 
     return (
       <motion.div
@@ -279,13 +292,15 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
     const dayOfMonth = today.getDate();
     const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
 
-    const totalSpent = transactions
+    const totalSpent = propsData?.totalSpent ?? transactions
       .filter(t => t.type === TransactionType.EXPENSE)
       .reduce((sum, t) => sum + t.amount, 0);
 
+    const budgetGoal = propsData?.budget ?? budget;
+
     const dailyAvg = totalSpent / Math.max(1, dayOfMonth);
     const projectedTotal = dailyAvg * daysInMonth;
-    const isOverBudget = projectedTotal > budget;
+    const isOverBudget = projectedTotal > budgetGoal;
 
     const data = [
       { day: 'Day 1', amount: 0 },
@@ -341,17 +356,24 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget }) =
 
   // 6. People Breakdown Widget (Bubbles)
   if (type === 'renderPeopleBreakdown') {
-    const expenses = transactions.filter(t => t.type === TransactionType.EXPENSE && t.relatedPerson);
-    const byPerson = expenses.reduce((acc, t) => {
-      const person = t.relatedPerson!;
-      acc[person] = (acc[person] || 0) + t.amount;
-      return acc;
-    }, {} as Record<string, number>);
+    let data: { name: string; value: number }[] = [];
 
-    const data = Object.entries(byPerson)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => (b.value as number) - (a.value as number))
-      .slice(0, 5);
+    if (propsData?.people) {
+      data = propsData.people as { name: string; value: number }[];
+    } else {
+      const expenses = transactions.filter(t => t.type === TransactionType.EXPENSE && t.relatedPerson);
+      const byPerson = expenses.reduce((acc, t) => {
+        const person = t.relatedPerson!;
+        acc[person] = (acc[person] || 0) + t.amount;
+        return acc;
+      }, {} as Record<string, number>);
+
+      data = Object.entries(byPerson)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => (b.value as number) - (a.value as number));
+    }
+
+    data = data.slice(0, 5);
 
     if (data.length === 0) return (
       <div className="p-3 bg-gray-50 rounded-xl text-center text-gray-400 text-xs my-2">No people tracked yet.</div>
