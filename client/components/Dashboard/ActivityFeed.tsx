@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Transaction, TransactionType } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Coffee, Home, Car, Zap, MoreHorizontal, Loader2, Gift } from 'lucide-react';
+import { ShoppingBag, Coffee, Home, Car, Zap, MoreHorizontal, Loader2, HandHeart } from 'lucide-react';
 
 interface ActivityFeedProps {
     transactions: Transaction[];
@@ -15,7 +15,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
     'Housing': <Home size={18} />,
     'Transport': <Car size={18} />,
     'Utilities': <Zap size={18} />,
-    'Giving': <Gift size={18} />,
+    'Giving': <HandHeart size={18} />,
     'Other': <MoreHorizontal size={18} />,
 };
 

@@ -12,13 +12,14 @@ import {
   renderMonthlyProjectionTool,
   renderRecentTransactionsTool,
   renderSpendingChartTool,
+  renderPeopleBreakdownTool,
 } from '../utils/geminiConfig';
 
 const buildSystemInstruction = (
   transactions: ITransaction[],
   userName?: string,
   budget: number = 0,
-  existingPeople: string[] = [],
+  peopleStats: string = '',
 ) => {
   // 1. Basic Totals
   const expenses = transactions.filter((t) => t.type === TransactionType.EXPENSE);
@@ -59,8 +60,8 @@ const buildSystemInstruction = (
     )
     .join('\n');
 
-  const peopleContext = existingPeople.length > 0
-    ? `Existing people this month: ${existingPeople.join(', ')}.`
+  const peopleContext = peopleStats
+    ? `People tracked this month: ${peopleStats}.`
     : 'No people tracked yet this month.';
 
   return `
@@ -92,6 +93,7 @@ INSTRUCTIONS:
    - Use 'renderMonthlyProjection' when discussing the *future* or if they will make it to the end of the month.
    - Use 'renderSpendingChart' for trends over the last few days.
    - Use 'renderRecentTransactions' when the user asks about specific recent purchases or history.
+   - Use 'renderPeopleBreakdown' when the user asks about money given to people, who they support, or their 'Giving' history.
 5. **Conciseness**: Keep it punchy and helpful. Avoid long lectures.
 `;
 };
@@ -190,9 +192,18 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       user: req.user._id,
       date: { $gte: startOfMonth },
       relatedPerson: { $exists: true, $ne: null },
-    }).select('relatedPerson');
+    }).select('relatedPerson amount');
 
-    const existingPeople = Array.from(new Set(monthlyTransactions.map((t) => t.relatedPerson).filter(Boolean))) as string[];
+    const peopleMap = monthlyTransactions.reduce((acc, t) => {
+      if (t.relatedPerson) {
+        acc[t.relatedPerson] = (acc[t.relatedPerson] || 0) + t.amount;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    const peopleStats = Object.entries(peopleMap)
+      .map(([name, total]) => `${name}: ${total} EGP`)
+      .join(', ');
 
     const contents = mapHistoryToContents(history);
     contents.push({
@@ -204,7 +215,7 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       model: MODEL_NAME,
       contents,
       config: {
-        systemInstruction: buildSystemInstruction(transactions, req.user.name, req.user.budget, existingPeople),
+        systemInstruction: buildSystemInstruction(transactions, req.user.name, req.user.budget, peopleStats),
         tools: [
           {
             functionDeclarations: [
@@ -214,6 +225,7 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
               renderBudgetOverviewTool,
               renderCategoryBreakdownTool,
               renderMonthlyProjectionTool,
+              renderPeopleBreakdownTool,
             ],
           },
         ],
