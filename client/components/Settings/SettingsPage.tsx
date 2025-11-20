@@ -12,15 +12,17 @@ import {
     Save
 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../services/api';
 
 interface SettingsPageProps {
     user: { name: string; email: string; avatar?: string; budget?: number } | null;
     onLogout: () => void;
-    onBack: () => void;
+    onBack?: () => void; // Optional now
 }
 
-const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout, onBack }) => {
+const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout }) => {
+    const navigate = useNavigate();
     const [budget, setBudget] = useState(user?.budget?.toString() || '0');
     const [isEditingBudget, setIsEditingBudget] = useState(false);
     const queryClient = useQueryClient();
@@ -58,7 +60,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout, onBack }) =
             {/* Header */}
             <div className="bg-white px-6 pt-12 pb-4 flex items-center gap-4 sticky top-0 z-10 shadow-sm">
                 <button
-                    onClick={onBack}
+                    onClick={() => navigate(-1)}
                     className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors"
                 >
                     <ChevronLeft className="text-gray-600" size={24} />

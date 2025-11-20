@@ -11,11 +11,13 @@ import { Transaction, TransactionType, User } from './types';
 import { authApi, transactionsApi, TransactionPayload } from './services/api';
 import { useMonthlyTransactions } from './hooks/useMonthlyTransactions';
 
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+
 type AuthMode = 'login' | 'register';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'chat' | 'analytics' | 'settings'>('home');
   const [showSmartInput, setShowSmartInput] = useState(false);
+  const location = useLocation();
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
   const [authError, setAuthError] = useState<string | null>(null);
@@ -92,7 +94,7 @@ const App: React.FC = () => {
     onSuccess: () => {
       setTransactionError(null);
       setShowSmartInput(false);
-      setActiveTab('home');
+      // setActiveTab('home'); // Navigation handled by user or separate logic
       // Invalidate all relevant queries to ensure UI updates immediately
       queryClient.invalidateQueries({ queryKey: ['monthlyStats'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
@@ -139,9 +141,7 @@ const App: React.FC = () => {
     await transactionMutation.mutateAsync(payload);
   };
 
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab as typeof activeTab);
-  };
+
 
   const handleAddClick = () => {
     setShowSmartInput(true);
@@ -162,7 +162,7 @@ const App: React.FC = () => {
       <div className="max-w-md mx-auto bg-gray-50 min-h-screen relative shadow-2xl overflow-hidden">
         {!showAuthForm ? (
           <>
-            {activeTab !== 'chat' && activeTab !== 'settings' && ( // Exclude header for chat and settings
+            {location.pathname !== '/chat' && location.pathname !== '/settings' && ( // Exclude header for chat and settings
               <header className="px-6 py-4 flex justify-between items-center border-b border-gray-200 bg-white/70 backdrop-blur-sm">
                 <div>
                   <p className="text-xs text-gray-500 uppercase tracking-widest">Welcome back</p>
@@ -177,61 +177,66 @@ const App: React.FC = () => {
               </header>
             )}
             <main className="h-full pb-32">
-              {activeTab === 'home' && (
-                <div className="animate-[fadeIn_0.3s_ease-out]">
-                  {transactionsLoading && transactions.length === 0 ? (
-                    <div className="p-6 text-center text-gray-500">Loading your wallet...</div>
-                  ) : transactionsError ? (
-                    <div className="p-6 text-center flex flex-col items-center gap-2">
-                      <p className="text-red-500">Could not load transactions.</p>
-                      <button
-                        onClick={() => refreshTransactions()}
-                        className="px-4 py-2 bg-white rounded-xl text-sm font-semibold text-gray-700 shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
-                      >
-                        Retry
-                      </button>
-                    </div>
-                  ) : (
-                    <Dashboard
+
+              <Routes>
+                <Route path="/" element={
+                  <div className="animate-[fadeIn_0.3s_ease-out]">
+                    {transactionsLoading && transactions.length === 0 ? (
+                      <div className="p-6 text-center text-gray-500">Loading your wallet...</div>
+                    ) : transactionsError ? (
+                      <div className="p-6 text-center flex flex-col items-center gap-2">
+                        <p className="text-red-500">Could not load transactions.</p>
+                        <button
+                          onClick={() => refreshTransactions()}
+                          className="px-4 py-2 bg-white rounded-xl text-sm font-semibold text-gray-700 shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    ) : (
+                      <Dashboard
+                        transactions={transactions}
+                        budget={budget}
+                        user={user}
+                        currentDate={currentDate}
+                        onPrevMonth={goToPreviousMonth}
+                        onNextMonth={goToNextMonth}
+                        onLoadMore={fetchNextPage}
+                        hasMore={hasNextPage}
+                        onSettingsClick={() => { }} // No-op as button is removed
+                      />
+                    )}
+                  </div>
+                } />
+
+                <Route path="/chat" element={
+                  <div className="animate-[fadeIn_0.3s_ease-out]">
+                    <ChatInterface
                       transactions={transactions}
                       budget={budget}
-                      user={user}
-                      currentDate={currentDate}
-                      onPrevMonth={goToPreviousMonth}
-                      onNextMonth={goToNextMonth}
-                      onLoadMore={fetchNextPage}
-                      hasMore={hasNextPage}
-                      onSettingsClick={() => setActiveTab('settings')}
+                      onAddTransaction={refreshTransactions}
                     />
-                  )}
-                </div>
-              )}
+                  </div>
+                } />
 
-              {activeTab === 'chat' && (
-                <div className="animate-[fadeIn_0.3s_ease-out]">
-                  <ChatInterface
-                    transactions={transactions}
-                    budget={budget}
-                    onAddTransaction={refreshTransactions}
-                  />
-                </div>
-              )}
+                <Route path="/analytics" element={
+                  <div className="animate-[fadeIn_0.3s_ease-out]">
+                    <AnalyticsView transactions={transactions} />
+                  </div>
+                } />
 
-              {activeTab === 'analytics' && (
-                <div className="animate-[fadeIn_0.3s_ease-out]">
-                  <AnalyticsView transactions={transactions} />
-                </div>
-              )}
+                <Route path="/settings" element={
+                  <div className="animate-[fadeIn_0.3s_ease-out]">
+                    <SettingsPage
+                      user={user}
+                      onLogout={handleLogout}
+                      onBack={() => { }} // Will be handled by internal navigation
+                    />
+                  </div>
+                } />
 
-              {activeTab === 'settings' && (
-                <div className="animate-[fadeIn_0.3s_ease-out]">
-                  <SettingsPage
-                    user={user}
-                    onLogout={handleLogout}
-                    onBack={() => setActiveTab('home')}
-                  />
-                </div>
-              )}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
             </main>
 
             <SmartInputSheet
@@ -243,8 +248,6 @@ const App: React.FC = () => {
             />
 
             <TabBar
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
               onAddClick={handleAddClick}
             />
           </>
