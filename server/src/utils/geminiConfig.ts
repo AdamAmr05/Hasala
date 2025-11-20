@@ -17,12 +17,16 @@ export const TRANSACTION_SCHEMA: Schema = {
     category: {
       type: Type.STRING,
       enum: Object.values(Category),
-      description: 'The category of the transaction',
+      description: 'The category of the transaction. Use "Giving" when the user gives money to someone.',
     },
     type: {
       type: Type.STRING,
       enum: Object.values(TransactionType),
       description: 'Transaction type',
+    },
+    relatedPerson: {
+      type: Type.STRING,
+      description: 'The name of the person involved in the transaction (e.g., who received money or gave money). Use the canonical name if it matches an existing person.',
     },
   },
   required: ['amount', 'description', 'category', 'type'],

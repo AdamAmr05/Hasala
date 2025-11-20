@@ -11,6 +11,7 @@ export enum Category {
   BILLS = 'Bills',
   EDUCATION = 'Education',
   INCOME = 'Income',
+  GIVING = 'Giving',
   OTHER = 'Other',
 }
 
@@ -22,6 +23,7 @@ export interface Transaction {
   date: string; // ISO string
   type: TransactionType;
   isRecurring?: boolean;
+  relatedPerson?: string;
 }
 
 export interface User {

@@ -57,6 +57,7 @@ interface ApiTransaction {
   type: TransactionType;
   date: string;
   isRecurring?: boolean;
+  relatedPerson?: string;
 }
 
 const normalizeTransaction = (tx: ApiTransaction): Transaction => ({
@@ -67,6 +68,7 @@ const normalizeTransaction = (tx: ApiTransaction): Transaction => ({
   type: tx.type,
   date: tx.date ?? new Date().toISOString(),
   isRecurring: tx.isRecurring,
+  relatedPerson: tx.relatedPerson,
 });
 
 const normalizeChatTransactions = (
@@ -83,6 +85,7 @@ const normalizeChatTransactions = (
     type: (tx.type as TransactionType) || TransactionType.EXPENSE,
     date: tx.date ?? new Date().toISOString(),
     isRecurring: tx.isRecurring,
+    relatedPerson: tx.relatedPerson,
   }));
 
 export interface TransactionPayload {
@@ -92,6 +95,7 @@ export interface TransactionPayload {
   type: TransactionType;
   date?: string;
   isRecurring?: boolean;
+  relatedPerson?: string;
 }
 
 export interface TransactionListResponse {
@@ -114,7 +118,16 @@ export const transactionsApi = {
   create: (payload: TransactionPayload) =>
     api.post<ApiTransaction>('/transactions', payload).then((res) => normalizeTransaction(res.data)),
   remove: (id: string) => api.delete(`/transactions/${id}`),
+  getAnalytics: (period: number = 30, month?: number, year?: number) =>
+    api.get<AnalyticsResponse>('/transactions/analytics', { params: { period, month, year } }).then((res) => res.data),
 };
+
+export interface AnalyticsResponse {
+  totals: Array<{ _id: TransactionType; total: number }>;
+  categoryBreakdown: Array<{ _id: string; total: number }>;
+  dailyTrend: Array<{ _id: string; total: number }>;
+  peopleBreakdown: Array<{ _id: string; total: number }>;
+}
 
 export const chatApi = {
   send: (payload: { message: string; history?: ChatMessage[] }) =>
@@ -137,6 +150,7 @@ type ParsedTransactionResponse = Partial<{
   description: string;
   category: string;
   type: TransactionType;
+  relatedPerson: string;
 }>;
 
 export const aiApi = {
@@ -145,4 +159,3 @@ export const aiApi = {
   parseVoice: (audio: string) =>
     api.post<ParsedTransactionResponse>('/ai/parse-voice', { audio }).then((res) => res.data),
 };
-

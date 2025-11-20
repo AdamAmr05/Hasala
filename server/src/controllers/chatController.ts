@@ -18,6 +18,7 @@ const buildSystemInstruction = (
   transactions: ITransaction[],
   userName?: string,
   budget: number = 0,
+  existingPeople: string[] = [],
 ) => {
   // 1. Basic Totals
   const expenses = transactions.filter((t) => t.type === TransactionType.EXPENSE);
@@ -58,6 +59,10 @@ const buildSystemInstruction = (
     )
     .join('\n');
 
+  const peopleContext = existingPeople.length > 0
+    ? `Existing people this month: ${existingPeople.join(', ')}.`
+    : 'No people tracked yet this month.';
+
   return `
 You are Hasala AI, a witty, insightful, and friendly financial companion for ${userName || 'friend'}.
 Your goal is to help the user understand their financial habits, not just report numbers.
@@ -68,6 +73,7 @@ RICH CONTEXT (Use this to give specific advice):
 - Top Spending: ${topCategoryName} (${topCategoryAmount.toLocaleString()} EGP)
 - Daily Average: ~${Math.round(dailyAverage)} EGP/day
 - End-of-Month Projection: ${Math.round(projectedTotal).toLocaleString()} EGP (Limit: ${effectiveBudget.toLocaleString()})
+- ${peopleContext}
 
 INSTRUCTIONS:
 1. **Be a Financial Advisor**: Don't just say "Here is your chart." Explain the *why*.
@@ -80,6 +86,7 @@ INSTRUCTIONS:
    - THEN use a tool (chart) to *visualize* what you just explained.
    - Example: "You've spent a lot on Food this week. Here's a breakdown:" -> [renderCategoryBreakdown]
 4. **Tools**:
+   - Use 'addTransaction' when user wants to add a transaction. If they mention a person, use the 'relatedPerson' field. Match to existing people if possible.
    - Use 'renderBudgetOverview' when discussing overall status or limits.
    - Use 'renderCategoryBreakdown' when discussing *where* money went.
    - Use 'renderMonthlyProjection' when discussing the *future* or if they will make it to the end of the month.
@@ -127,6 +134,7 @@ const executeToolCalls = async (
       : TransactionType.EXPENSE) as TransactionType;
     const providedDate =
       typeof args.date === 'string' || args.date instanceof Date ? args.date : undefined;
+    const relatedPerson = typeof args.relatedPerson === 'string' ? args.relatedPerson : undefined;
 
     const created = await Transaction.create({
       user: userId,
@@ -136,6 +144,7 @@ const executeToolCalls = async (
       type,
       date: providedDate ? new Date(providedDate) : new Date(),
       isRecurring: Boolean(args.isRecurring),
+      relatedPerson,
     });
 
     createdTransactions.push(created);
@@ -172,6 +181,19 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       .sort({ date: -1 })
       .limit(20);
 
+    // Fetch existing people for the current month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const monthlyTransactions = await Transaction.find({
+      user: req.user._id,
+      date: { $gte: startOfMonth },
+      relatedPerson: { $exists: true, $ne: null },
+    }).select('relatedPerson');
+
+    const existingPeople = Array.from(new Set(monthlyTransactions.map((t) => t.relatedPerson).filter(Boolean))) as string[];
+
     const contents = mapHistoryToContents(history);
     contents.push({
       role: 'user',
@@ -182,7 +204,7 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       model: MODEL_NAME,
       contents,
       config: {
-        systemInstruction: buildSystemInstruction(transactions, req.user.name, req.user.budget),
+        systemInstruction: buildSystemInstruction(transactions, req.user.name, req.user.budget, existingPeople),
         tools: [
           {
             functionDeclarations: [
