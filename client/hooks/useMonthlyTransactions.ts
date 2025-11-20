@@ -20,12 +20,13 @@ export const useMonthlyTransactions = (userId?: string) => {
         refetch
     } = useInfiniteQuery({
         queryKey: ['transactions', userId, month, year],
-        queryFn: ({ pageParam = 1 }) =>
+        queryFn: ({ pageParam = 1, signal }) =>
             transactionsApi.list({
                 page: pageParam as number,
                 limit: 10,
                 month,
-                year
+                year,
+                signal
             }),
         initialPageParam: 1,
         getNextPageParam: (lastPage) => {
@@ -47,23 +48,27 @@ export const useMonthlyTransactions = (userId?: string) => {
     // Prefetch adjacent months for smoother transitions
     useEffect(() => {
         if (userId) {
-            const prevMonth = month === 0 ? 11 : month - 1;
-            const prevYear = month === 0 ? year - 1 : year;
+            const timer = setTimeout(() => {
+                const prevMonth = month === 0 ? 11 : month - 1;
+                const prevYear = month === 0 ? year - 1 : year;
 
-            const nextMonth = month === 11 ? 0 : month + 1;
-            const nextYear = month === 11 ? year + 1 : year;
+                const nextMonth = month === 11 ? 0 : month + 1;
+                const nextYear = month === 11 ? year + 1 : year;
 
-            queryClient.prefetchInfiniteQuery({
-                queryKey: ['transactions', userId, prevMonth, prevYear],
-                queryFn: () => transactionsApi.list({ page: 1, limit: 10, month: prevMonth, year: prevYear }),
-                initialPageParam: 1,
-            });
+                queryClient.prefetchInfiniteQuery({
+                    queryKey: ['transactions', userId, prevMonth, prevYear],
+                    queryFn: () => transactionsApi.list({ page: 1, limit: 10, month: prevMonth, year: prevYear }),
+                    initialPageParam: 1,
+                });
 
-            queryClient.prefetchInfiniteQuery({
-                queryKey: ['transactions', userId, nextMonth, nextYear],
-                queryFn: () => transactionsApi.list({ page: 1, limit: 10, month: nextMonth, year: nextYear }),
-                initialPageParam: 1,
-            });
+                queryClient.prefetchInfiniteQuery({
+                    queryKey: ['transactions', userId, nextMonth, nextYear],
+                    queryFn: () => transactionsApi.list({ page: 1, limit: 10, month: nextMonth, year: nextYear }),
+                    initialPageParam: 1,
+                });
+            }, 300); // Debounce prefetching by 300ms
+
+            return () => clearTimeout(timer);
         }
     }, [month, year, userId, queryClient]);
 

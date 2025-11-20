@@ -110,8 +110,8 @@ export interface TransactionListResponse {
 }
 
 export const transactionsApi = {
-  list: (params?: { page?: number; limit?: number; month?: number; year?: number }) =>
-    api.get<{ data: ApiTransaction[]; meta: any }>('/transactions', { params }).then((res) => ({
+  list: (params?: { page?: number; limit?: number; month?: number; year?: number; signal?: AbortSignal }) =>
+    api.get<{ data: ApiTransaction[]; meta: any }>('/transactions', { params, signal: params?.signal }).then((res) => ({
       data: res.data.data.map(normalizeTransaction),
       meta: res.data.meta,
     })),

@@ -90,6 +90,10 @@ const App: React.FC = () => {
       setTransactionError(null);
       setShowSmartInput(false);
       setActiveTab('home');
+      // Invalidate all relevant queries to ensure UI updates immediately
+      queryClient.invalidateQueries({ queryKey: ['monthlyStats'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
       refreshTransactions();
     },
     onError: () => {
@@ -175,8 +179,14 @@ const App: React.FC = () => {
                   {transactionsLoading && transactions.length === 0 ? (
                     <div className="p-6 text-center text-gray-500">Loading your wallet...</div>
                   ) : transactionsError ? (
-                    <div className="p-6 text-center text-red-500">
-                      Could not load transactions. Pull to refresh.
+                    <div className="p-6 text-center flex flex-col items-center gap-2">
+                      <p className="text-red-500">Could not load transactions.</p>
+                      <button
+                        onClick={() => refreshTransactions()}
+                        className="px-4 py-2 bg-white rounded-xl text-sm font-semibold text-gray-700 shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+                      >
+                        Retry
+                      </button>
                     </div>
                   ) : (
                     <Dashboard
