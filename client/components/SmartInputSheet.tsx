@@ -47,7 +47,7 @@ const SmartInputSheet: React.FC<SmartInputSheetProps> = ({
     }
   }, [mode]);
 
-  const buildPayload = (result?: Partial<{ amount?: number; description?: string; category?: string; type?: TransactionType }>): TransactionPayload | null => {
+  const buildPayload = (result?: Partial<{ amount?: number; description?: string; category?: string; type?: TransactionType; relatedPerson?: string }>): TransactionPayload | null => {
     if (!result || result.amount === undefined || !result.description) {
       return null;
     }
@@ -62,6 +62,7 @@ const SmartInputSheet: React.FC<SmartInputSheetProps> = ({
       category: (result.category as Category) || (transactionType === TransactionType.INCOME ? Category.INCOME : Category.OTHER),
       type: transactionType, // Force the selected type
       date: new Date().toISOString(),
+      relatedPerson: result.relatedPerson,
     };
   };
 

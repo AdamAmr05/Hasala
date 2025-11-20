@@ -1,31 +1,24 @@
 import React from 'react';
-import { Transaction, TransactionType } from '../../types';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, TrendingUp } from 'lucide-react';
 
 interface StatsOverviewProps {
-  transactions: Transaction[];
+  currentDate: Date;
+  income: number;
+  expense: number;
 }
 
-const StatsOverview: React.FC<StatsOverviewProps> = ({ transactions }) => {
-  const income = transactions
-    .filter(t => t.type === TransactionType.INCOME)
-    .reduce((acc, curr) => acc + curr.amount, 0);
+const StatsOverview: React.FC<StatsOverviewProps> = ({ currentDate, income, expense }) => {
+  const month = currentDate.getMonth();
+  const year = currentDate.getFullYear();
 
-  const expense = transactions
-    .filter(t => t.type === TransactionType.EXPENSE)
-    .reduce((acc, curr) => acc + curr.amount, 0);
-
-  // Calculate Daily Average (Current Month)
+  // Calculate Daily Average
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
   const today = new Date();
-  const currentMonthExpenses = transactions.filter(t => {
-    const d = new Date(t.date);
-    return t.type === TransactionType.EXPENSE &&
-      d.getMonth() === today.getMonth() &&
-      d.getFullYear() === today.getFullYear();
-  }).reduce((acc, curr) => acc + curr.amount, 0);
+  const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+  const daysPassed = isCurrentMonth ? Math.max(1, today.getDate()) : daysInMonth;
 
-  const daysPassed = Math.max(1, today.getDate());
-  const dailyAvg = Math.round(currentMonthExpenses / daysPassed);
+  const dailyAvg = Math.round(expense / daysPassed);
 
   return (
     <div className="grid grid-cols-2 gap-4 px-6">

@@ -1,79 +1,116 @@
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+    AreaChart, Area, XAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     BarChart, Bar, Cell, PieChart, Pie
 } from 'recharts';
-import { Transaction, TransactionType, Category } from '../../types';
-import { TrendingUp, Calendar, PieChart as PieIcon, ArrowUpRight } from 'lucide-react';
+import { transactionsApi } from '../../services/api';
+import { TrendingUp, Calendar, PieChart as PieIcon, Users, AlertCircle } from 'lucide-react';
 
-interface AnalyticsViewProps {
-    transactions: Transaction[];
-}
+const AnalyticsView: React.FC = () => {
+    const [period, setPeriod] = useState(30);
 
-const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
-    // 1. Filter Expenses Only
-    const expenses = useMemo(() =>
-        transactions.filter(t => t.type === TransactionType.EXPENSE),
-        [transactions]);
+    const { data, isLoading, isError } = useQuery({
+        queryKey: ['analytics', period],
+        queryFn: () => transactionsApi.getAnalytics(period),
+    });
 
-    // 2. Prepare Trend Data (Last 30 Days)
-    const trendData = useMemo(() => {
-        const data = [];
-        const today = new Date();
-        for (let i = 29; i >= 0; i--) {
-            const d = new Date();
-            d.setDate(today.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0];
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
 
-            const dailyTotal = expenses
-                .filter(t => t.date.startsWith(dateStr))
-                .reduce((sum, t) => sum + t.amount, 0);
+    if (isError || !data) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+                <AlertCircle size={32} className="mb-2 text-red-500" />
+                <p>Could not load analytics.</p>
+            </div>
+        );
+    }
 
-            data.push({
-                date: d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
-                amount: dailyTotal
-            });
-        }
-        return data;
-    }, [expenses]);
+    // Transform Data for Charts
+    const trendData = data.dailyTrend.map(d => ({
+        date: new Date(d._id).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+        amount: d.total
+    }));
 
-    // 3. Prepare Category Data
-    const categoryData = useMemo(() => {
-        const totals: Record<string, number> = {};
-        expenses.forEach(t => {
-            totals[t.category] = (totals[t.category] || 0) + t.amount;
-        });
+    const categoryData = data.categoryBreakdown.map(c => ({
+        name: c._id,
+        value: c.total
+    }));
 
-        return Object.entries(totals)
-            .map(([name, value]) => ({ name, value }))
-            .sort((a, b) => b.value - a.value);
-    }, [expenses]);
+    const peopleData = data.peopleBreakdown.map(p => ({
+        name: p._id,
+        value: p.total
+    }));
 
-    // 4. Prepare Day of Week Data
-    const dayData = useMemo(() => {
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const totals = new Array(7).fill(0);
+    // Day of week analysis (calculated from daily trend for now, or could be server-side)
+    // For simplicity and consistency, let's calculate it from the daily trend which covers the period
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayTotals = new Array(7).fill(0);
+    data.dailyTrend.forEach(d => {
+        const dayIndex = new Date(d._id).getDay();
+        dayTotals[dayIndex] += d.total;
+    });
+    const dayData = days.map((day, index) => ({ day, amount: dayTotals[index] }));
 
-        expenses.forEach(t => {
-            const dayIndex = new Date(t.date).getDay();
-            totals[dayIndex] += t.amount;
-        });
-
-        return days.map((day, index) => ({
-            day,
-            amount: totals[index]
-        }));
-    }, [expenses]);
 
     const COLORS = ['#007AFF', '#34C759', '#FF9500', '#FF3B30', '#5856D6', '#AF52DE'];
 
     return (
         <div className="pb-32 pt-8 space-y-8 animate-[fadeIn_0.5s_ease-out]">
             {/* Header */}
-            <div className="px-6">
-                <h1 className="text-2xl font-bold text-primary tracking-tight">Analytics</h1>
-                <p className="text-sm text-gray-500">Deep dive into your spending habits.</p>
+            <div className="px-6 flex justify-between items-end">
+                <div>
+                    <h1 className="text-2xl font-bold text-primary tracking-tight">Analytics</h1>
+                    <p className="text-sm text-gray-500">Deep dive into your spending habits.</p>
+                </div>
+                <select
+                    value={period}
+                    onChange={(e) => setPeriod(Number(e.target.value))}
+                    className="bg-gray-100 border-none text-sm font-medium text-gray-600 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                    <option value={7}>Last 7 Days</option>
+                    <option value={30}>Last 30 Days</option>
+                    <option value={90}>Last 3 Months</option>
+                </select>
             </div>
+
+            {/* 0. People Section */}
+            {peopleData.length > 0 && (
+                <div className="px-6">
+                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="p-2 bg-indigo-50 rounded-full">
+                                <Users size={18} className="text-indigo-500" />
+                            </div>
+                            <h3 className="font-bold text-gray-900">People</h3>
+                        </div>
+
+                        <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
+                            {peopleData.map((person, index) => (
+                                <div key={person.name} className="flex flex-col items-center space-y-2 min-w-[80px]">
+                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md bg-gradient-to-br ${index === 0 ? 'from-yellow-400 to-orange-500' :
+                                            index === 1 ? 'from-gray-300 to-gray-400' :
+                                                index === 2 ? 'from-orange-300 to-orange-400' :
+                                                    'from-blue-400 to-indigo-500'
+                                        }`}>
+                                        {person.name[0].toUpperCase()}
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-xs font-bold text-gray-900 truncate max-w-[80px]">{person.name}</p>
+                                        <p className="text-[10px] text-gray-500 font-medium">{person.value.toLocaleString()} EGP</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* 1. Spending Trend Chart */}
             <div className="px-6">
@@ -85,7 +122,6 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
                             </div>
                             <h3 className="font-bold text-gray-900">Spending Trend</h3>
                         </div>
-                        <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">Last 30 Days</span>
                     </div>
 
                     <div className="h-48 w-full">
@@ -103,7 +139,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
                                     axisLine={false}
                                     tickLine={false}
                                     tick={{ fontSize: 10, fill: '#8E8E93' }}
-                                    interval={6}
+                                    interval="preserveStartEnd"
                                 />
                                 <Tooltip
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
@@ -201,9 +237,6 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
-                    <p className="text-xs text-center text-gray-400 mt-4">
-                        Your highest spending day is usually <span className="font-bold text-purple-600">{dayData.reduce((a, b) => a.amount > b.amount ? a : b).day}</span>.
-                    </p>
                 </div>
             </div>
         </div>

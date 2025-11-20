@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { GoogleGenAI } from '@google/genai';
 import { MODEL_NAME, TRANSACTION_SCHEMA } from '../utils/geminiConfig';
+import Transaction from '../models/Transaction';
+import { AuthRequest } from '../middleware/authMiddleware';
 
 const getClient = () => {
   if (!process.env.GEMINI_API_KEY) {
@@ -16,7 +18,22 @@ const parseResponse = (responseText?: string) => {
   return JSON.parse(responseText);
 };
 
-export const parseTransactionText = async (req: Request, res: Response) => {
+const getExistingPeople = async (userId: string) => {
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const transactions = await Transaction.find({
+    user: userId,
+    date: { $gte: startOfMonth },
+    relatedPerson: { $exists: true, $ne: null },
+  }).select('relatedPerson');
+
+  const people = new Set(transactions.map((t) => t.relatedPerson).filter(Boolean));
+  return Array.from(people);
+};
+
+export const parseTransactionText = async (req: AuthRequest, res: Response) => {
   try {
     const { input } = req.body || {};
 
@@ -25,13 +42,17 @@ export const parseTransactionText = async (req: Request, res: Response) => {
     }
 
     const ai = getClient();
+    const existingPeople = req.user ? await getExistingPeople(req.user._id.toString()) : [];
+    const peopleContext = existingPeople.length > 0
+      ? `Existing people this month: ${existingPeople.join(', ')}. Match names if possible.`
+      : '';
 
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: [
         {
           role: 'user',
-          parts: [{ text: `Extract transaction details from: "${input}". Return JSON only.` }],
+          parts: [{ text: `Extract transaction details from: "${input}". ${peopleContext} Return JSON only.` }],
         },
       ],
       config: {
@@ -48,7 +69,7 @@ export const parseTransactionText = async (req: Request, res: Response) => {
   }
 };
 
-export const parseTransactionVoice = async (req: Request, res: Response) => {
+export const parseTransactionVoice = async (req: AuthRequest, res: Response) => {
   try {
     const { audio } = req.body || {};
 
@@ -57,6 +78,10 @@ export const parseTransactionVoice = async (req: Request, res: Response) => {
     }
 
     const ai = getClient();
+    const existingPeople = req.user ? await getExistingPeople(req.user._id.toString()) : [];
+    const peopleContext = existingPeople.length > 0
+      ? `Existing people this month: ${existingPeople.join(', ')}. Match names if possible.`
+      : '';
 
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
@@ -65,7 +90,7 @@ export const parseTransactionVoice = async (req: Request, res: Response) => {
           role: 'user',
           parts: [
             { inlineData: { mimeType: 'audio/webm', data: audio.split(',')[1] || audio } },
-            { text: 'Extract transaction details (amount, description, category, type) as JSON. Default to EGP currency if not specified.' },
+            { text: `Extract transaction details (amount, description, category, type, relatedPerson) as JSON. Default to EGP currency if not specified. ${peopleContext}` },
           ],
         },
       ],

@@ -13,6 +13,7 @@ export enum Category {
   BILLS = 'Bills',
   EDUCATION = 'Education',
   INCOME = 'Income',
+  GIVING = 'Giving',
   OTHER = 'Other',
 }
 
@@ -24,6 +25,7 @@ export interface ITransaction extends Document {
   type: TransactionType;
   date: Date;
   isRecurring: boolean;
+  relatedPerson?: string;
 }
 
 const TransactionSchema: Schema = new Schema({
@@ -57,6 +59,10 @@ const TransactionSchema: Schema = new Schema({
   isRecurring: {
     type: Boolean,
     default: false,
+  },
+  relatedPerson: {
+    type: String,
+    trim: true,
   },
 }, {
   timestamps: true,

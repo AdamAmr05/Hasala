@@ -51,7 +51,7 @@ export const getTransactions = async (req: AuthRequest, res: Response) => {
 // @access  Private
 export const addTransaction = async (req: AuthRequest, res: Response) => {
   try {
-    const { amount, description, category, type, date, isRecurring } = req.body;
+    const { amount, description, category, type, date, isRecurring, relatedPerson } = req.body;
 
     const transaction = await Transaction.create({
       user: req.user?._id,
@@ -61,6 +61,7 @@ export const addTransaction = async (req: AuthRequest, res: Response) => {
       type,
       date: date || Date.now(),
       isRecurring: isRecurring || false,
+      relatedPerson,
     });
 
     res.status(201).json(transaction);
@@ -101,17 +102,28 @@ export const deleteTransaction = async (req: AuthRequest, res: Response) => {
 export const getAnalytics = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?._id;
-    const { period = '30' } = req.query; // Default to last 30 days
+    const { period = '30', month, year } = req.query;
 
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - parseInt(period as string));
+    let startDate = new Date();
+    let endDate = new Date();
+
+    if (month !== undefined && year !== undefined) {
+      const m = parseInt(month as string);
+      const y = parseInt(year as string);
+      startDate = new Date(y, m, 1);
+      endDate = new Date(y, m + 1, 0, 23, 59, 59, 999);
+    } else {
+      startDate.setDate(startDate.getDate() - parseInt(period as string));
+    }
+
+    const dateFilter = { $gte: startDate, $lte: endDate };
 
     // 1. Total Spent vs Income
     const totals = await Transaction.aggregate([
       {
         $match: {
           user: userId,
-          date: { $gte: startDate }
+          date: dateFilter
         }
       },
       {
@@ -128,7 +140,7 @@ export const getAnalytics = async (req: AuthRequest, res: Response) => {
         $match: {
           user: userId,
           type: 'EXPENSE',
-          date: { $gte: startDate }
+          date: dateFilter
         }
       },
       {
@@ -146,7 +158,7 @@ export const getAnalytics = async (req: AuthRequest, res: Response) => {
         $match: {
           user: userId,
           type: 'EXPENSE',
-          date: { $gte: startDate }
+          date: dateFilter
         }
       },
       {
@@ -158,10 +170,30 @@ export const getAnalytics = async (req: AuthRequest, res: Response) => {
       { $sort: { _id: 1 } }
     ]);
 
+    // 4. People Breakdown
+    const peopleBreakdown = await Transaction.aggregate([
+      {
+        $match: {
+          user: userId,
+          type: 'EXPENSE',
+          date: dateFilter,
+          relatedPerson: { $exists: true, $ne: null }
+        }
+      },
+      {
+        $group: {
+          _id: '$relatedPerson',
+          total: { $sum: '$amount' }
+        }
+      },
+      { $sort: { total: -1 } }
+    ]);
+
     res.status(200).json({
       totals,
       categoryBreakdown,
-      dailyTrend
+      dailyTrend,
+      peopleBreakdown
     });
   } catch (error) {
     res.status(500).json({ message: (error as Error).message });

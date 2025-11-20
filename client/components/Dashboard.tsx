@@ -1,5 +1,7 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Transaction } from '../types';
+import { transactionsApi } from '../services/api';
 import CoinStack from './Dashboard/CoinStack';
 import StatsOverview from './Dashboard/StatsOverview';
 import ActivityFeed from './Dashboard/ActivityFeed';
@@ -29,6 +31,14 @@ const Dashboard: React.FC<DashboardProps> = ({
   hasMore
 }) => {
   const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+  const { data: stats } = useQuery({
+    queryKey: ['monthlyStats', currentDate.getMonth(), currentDate.getFullYear()],
+    queryFn: () => transactionsApi.getAnalytics(30, currentDate.getMonth(), currentDate.getFullYear()),
+  });
+
+  const income = stats?.totals.find(t => t._id === 'INCOME')?.total || 0;
+  const expense = stats?.totals.find(t => t._id === 'EXPENSE')?.total || 0;
 
   return (
     <div className="pb-32 pt-8 space-y-8 animate-[fadeIn_0.5s_ease-out]">
@@ -65,12 +75,12 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Main Interactive Coin Stack */}
       <CoinStack
-        totalSpent={transactions.reduce((acc, t) => t.type === 'EXPENSE' ? acc + t.amount : acc, 0)}
-        budget={budget + transactions.reduce((acc, t) => t.type === 'INCOME' ? acc + t.amount : acc, 0)}
+        totalSpent={expense}
+        budget={budget + income}
       />
 
       {/* Quick Stats */}
-      <StatsOverview transactions={transactions} />
+      <StatsOverview income={income} expense={expense} currentDate={currentDate} />
 
       {/* Activity Feed */}
       <ActivityFeed
