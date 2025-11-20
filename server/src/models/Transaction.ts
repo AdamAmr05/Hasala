@@ -14,6 +14,7 @@ export enum Category {
   EDUCATION = 'Education',
   INCOME = 'Income',
   GIVING = 'Giving',
+  HOUSING = 'Housing',
   OTHER = 'Other',
 }
 

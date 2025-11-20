@@ -5,9 +5,10 @@ import {
   Transaction,
   ToolCall,
 } from '../../types';
-import { chatApi } from '../../services/api';
+import { chatApi, ChatThread } from '../../services/api';
 import ChatWidget from './ChatWidget';
-import { Send, Sparkles } from 'lucide-react';
+import ChatHistorySidebar from './ChatHistorySidebar';
+import { Send, Sparkles, History } from 'lucide-react';
 
 interface ChatInterfaceProps {
   transactions: Transaction[];
@@ -20,20 +21,80 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   budget,
   onAddTransaction,
 }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      sender: ChatSender.AI,
-      text: "Ahlan! I'm Hasala. I can visualize your spending or help you add new expenses. Just tell me what you bought!",
-      timestamp: Date.now()
-    }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [threads, setThreads] = useState<ChatThread[]>([]);
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Fetch threads on mount
+  useEffect(() => {
+    loadThreads();
+  }, []);
+
+  // Fetch messages when thread changes
+  useEffect(() => {
+    if (activeThreadId) {
+      loadMessages(activeThreadId);
+    } else {
+      // New Chat State
+      setMessages([{
+        id: 'welcome',
+        sender: ChatSender.AI,
+        text: "Ahlan! I'm Hasala. I can visualize your spending or help you add new expenses. Just tell me what you bought!",
+        timestamp: Date.now()
+      }]);
+    }
+  }, [activeThreadId]);
+
+  const loadThreads = async () => {
+    try {
+      const data = await chatApi.getThreads();
+      setThreads(data);
+    } catch (error) {
+      console.error('Failed to load threads', error);
+    }
+  };
+
+  const loadMessages = async (threadId: string) => {
+    try {
+      const data = await chatApi.getMessages(threadId);
+      // Map API messages to UI messages
+      const uiMessages: ChatMessage[] = data.map((msg: any) => ({
+        id: msg._id,
+        sender: msg.role === 'user' ? ChatSender.USER : ChatSender.AI,
+        text: msg.text,
+        timestamp: new Date(msg.createdAt).getTime(),
+        toolCalls: msg.toolCalls
+      }));
+      setMessages(uiMessages);
+      setTimeout(scrollToBottom, 100);
+    } catch (error) {
+      console.error('Failed to load messages', error);
+    }
+  };
+
+  const handleNewChat = () => {
+    setActiveThreadId(null);
+    setIsSidebarOpen(false);
+  };
+
+  const handleDeleteThread = async (threadId: string) => {
+    try {
+      await chatApi.deleteThread(threadId);
+      setThreads(prev => prev.filter(t => t._id !== threadId));
+      if (activeThreadId === threadId) {
+        handleNewChat();
+      }
+    } catch (error) {
+      console.error('Failed to delete thread', error);
+    }
   };
 
   // Only scroll when user types or explicitly sends
@@ -75,8 +136,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       // Send to Gemini
       const response = await chatApi.send({
         message: userMsg.text,
-        history: previousMessages,
+        history: previousMessages.filter(m => m.id !== 'welcome'), // Exclude welcome message
+        threadId: activeThreadId || undefined,
       });
+
+      // Update active thread if it was a new chat
+      if (!activeThreadId && response.threadId) {
+        setActiveThreadId(response.threadId);
+        loadThreads(); // Refresh list to show new thread title
+      }
 
       const finalText =
         response.text || (response.toolCalls ? 'Here is what I found:' : "I'm not sure.");
@@ -120,9 +188,26 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
           <div>
             <h2 className="font-bold text-primary text-lg tracking-tight">Hasala AI</h2>
+            {activeThreadId && <p className="text-[10px] text-gray-400">Continuing conversation...</p>}
           </div>
         </div>
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+        >
+          <History size={20} />
+        </button>
       </div>
+
+      <ChatHistorySidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        threads={threads}
+        activeThreadId={activeThreadId}
+        onSelectThread={setActiveThreadId}
+        onNewChat={handleNewChat}
+        onDeleteThread={handleDeleteThread}
+      />
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-6 pb-10 space-y-6 scroll-smooth no-scrollbar">

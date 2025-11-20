@@ -8,6 +8,12 @@ import {
   User,
 } from '../types';
 
+export interface ChatThread {
+  _id: string;
+  title: string;
+  lastMessageAt: string;
+}
+
 // Auto-detect: use network URL when accessing from network, localhost otherwise
 const isNetworkAccess = window.location.hostname === '192.168.1.7';
 const API_BASE_URL = (
@@ -135,10 +141,11 @@ export interface AnalyticsResponse {
 }
 
 export const chatApi = {
-  send: (payload: { message: string; history?: ChatMessage[] }) =>
+  send: (payload: { message: string; history?: ChatMessage[]; threadId?: string }) =>
     api
       .post<ChatResponse>('/chat', {
         message: payload.message,
+        threadId: payload.threadId,
         history: payload.history?.map((msg) => ({
           sender: msg.sender,
           text: msg.text,
@@ -148,6 +155,9 @@ export const chatApi = {
         ...res.data,
         createdTransactions: normalizeChatTransactions(res.data.createdTransactions as any),
       })),
+  getThreads: () => api.get<ChatThread[]>('/chat').then((res) => res.data),
+  getMessages: (threadId: string) => api.get<ChatMessage[]>(`/chat/${threadId}`).then((res) => res.data),
+  deleteThread: (threadId: string) => api.delete(`/chat/${threadId}`),
 };
 
 type ParsedTransactionResponse = Partial<{
