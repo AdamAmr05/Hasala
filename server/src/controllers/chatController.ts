@@ -20,13 +20,16 @@ const buildSystemInstruction = (
   userName?: string,
   budget: number = 0,
   peopleStats: string = '',
+  realTotalSpent: number = 0,
+  realTotalIncome: number = 0,
 ) => {
   // 1. Basic Totals
   const expenses = transactions.filter((t) => t.type === TransactionType.EXPENSE);
-  const income = transactions.filter((t) => t.type === TransactionType.INCOME);
 
-  const totalSpent = expenses.reduce((sum, t) => sum + t.amount, 0);
-  const totalIncome = income.reduce((sum, t) => sum + t.amount, 0);
+  // Use real totals if provided (which they should be), otherwise fallback to slice (legacy behavior safety)
+  const totalSpent = realTotalSpent > 0 ? realTotalSpent : expenses.reduce((sum, t) => sum + t.amount, 0);
+  const totalIncome = realTotalIncome > 0 ? realTotalIncome : 0; // Income might be 0, that's fine
+
   const effectiveBudget = budget > 0 ? budget : totalIncome; // Use budget if set, otherwise income
   const remaining = effectiveBudget - totalSpent;
   const remainingIncome = totalIncome - totalSpent;
@@ -218,11 +221,41 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       parts: [{ text: message }],
     });
 
+    // Calculate accurate monthly totals
+    const startOfCurrentMonth = new Date();
+    startOfCurrentMonth.setDate(1);
+    startOfCurrentMonth.setHours(0, 0, 0, 0);
+
+    const monthlyStats = await Transaction.aggregate([
+      {
+        $match: {
+          user: req.user._id,
+          date: { $gte: startOfCurrentMonth },
+        },
+      },
+      {
+        $group: {
+          _id: '$type',
+          total: { $sum: '$amount' },
+        },
+      },
+    ]);
+
+    const totalSpentReal = monthlyStats.find((s) => s._id === TransactionType.EXPENSE)?.total || 0;
+    const totalIncomeReal = monthlyStats.find((s) => s._id === TransactionType.INCOME)?.total || 0;
+
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents,
       config: {
-        systemInstruction: buildSystemInstruction(transactions, req.user.name, req.user.budget, peopleStats),
+        systemInstruction: buildSystemInstruction(
+          transactions,
+          req.user.name,
+          req.user.budget,
+          peopleStats,
+          totalSpentReal,
+          totalIncomeReal
+        ),
         tools: [
           {
             functionDeclarations: [
