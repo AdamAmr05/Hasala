@@ -5,7 +5,7 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { ChatRequestBody, ChatSender, ToolCall } from '../types/chat';
 import ChatThread from '../models/ChatThread';
 import ChatMessage from '../models/ChatMessage';
-import RecurringExpense from '../models/RecurringExpense';
+import RecurringTransaction from '../models/RecurringTransaction';
 import {
   MODEL_NAME,
   TRANSACTION_SCHEMA,
@@ -222,13 +222,14 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       .join(', ');
 
     // Calculate Upcoming Recurring Expenses
-    const recurringExpenses = await RecurringExpense.find({ user: req.user._id, isActive: true });
+    const recurringTransactions = await RecurringTransaction.find({ user: req.user._id, isActive: true });
     const today = new Date();
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-    const upcomingBills = recurringExpenses.filter(expense => {
+    const upcomingBills = recurringTransactions.filter(transaction => {
       // Check if the due day is still to come this month (or is today)
-      return expense.dayOfMonth >= today.getDate();
+      // AND it is an expense
+      return transaction.dayOfMonth >= today.getDate() && transaction.type === 'EXPENSE';
     });
 
     const upcomingLiabilitiesTotal = upcomingBills.reduce((sum, exp) => sum + exp.amount, 0);

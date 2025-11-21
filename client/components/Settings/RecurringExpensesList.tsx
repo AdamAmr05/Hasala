@@ -1,58 +1,116 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { recurringApi, Category } from '../../services/api';
+import { recurringApi, Category, TransactionType } from '../../services/api';
 import { Trash2, Plus, Calendar, AlertCircle } from 'lucide-react';
 
-const RecurringExpensesList: React.FC = () => {
+const RecurringTransactionsList: React.FC = () => {
     const queryClient = useQueryClient();
     const [isAdding, setIsAdding] = useState(false);
-    const [newExpense, setNewExpense] = useState({
+    const [newTransaction, setNewTransaction] = useState({
         amount: '',
         description: '',
         category: Category.BILLS,
+        type: TransactionType.EXPENSE,
         dayOfMonth: '1',
     });
 
-    const { data: expenses, isLoading, isError } = useQuery({
-        queryKey: ['recurringExpenses'],
+    const { data: transactions, isLoading, isError } = useQuery({
+        queryKey: ['recurringTransactions'],
         queryFn: recurringApi.getAll,
     });
 
     const createMutation = useMutation({
         mutationFn: recurringApi.create,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['recurringExpenses'] });
+            queryClient.invalidateQueries({ queryKey: ['recurringTransactions'] });
             setIsAdding(false);
-            setNewExpense({ amount: '', description: '', category: Category.BILLS, dayOfMonth: '1' });
+            setNewTransaction({
+                amount: '',
+                description: '',
+                category: Category.BILLS,
+                type: TransactionType.EXPENSE,
+                dayOfMonth: '1'
+            });
         },
     });
 
     const deleteMutation = useMutation({
         mutationFn: recurringApi.remove,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['recurringExpenses'] });
+            queryClient.invalidateQueries({ queryKey: ['recurringTransactions'] });
+        },
+    });
+
+    const rewindMutation = useMutation({
+        mutationFn: recurringApi.rewind,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['recurringTransactions'] });
+            alert('Rewound! Refresh the page (or go to Home) to trigger injection.');
         },
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         createMutation.mutate({
-            amount: Number(newExpense.amount),
-            description: newExpense.description,
-            category: newExpense.category,
-            dayOfMonth: Number(newExpense.dayOfMonth),
+            amount: Number(newTransaction.amount),
+            description: newTransaction.description,
+            category: newTransaction.category,
+            type: newTransaction.type,
+            dayOfMonth: Number(newTransaction.dayOfMonth),
         });
     };
 
     if (isLoading) return <div className="p-4 text-center text-gray-500">Loading rules...</div>;
-    if (isError) return <div className="p-4 text-center text-red-500">Failed to load recurring expenses.</div>;
+    if (isError) return <div className="p-4 text-center text-red-500">Failed to load recurring transactions.</div>;
+
+    const incomeTransactions = transactions?.filter(t => t.type === TransactionType.INCOME) || [];
+    const expenseTransactions = transactions?.filter(t => t.type === TransactionType.EXPENSE) || [];
+
+    const renderList = (items: typeof transactions, title: string, emptyMsg: string) => (
+        <div className="space-y-3">
+            <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wider mt-6 mb-2">{title}</h4>
+            {items?.length === 0 && (
+                <div className="text-center py-4 text-gray-400 flex flex-col items-center gap-2">
+                    <p className="text-xs">{emptyMsg}</p>
+                </div>
+            )}
+            {items?.map((item) => (
+                <div key={item._id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${item.type === TransactionType.INCOME ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                            {item.dayOfMonth}
+                        </div>
+                        <div>
+                            <h4 className="font-semibold text-gray-900">{item.description}</h4>
+                            <p className="text-xs text-gray-500">{item.amount.toLocaleString()} EGP • {item.category}</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-1">
+                        <button
+                            onClick={() => rewindMutation.mutate(item._id)}
+                            className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
+                            title="Rewind 1 Month (Test)"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg>
+                        </button>
+                        <button
+                            onClick={() => deleteMutation.mutate(item._id)}
+                            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h3 className="text-lg font-bold text-gray-900">Recurring Expenses</h3>
-                    <p className="text-xs text-gray-500">Bills that auto-log when you visit.</p>
+                    <h3 className="text-lg font-bold text-gray-900">Recurring Rules</h3>
+                    <p className="text-xs text-gray-500">Auto-log salaries and bills.</p>
                 </div>
                 <button
                     onClick={() => setIsAdding(!isAdding)}
@@ -64,14 +122,31 @@ const RecurringExpensesList: React.FC = () => {
 
             {isAdding && (
                 <form onSubmit={handleSubmit} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4 animate-[fadeIn_0.2s_ease-out]">
+                    <div className="flex gap-2 p-1 bg-gray-100 rounded-xl">
+                        <button
+                            type="button"
+                            onClick={() => setNewTransaction({ ...newTransaction, type: TransactionType.EXPENSE, category: Category.BILLS })}
+                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${newTransaction.type === TransactionType.EXPENSE ? 'bg-white shadow-sm text-red-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            Expense
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setNewTransaction({ ...newTransaction, type: TransactionType.INCOME, category: Category.SALARY })}
+                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${newTransaction.type === TransactionType.INCOME ? 'bg-white shadow-sm text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            Income
+                        </button>
+                    </div>
+
                     <div>
                         <label className="text-xs font-semibold text-gray-500 uppercase">Description</label>
                         <input
                             type="text"
-                            value={newExpense.description}
-                            onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
+                            value={newTransaction.description}
+                            onChange={(e) => setNewTransaction({ ...newTransaction, description: e.target.value })}
                             className="w-full mt-1 p-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"
-                            placeholder="Netflix, Rent..."
+                            placeholder={newTransaction.type === TransactionType.INCOME ? "Salary, Allowance..." : "Netflix, Rent..."}
                             required
                         />
                     </div>
@@ -80,8 +155,8 @@ const RecurringExpensesList: React.FC = () => {
                             <label className="text-xs font-semibold text-gray-500 uppercase">Amount</label>
                             <input
                                 type="number"
-                                value={newExpense.amount}
-                                onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                                value={newTransaction.amount}
+                                onChange={(e) => setNewTransaction({ ...newTransaction, amount: e.target.value })}
                                 className="w-full mt-1 p-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"
                                 placeholder="0.00"
                                 required
@@ -93,8 +168,8 @@ const RecurringExpensesList: React.FC = () => {
                                 type="number"
                                 min="1"
                                 max="31"
-                                value={newExpense.dayOfMonth}
-                                onChange={(e) => setNewExpense({ ...newExpense, dayOfMonth: e.target.value })}
+                                value={newTransaction.dayOfMonth}
+                                onChange={(e) => setNewTransaction({ ...newTransaction, dayOfMonth: e.target.value })}
                                 className="w-full mt-1 p-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"
                                 required
                             />
@@ -103,8 +178,8 @@ const RecurringExpensesList: React.FC = () => {
                     <div>
                         <label className="text-xs font-semibold text-gray-500 uppercase">Category</label>
                         <select
-                            value={newExpense.category}
-                            onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value as Category })}
+                            value={newTransaction.category}
+                            onChange={(e) => setNewTransaction({ ...newTransaction, category: e.target.value as Category })}
                             className="w-full mt-1 p-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary bg-white"
                         >
                             {Object.values(Category).map((cat) => (
@@ -131,43 +206,17 @@ const RecurringExpensesList: React.FC = () => {
                 </form>
             )}
 
-            <div className="space-y-3">
-                {expenses?.length === 0 && !isAdding && (
-                    <div className="text-center py-8 text-gray-400 flex flex-col items-center gap-2">
-                        <Calendar size={32} className="opacity-20" />
-                        <p className="text-sm">No recurring expenses set.</p>
-                    </div>
-                )}
+            {renderList(incomeTransactions, 'Recurring Income', 'No recurring income set.')}
+            {renderList(expenseTransactions, 'Recurring Expenses', 'No recurring expenses set.')}
 
-                {expenses?.map((expense) => (
-                    <div key={expense._id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 font-bold text-xs">
-                                {expense.dayOfMonth}
-                            </div>
-                            <div>
-                                <h4 className="font-semibold text-gray-900">{expense.description}</h4>
-                                <p className="text-xs text-gray-500">{expense.amount.toLocaleString()} EGP • {expense.category}</p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => deleteMutation.mutate(expense._id)}
-                            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                        >
-                            <Trash2 size={18} />
-                        </button>
-                    </div>
-                ))}
-            </div>
-
-            <div className="bg-blue-50 p-4 rounded-2xl flex gap-3 items-start">
+            <div className="bg-blue-50 p-4 rounded-2xl flex gap-3 items-start mt-6">
                 <AlertCircle className="text-blue-500 shrink-0 mt-0.5" size={18} />
                 <p className="text-xs text-blue-700 leading-relaxed">
-                    <strong>How it works:</strong> We don't charge you automatically. Instead, whenever you open the app, we check if a bill was due and log it for you retroactively.
+                    <strong>How it works:</strong> We check for due items whenever you open the app and log them automatically.
                 </p>
             </div>
         </div>
     );
 };
 
-export default RecurringExpensesList;
+export default RecurringTransactionsList;

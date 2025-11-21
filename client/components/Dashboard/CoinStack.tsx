@@ -39,7 +39,7 @@ const CoinStack: React.FC<CoinStackProps> = ({ totalSpent, budget, isLoading = f
                         className="absolute -top-8 z-20 flex flex-col items-center"
                     >
                         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Remaining</span>
-                        <span className={`text-2xl font-bold ${isOverBudget ? 'text-red-500' : 'text-primary'}`}>
+                        <span className={`text-2xl font-bold whitespace-nowrap ${isOverBudget ? 'text-red-500' : 'text-primary'}`}>
                             {remaining.toLocaleString()} <span className="text-xs font-normal text-gray-400">EGP</span>
                         </span>
                     </motion.div>

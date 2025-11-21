@@ -1,17 +1,18 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import { Category } from './Transaction';
 
-export interface IRecurringExpense extends Document {
+export interface IRecurringTransaction extends Document {
     user: mongoose.Schema.Types.ObjectId;
     amount: number;
     description: string;
-    category: Category;
+    category: string;
+    type: 'EXPENSE' | 'INCOME';
     dayOfMonth: number; // 1-31
     lastInjected: Date;
     isActive: boolean;
 }
 
-const RecurringExpenseSchema: Schema = new Schema({
+const RecurringTransactionSchema: Schema = new Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
@@ -30,15 +31,21 @@ const RecurringExpenseSchema: Schema = new Schema({
         enum: Object.values(Category),
         required: [true, 'Please add a category'],
     },
+    type: {
+        type: String,
+        enum: ['EXPENSE', 'INCOME'],
+        default: 'EXPENSE',
+        required: [true, 'Please add a type'],
+    },
     dayOfMonth: {
         type: Number,
-        required: true,
+        required: [true, 'Please add a day of month'],
         min: 1,
         max: 31,
     },
     lastInjected: {
         type: Date,
-        default: Date.now,
+        required: true,
     },
     isActive: {
         type: Boolean,
@@ -48,6 +55,6 @@ const RecurringExpenseSchema: Schema = new Schema({
     timestamps: true,
 });
 
-const RecurringExpense = mongoose.model<IRecurringExpense>('RecurringExpense', RecurringExpenseSchema);
+const RecurringTransaction = mongoose.model<IRecurringTransaction>('RecurringTransaction', RecurringTransactionSchema);
 
-export default RecurringExpense;
+export default RecurringTransaction;
