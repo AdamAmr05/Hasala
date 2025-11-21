@@ -108,6 +108,55 @@ const AnalyticsView: React.FC = () => {
                 </div>
             </div>
 
+            {/* Income Overview Section */}
+            {data.incomeBreakdown && data.incomeBreakdown.length > 0 && (
+                <div className="px-6">
+                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="p-2 bg-green-50 rounded-full">
+                                <TrendingUp size={18} className="text-green-500" />
+                            </div>
+                            <h3 className="font-bold text-gray-900">Income Sources</h3>
+                        </div>
+
+                        {/* Total Income Display */}
+                        <div className="mb-6 p-4 bg-gray-50 rounded-2xl">
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total Income</p>
+                            <p className="text-2xl font-bold text-gray-900">
+                                {data.totals.find(t => t._id === 'INCOME')?.total.toLocaleString() || 0} <span className="text-sm text-gray-500">EGP</span>
+                            </p>
+                        </div>
+
+                        {/* Income Breakdown */}
+                        <div className="space-y-3">
+                            {data.incomeBreakdown.map((source, index) => {
+                                const totalIncome = data.totals.find(t => t._id === 'INCOME')?.total || 1;
+                                const percentage = (source.total / totalIncome) * 100;
+
+                                return (
+                                    <div key={source._id} className="space-y-1">
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="font-medium text-gray-700">{source._id}</span>
+                                            <span className="font-bold text-gray-900">{source.total.toLocaleString()} EGP</span>
+                                        </div>
+
+                                        {/* Progress Bar */}
+                                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${percentage}%` }}
+                                                transition={{ duration: 0.5, delay: index * 0.1 }}
+                                                className="h-full rounded-full bg-green-500"
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* 0. People Section */}
             {peopleData.length > 0 && (
                 <div className="px-6">

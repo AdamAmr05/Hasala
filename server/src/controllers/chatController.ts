@@ -16,6 +16,7 @@ import {
   renderRecentTransactionsTool,
   renderSpendingChartTool,
   renderPeopleBreakdownTool,
+  renderIncomeOverviewTool,
 } from '../utils/geminiConfig';
 
 const buildSystemInstruction = (
@@ -279,6 +280,7 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
             if (tc.name === 'renderCategoryBreakdown') return `(I showed the category breakdown)`;
             if (tc.name === 'renderMonthlyProjection') return `(I showed the monthly projection)`;
             if (tc.name === 'renderPeopleBreakdown') return `(I showed the people breakdown)`;
+            if (tc.name === 'renderIncomeOverview') return `(I showed the income overview)`;
             if (tc.name === 'renderRecentTransactions') return `(I showed recent transactions)`;
             return `(I used tool: ${tc.name})`;
           }).join(' ');
@@ -343,6 +345,7 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
               renderCategoryBreakdownTool,
               renderMonthlyProjectionTool,
               renderPeopleBreakdownTool,
+              renderIncomeOverviewTool,
             ],
           },
         ],
@@ -371,6 +374,25 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
     const categoryData = categoryStats.map(s => ({ name: s._id, value: s.total }));
     const peopleData = Object.entries(peopleMap).map(([name, value]) => ({ name, value }));
 
+    // Calculate Income Breakdown for tool
+    const incomeStats = await Transaction.aggregate([
+      {
+        $match: {
+          user: req.user._id,
+          type: TransactionType.INCOME,
+          date: { $gte: startOfCurrentMonth },
+        },
+      },
+      {
+        $group: {
+          _id: '$category',
+          total: { $sum: '$amount' },
+        },
+      },
+      { $sort: { total: -1 } }
+    ]);
+    const incomeData = incomeStats.map(s => ({ name: s._id, value: s.total }));
+
     const rawToolCalls: ToolCall[] =
       response.functionCalls
         ?.filter((call) => Boolean(call.name))
@@ -389,6 +411,9 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
           } else if (call.name === 'renderMonthlyProjection') {
             args.totalSpent = totalSpentReal;
             args.budget = req.user?.budget || 0;
+          } else if (call.name === 'renderIncomeOverview') {
+            args.incomeSources = incomeData;
+            args.totalIncome = totalIncomeReal;
           }
 
           return {

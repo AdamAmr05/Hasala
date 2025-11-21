@@ -117,3 +117,25 @@ export const renderPeopleBreakdownTool: FunctionDeclaration = {
   },
 };
 
+export const renderIncomeOverviewTool: FunctionDeclaration = {
+  name: 'renderIncomeOverview',
+  description: 'Display a visual breakdown of income sources.',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      incomeSources: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            name: { type: Type.STRING },
+            value: { type: Type.NUMBER },
+          },
+        },
+        description: 'List of income sources and their total amount',
+      },
+      totalIncome: { type: Type.NUMBER, description: 'Total income amount' },
+    },
+  },
+};
+
