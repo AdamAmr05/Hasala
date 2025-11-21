@@ -15,6 +15,22 @@ dotenv.config();
 dotenv.config({ path: '.env.local' });
 dotenv.config({ path: '../.env.local' }); // Check root directory
 
+// Validations
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL ERROR: JWT_SECRET is not defined.');
+  process.exit(1);
+}
+
+if (!process.env.MONGODB_URI && !process.env.MONGO_URI) {
+  console.error('FATAL ERROR: MONGODB_URI is not defined.');
+  process.exit(1);
+}
+
+if (!process.env.GEMINI_API_KEY) {
+  console.error('FATAL ERROR: GEMINI_API_KEY is not defined.');
+  process.exit(1);
+}
+
 const app: Application = express();
 const PORT = process.env.PORT || 5001;
 
