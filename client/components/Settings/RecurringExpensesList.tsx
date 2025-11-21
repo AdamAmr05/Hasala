@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recurringApi, Category } from '../../services/api';
-import { Trash2, Plus, Calendar, AlertCircle, History } from 'lucide-react';
+import { Trash2, Plus, Calendar, AlertCircle } from 'lucide-react';
 
 const RecurringExpensesList: React.FC = () => {
     const queryClient = useQueryClient();
@@ -31,13 +31,6 @@ const RecurringExpensesList: React.FC = () => {
         mutationFn: recurringApi.remove,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['recurringExpenses'] });
-        },
-    });
-
-    const resetMutation = useMutation({
-        mutationFn: (id: string) => recurringApi.resetLastInjected(id),
-        onSuccess: () => {
-            alert('Rewound! Go to dashboard to trigger injection.');
         },
     });
 
@@ -157,21 +150,12 @@ const RecurringExpensesList: React.FC = () => {
                                 <p className="text-xs text-gray-500">{expense.amount.toLocaleString()} EGP • {expense.category}</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => resetMutation.mutate(expense._id)}
-                                className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
-                                title="Test: Rewind 1 Month"
-                            >
-                                <History size={18} />
-                            </button>
-                            <button
-                                onClick={() => deleteMutation.mutate(expense._id)}
-                                className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                            >
-                                <Trash2 size={18} />
-                            </button>
-                        </div>
+                        <button
+                            onClick={() => deleteMutation.mutate(expense._id)}
+                            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                            <Trash2 size={18} />
+                        </button>
                     </div>
                 ))}
             </div>

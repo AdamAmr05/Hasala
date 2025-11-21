@@ -4,7 +4,6 @@ import {
     getRecurringExpenses,
     addRecurringExpense,
     deleteRecurringExpense,
-    resetLastInjected,
 } from '../controllers/recurringController';
 
 const router = express.Router();
@@ -15,8 +14,5 @@ router.route('/')
 
 router.route('/:id')
     .delete(protect, deleteRecurringExpense);
-
-router.route('/:id/test-reset')
-    .post(protect, resetLastInjected);
 
 export default router;
