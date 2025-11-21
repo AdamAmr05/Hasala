@@ -78,24 +78,18 @@ export const checkAndInjectRecurring = async (userId: string) => {
     const createdTransactions = [];
 
     for (const expense of recurringExpenses) {
-        let nextDueDate = new Date(expense.lastInjected);
-        // Move to the next potential due date based on dayOfMonth
-        // Logic: Start from lastInjected. If dayOfMonth is 5, and lastInjected was Oct 5, next is Nov 5.
-        // If lastInjected was Oct 1 (creation), and day is 5, next is Oct 5.
+        // Start checking from the month AFTER the last injection
+        let targetDate = new Date(expense.lastInjected);
+        targetDate.setMonth(targetDate.getMonth() + 1);
 
-        // Simple approach: iterate month by month from lastInjected until we reach now.
+        // Set the day, clamping to the last day of the month if needed
+        // e.g. if dayOfMonth is 31, and target is Feb, set to Feb 28/29
+        const daysInTargetMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate();
+        const actualDay = Math.min(expense.dayOfMonth, daysInTargetMonth);
+        targetDate.setDate(actualDay);
 
-        // 1. Determine the first candidate date after lastInjected
-        let candidateDate = new Date(expense.lastInjected);
-        candidateDate.setDate(expense.dayOfMonth);
-
-        // If the candidate date is before or same as lastInjected, move to next month
-        if (candidateDate <= expense.lastInjected) {
-            candidateDate.setMonth(candidateDate.getMonth() + 1);
-        }
-
-        // While the candidate date is in the past (before now)
-        while (candidateDate <= now) {
+        // While the target date is in the past (before or equal to now)
+        while (targetDate <= now) {
             // Create the transaction
             const newTransaction = await Transaction.create({
                 user: userId,
@@ -103,44 +97,27 @@ export const checkAndInjectRecurring = async (userId: string) => {
                 description: expense.description + ' (Auto)',
                 category: expense.category,
                 type: TransactionType.EXPENSE,
-                date: candidateDate, // Backdated!
+                date: targetDate, // Backdated!
                 isRecurring: true,
             });
 
             createdTransactions.push(newTransaction);
 
             // Update lastInjected to this date
-            expense.lastInjected = candidateDate;
+            expense.lastInjected = targetDate;
             await expense.save();
 
             // Move to next month
-            candidateDate = new Date(candidateDate); // Clone to avoid reference issues
-            candidateDate.setMonth(candidateDate.getMonth() + 1);
+            targetDate = new Date(targetDate); // Clone
+            targetDate.setMonth(targetDate.getMonth() + 1);
+
+            // Re-clamp for the new month to prevent drift
+            // (e.g. if we were at Feb 28, next month should be Mar 31, not Mar 28)
+            const daysInNextMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate();
+            const nextActualDay = Math.min(expense.dayOfMonth, daysInNextMonth);
+            targetDate.setDate(nextActualDay);
         }
     }
 
     return createdTransactions;
-};
-
-// @desc    DEV: Reset lastInjected to test injection
-// @route   POST /api/recurring/:id/test-reset
-// @access  Private
-export const resetLastInjected = async (req: AuthRequest, res: Response) => {
-    try {
-        const expense = await RecurringExpense.findById(req.params.id);
-        if (!expense) {
-            res.status(404).json({ message: 'Not found' });
-            return;
-        }
-
-        // Set to 2 months ago to ensure it triggers
-        const pastDate = new Date();
-        pastDate.setMonth(pastDate.getMonth() - 2);
-        expense.lastInjected = pastDate;
-        await expense.save();
-
-        res.status(200).json({ message: 'Reset successful. Go to dashboard to trigger injection.' });
-    } catch (error) {
-        res.status(500).json({ message: (error as Error).message });
-    }
 };

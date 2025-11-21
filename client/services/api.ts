@@ -186,7 +186,6 @@ export const recurringApi = {
   create: (payload: { amount: number; description: string; category: Category; dayOfMonth: number }) =>
     api.post<RecurringExpense>('/recurring', payload).then((res) => res.data),
   remove: (id: string) => api.delete(`/recurring/${id}`),
-  resetLastInjected: (id: string) => api.post(`/recurring/${id}/test-reset`),
 };
 
 export const aiApi = {
