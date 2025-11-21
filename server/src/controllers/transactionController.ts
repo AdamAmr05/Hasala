@@ -196,11 +196,30 @@ export const getAnalytics = async (req: AuthRequest, res: Response) => {
       { $sort: { total: -1 } }
     ]);
 
+    // 5. Income Breakdown
+    const incomeBreakdown = await Transaction.aggregate([
+      {
+        $match: {
+          user: userId,
+          type: 'INCOME',
+          date: dateFilter
+        }
+      },
+      {
+        $group: {
+          _id: '$category',
+          total: { $sum: '$amount' }
+        }
+      },
+      { $sort: { total: -1 } }
+    ]);
+
     res.status(200).json({
       totals,
       categoryBreakdown,
       dailyTrend,
-      peopleBreakdown
+      peopleBreakdown,
+      incomeBreakdown
     });
   } catch (error) {
     res.status(500).json({ message: (error as Error).message });

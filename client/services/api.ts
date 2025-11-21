@@ -140,6 +140,7 @@ export interface AnalyticsResponse {
   categoryBreakdown: Array<{ _id: string; total: number }>;
   dailyTrend: Array<{ _id: string; total: number }>;
   peopleBreakdown: Array<{ _id: string; total: number }>;
+  incomeBreakdown: Array<{ _id: string; total: number }>;
 }
 
 export const chatApi = {

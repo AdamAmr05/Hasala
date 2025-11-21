@@ -11,6 +11,8 @@ import {
   ShoppingBag, Coffee, Home, Car, Zap, MoreHorizontal, HandHeart
 } from 'lucide-react';
 
+import IncomeOverview from './Tools/IncomeOverview';
+
 interface ChatWidgetProps {
   type: string;
   transactions: Transaction[];
@@ -404,6 +406,22 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
             </div>
           ))}
         </div>
+      </motion.div>
+    );
+  }
+
+  // 7. Income Overview Widget
+  if (type === 'renderIncomeOverview') {
+    const incomeSources = propsData?.incomeSources || [];
+    const totalIncome = propsData?.totalIncome || 0;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="my-3"
+      >
+        <IncomeOverview incomeSources={incomeSources} totalIncome={totalIncome} />
       </motion.div>
     );
   }
