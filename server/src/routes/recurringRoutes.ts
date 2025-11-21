@@ -1,18 +1,22 @@
 import express from 'express';
-import { protect } from '../middleware/authMiddleware';
 import {
-    getRecurringExpenses,
-    addRecurringExpense,
-    deleteRecurringExpense,
+    getRecurringTransactions,
+    addRecurringTransaction,
+    deleteRecurringTransaction,
+    rewindRecurringTransaction,
 } from '../controllers/recurringController';
+import { protect } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
 router.route('/')
-    .get(protect, getRecurringExpenses)
-    .post(protect, addRecurringExpense);
+    .get(protect, getRecurringTransactions)
+    .post(protect, addRecurringTransaction);
 
 router.route('/:id')
-    .delete(protect, deleteRecurringExpense);
+    .delete(protect, deleteRecurringTransaction);
+
+router.route('/:id/rewind')
+    .post(protect, rewindRecurringTransaction);
 
 export default router;

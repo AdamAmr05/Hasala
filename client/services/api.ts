@@ -171,21 +171,35 @@ type ParsedTransactionResponse = Partial<{
   relatedPerson: string;
 }>;
 
-export interface RecurringExpense {
+export interface RecurringTransaction {
   _id: string;
+  user: string;
   amount: number;
   description: string;
   category: Category;
+  type: TransactionType;
   dayOfMonth: number;
-  lastInjected: string;
+  lastInjected: Date;
   isActive: boolean;
 }
 
 export const recurringApi = {
-  getAll: () => api.get<RecurringExpense[]>('/recurring').then((res) => res.data),
-  create: (payload: { amount: number; description: string; category: Category; dayOfMonth: number }) =>
-    api.post<RecurringExpense>('/recurring', payload).then((res) => res.data),
-  remove: (id: string) => api.delete(`/recurring/${id}`),
+  getAll: async () => {
+    const response = await api.get<RecurringTransaction[]>('/recurring');
+    return response.data;
+  },
+  create: async (data: { amount: number; description: string; category: Category; type: TransactionType; dayOfMonth: number }) => {
+    const response = await api.post<RecurringTransaction>('/recurring', data);
+    return response.data;
+  },
+  remove: async (id: string) => {
+    const response = await api.delete(`/recurring/${id}`);
+    return response.data;
+  },
+  rewind: async (id: string) => {
+    const response = await api.post(`/recurring/${id}/rewind`);
+    return response.data;
+  },
 };
 
 export const aiApi = {
