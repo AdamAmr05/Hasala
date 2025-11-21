@@ -7,11 +7,18 @@ interface AuthRequest extends Request {
   user?: IUser;
 }
 
+import { checkAndInjectRecurring } from './recurringController';
+
 // @desc    Get all transactions
 // @route   GET /api/transactions
 // @access  Private
 export const getTransactions = async (req: AuthRequest, res: Response) => {
   try {
+    // Lazy Injection: Check for missed recurring expenses before fetching
+    if (req.user?._id) {
+      await checkAndInjectRecurring(req.user._id.toString());
+    }
+
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const month = parseInt(req.query.month as string); // 0-11

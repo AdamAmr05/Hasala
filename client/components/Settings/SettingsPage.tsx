@@ -14,6 +14,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../services/api';
+import RecurringExpensesList from './RecurringExpensesList';
 
 interface SettingsPageProps {
     user: { name: string; email: string; avatar?: string; budget?: number } | null;
@@ -21,7 +22,7 @@ interface SettingsPageProps {
     onBack?: () => void; // Optional now
 }
 
-const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout }) => {
+const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout, onBack }) => {
     const navigate = useNavigate();
     const [budget, setBudget] = useState(user?.budget?.toString() || '0');
     const [isEditingBudget, setIsEditingBudget] = useState(false);
@@ -56,7 +57,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout }) => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-24">
+        <div className="min-h-screen bg-[#F2F2F7] pb-20">
             {/* Header */}
             <div className="bg-white px-6 pt-12 pb-4 flex items-center gap-4 sticky top-0 z-10 shadow-sm">
                 <button
@@ -125,6 +126,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout }) => {
                             )}
                         </div>
                     </div>
+                </motion.div>
+
+                {/* Recurring Expenses Section */}
+                <motion.div variants={itemVariants}>
+                    <RecurringExpensesList />
                 </motion.div>
 
                 {/* Family Sync (Placeholder) */}

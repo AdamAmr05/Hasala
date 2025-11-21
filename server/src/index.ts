@@ -10,7 +10,7 @@ import aiRoutes from './routes/aiRoutes';
 import connectDB from './config/db';
 
 // Load env vars
-dotenv.config(); 
+dotenv.config();
 // Also try loading .env.local for local development overrides
 dotenv.config({ path: '.env.local' });
 dotenv.config({ path: '../.env.local' }); // Check root directory
@@ -45,11 +45,14 @@ app.use(cookieParser());
 // Database Connection
 connectDB();
 
+import recurringRoutes from './routes/recurringRoutes';
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/recurring', recurringRoutes);
 
 app.get('/', (req, res) => {
   res.send('Hasala API is running...');
