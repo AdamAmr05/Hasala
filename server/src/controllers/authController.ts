@@ -4,7 +4,7 @@ import User, { IUser } from '../models/User';
 import { AuthRequest } from '../middleware/authMiddleware';
 
 const generateToken = (res: Response, userId: string) => {
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET || 'default_secret', {
+  const token = jwt.sign({ userId }, process.env.JWT_SECRET!, {
     expiresIn: '30d',
   });
 

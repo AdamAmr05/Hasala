@@ -16,7 +16,7 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
 
   if (token) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret') as JwtPayload;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
 
       const user = await User.findById(decoded.userId).select('-password');
       if (user) {
