@@ -17,5 +17,6 @@ export interface ChatRequestBody {
   message: string;
   history?: ChatMessage[];
   threadId?: string;
+  clientTimestamp?: string;
 }
 

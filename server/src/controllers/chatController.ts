@@ -5,6 +5,7 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { ChatRequestBody, ChatSender, ToolCall } from '../types/chat';
 import ChatThread from '../models/ChatThread';
 import ChatMessage from '../models/ChatMessage';
+import RecurringExpense from '../models/RecurringExpense';
 import {
   MODEL_NAME,
   TRANSACTION_SCHEMA,
@@ -24,6 +25,7 @@ const buildSystemInstruction = (
   peopleStats: string = '',
   realTotalSpent: number = 0,
   realTotalIncome: number = 0,
+  upcomingLiabilities: string = '',
 ) => {
   // 1. Basic Totals
   const expenses = transactions.filter((t) => t.type === TransactionType.EXPENSE);
@@ -84,6 +86,7 @@ RICH CONTEXT (Use this to give specific advice):
 - Top Spending: ${topCategoryName} (${topCategoryAmount.toLocaleString()} EGP)
 - Daily Average: ~${Math.round(dailyAverage)} EGP/day
 - End-of-Month Projection: ${Math.round(projectedTotal).toLocaleString()} EGP (Limit: ${effectiveBudget.toLocaleString()})
+- Upcoming Recurring Bills (This Month): ${upcomingLiabilities || 'None'}
 - ${peopleContext}
 
 INSTRUCTIONS:
@@ -125,6 +128,7 @@ const mapHistoryToContents = (history: ChatRequestBody['history'] = []): Content
 const executeToolCalls = async (
   toolCalls: ToolCall[],
   userId: string,
+  clientTimestamp?: string,
 ): Promise<{ toolCalls: ToolCall[]; createdTransactions: ITransaction[] }> => {
   if (!toolCalls.length) {
     return { toolCalls, createdTransactions: [] };
@@ -156,7 +160,7 @@ const executeToolCalls = async (
       description,
       category,
       type,
-      date: providedDate ? new Date(providedDate) : new Date(),
+      date: providedDate ? new Date(providedDate) : (clientTimestamp ? new Date(clientTimestamp) : new Date()),
       isRecurring: Boolean(args.isRecurring),
       relatedPerson,
     });
@@ -173,7 +177,7 @@ const executeToolCalls = async (
 
 export const chatWithAI = async (req: AuthRequest, res: Response) => {
   try {
-    const { message, history, threadId }: ChatRequestBody = req.body;
+    const { message, history, threadId, clientTimestamp }: ChatRequestBody = req.body;
 
     if (!message) {
       return res.status(400).json({ message: 'Message is required.' });
@@ -216,6 +220,21 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
     const peopleStats = Object.entries(peopleMap)
       .map(([name, total]) => `${name}: ${total} EGP`)
       .join(', ');
+
+    // Calculate Upcoming Recurring Expenses
+    const recurringExpenses = await RecurringExpense.find({ user: req.user._id, isActive: true });
+    const today = new Date();
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    const upcomingBills = recurringExpenses.filter(expense => {
+      // Check if the due day is still to come this month (or is today)
+      return expense.dayOfMonth >= today.getDate();
+    });
+
+    const upcomingLiabilitiesTotal = upcomingBills.reduce((sum, exp) => sum + exp.amount, 0);
+    const upcomingLiabilitiesText = upcomingBills.length > 0
+      ? `${upcomingLiabilitiesTotal.toLocaleString()} EGP (${upcomingBills.map(b => `${b.description}: ${b.amount}`).join(', ')})`
+      : '';
 
     // --- PERSISTENCE START ---
     let currentThreadId = threadId;
@@ -310,7 +329,8 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
           req.user.budget,
           peopleStats,
           totalSpentReal,
-          totalIncomeReal
+          totalIncomeReal,
+          upcomingLiabilitiesText
         ),
         tools: [
           {
@@ -376,7 +396,7 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
           };
         }) || [];
 
-    const { toolCalls, createdTransactions } = await executeToolCalls(rawToolCalls, req.user._id.toString());
+    const { toolCalls, createdTransactions } = await executeToolCalls(rawToolCalls, req.user._id.toString(), clientTimestamp);
 
     // --- PERSISTENCE START ---
     // Save AI Response

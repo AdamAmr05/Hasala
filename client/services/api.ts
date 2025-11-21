@@ -8,6 +8,8 @@ import {
   User,
 } from '../types';
 
+export { Category, TransactionType }; // Re-export for convenience
+
 export interface ChatThread {
   _id: string;
   title: string;
@@ -150,6 +152,7 @@ export const chatApi = {
           sender: msg.sender,
           text: msg.text,
         })),
+        clientTimestamp: new Date().toISOString(),
       })
       .then((res) => ({
         ...res.data,
@@ -167,6 +170,24 @@ type ParsedTransactionResponse = Partial<{
   type: TransactionType;
   relatedPerson: string;
 }>;
+
+export interface RecurringExpense {
+  _id: string;
+  amount: number;
+  description: string;
+  category: Category;
+  dayOfMonth: number;
+  lastInjected: string;
+  isActive: boolean;
+}
+
+export const recurringApi = {
+  getAll: () => api.get<RecurringExpense[]>('/recurring').then((res) => res.data),
+  create: (payload: { amount: number; description: string; category: Category; dayOfMonth: number }) =>
+    api.post<RecurringExpense>('/recurring', payload).then((res) => res.data),
+  remove: (id: string) => api.delete(`/recurring/${id}`),
+  resetLastInjected: (id: string) => api.post(`/recurring/${id}/test-reset`),
+};
 
 export const aiApi = {
   parseText: (input: string) =>

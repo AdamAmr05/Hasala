@@ -100,9 +100,11 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                onDeleteThread(thread._id);
+                                                if (window.confirm('Are you sure you want to delete this chat?')) {
+                                                    onDeleteThread(thread._id);
+                                                }
                                             }}
-                                            className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                                            className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                                         >
                                             <Trash2 size={14} />
                                         </button>
