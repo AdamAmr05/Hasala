@@ -3,6 +3,7 @@ import SplitGroup from '../models/SplitGroup';
 import GroupExpense from '../models/GroupExpense';
 import { AuthRequest } from '../middleware/authMiddleware';
 import mongoose from 'mongoose';
+import { toCents, fromCents } from '../utils/currency';
 
 // Create a new group
 export const createGroup = async (req: AuthRequest, res: Response) => {
@@ -61,13 +62,23 @@ export const getGroupDetails = async (req: AuthRequest, res: Response) => {
             .populate('payer', 'name')
             .sort({ date: -1 });
 
-        // Calculate balances
+        // Transform expenses to decimal format for frontend
+        const decimalExpenses = expenses.map((exp: any) => ({
+            ...exp.toObject(),
+            amount: fromCents(exp.amount),
+            splitDetails: exp.splitDetails.map((split: any) => ({
+                ...split,
+                amount: fromCents(split.amount)
+            }))
+        }));
+
+        // Calculate balances (using integers)
         const balances: { [key: string]: number } = {};
         group.members.forEach((m: any) => balances[m.user._id.toString()] = 0);
 
         expenses.forEach((exp: any) => {
             const payerId = exp.payer._id.toString();
-            const amount = exp.amount;
+            const amount = exp.amount; // Already in cents in DB
 
             // Payer gets positive balance (owed money)
             balances[payerId] = (balances[payerId] || 0) + amount;
@@ -79,10 +90,21 @@ export const getGroupDetails = async (req: AuthRequest, res: Response) => {
             });
         });
 
-        // Calculate simplified debts
-        const debts = simplifyDebts(balances);
+        // Calculate simplified debts (returns values in cents)
+        const debtsCents = simplifyDebts(balances);
 
-        res.json({ group, expenses, balances, debts });
+        // Convert debts and balances to decimals for frontend
+        const debts = debtsCents.map(d => ({
+            ...d,
+            amount: fromCents(d.amount)
+        }));
+
+        const decimalBalances: { [key: string]: number } = {};
+        Object.keys(balances).forEach(key => {
+            decimalBalances[key] = fromCents(balances[key]);
+        });
+
+        res.json({ group, expenses: decimalExpenses, balances: decimalBalances, debts });
     } catch (error) {
         res.status(500).json({ message: (error as Error).message });
     }
@@ -114,36 +136,58 @@ export const addExpense = async (req: AuthRequest, res: Response) => {
         const isMember = group.members.some((m: any) => m.user.toString() === (req.user as any)._id.toString());
         if (!isMember) return res.status(403).json({ message: 'Forbidden' });
 
+        // Convert to cents
+        const amountCents = toCents(amount);
+        const splitDetailsCents = splitDetails.map((s: any) => ({
+            ...s,
+            amount: toCents(s.amount)
+        }));
+
         // Validate split details
         const memberIds = new Set(group.members.map((m: any) => m.user.toString()));
-        let totalSplit = 0;
+        let totalSplitCents = 0;
 
-        for (const split of splitDetails) {
+        for (const split of splitDetailsCents) {
             if (!split.user || typeof split.amount !== 'number' || split.amount < 0) {
                 return res.status(400).json({ message: 'Invalid split entry' });
             }
             if (!memberIds.has(split.user)) {
                 return res.status(400).json({ message: `User ${split.user} is not a member of this group` });
             }
-            totalSplit += split.amount;
+            totalSplitCents += split.amount;
         }
 
-        // Validate total (allow small floating point error)
-        if (!isSettlement && Math.abs(totalSplit - amount) > 0.1) {
-            return res.status(400).json({ message: `Split amounts (${totalSplit}) do not match total (${amount})` });
+        // Validate total (Exact integer match)
+        // For settlements, we don't strictly enforce sum matching because one person pays 100% of the debt
+        if (!isSettlement && totalSplitCents !== amountCents) {
+            // Check if difference is just rounding error (within 1 cent per person involved?)
+            // Actually, frontend should handle remainder. We expect exact match now.
+            return res.status(400).json({
+                message: `Split amounts (${fromCents(totalSplitCents)}) do not match total (${fromCents(amountCents)})`
+            });
         }
 
         const expense = await GroupExpense.create({
             groupId: id,
             payer: payer || req.user._id,
-            amount,
+            amount: amountCents, // Store in cents
             description,
             date: date || new Date(),
-            splitDetails,
+            splitDetails: splitDetailsCents, // Store in cents
             isSettlement: isSettlement || false
         });
 
-        res.status(201).json(expense);
+        // Return decimal version
+        const expenseDecimal = {
+            ...expense.toObject(),
+            amount: fromCents(expense.amount),
+            splitDetails: expense.splitDetails.map((s: any) => ({
+                ...s,
+                amount: fromCents(s.amount)
+            }))
+        };
+
+        res.status(201).json(expenseDecimal);
     } catch (error) {
         res.status(400).json({ message: (error as Error).message });
     }
@@ -181,14 +225,14 @@ export const joinGroup = async (req: AuthRequest, res: Response) => {
     }
 };
 
-// Helper: Simplify Debts (Greedy Algorithm)
+// Helper: Simplify Debts (Greedy Algorithm) - Uses Integers
 const simplifyDebts = (balances: { [key: string]: number }) => {
     const debtors: { user: string, amount: number }[] = [];
     const creditors: { user: string, amount: number }[] = [];
 
     Object.entries(balances).forEach(([user, amount]) => {
-        if (amount < -0.01) debtors.push({ user, amount: -amount }); // Store positive debt
-        if (amount > 0.01) creditors.push({ user, amount });
+        if (amount < 0) debtors.push({ user, amount: -amount }); // Store positive debt
+        if (amount > 0) creditors.push({ user, amount });
     });
 
     // Sort by amount descending to minimize transactions
@@ -203,17 +247,19 @@ const simplifyDebts = (balances: { [key: string]: number }) => {
         const debtor = debtors[i];
         const creditor = creditors[j];
 
+        // Match amounts
         const amount = Math.min(debtor.amount, creditor.amount);
 
-        if (amount > 0.01) {
+        if (amount > 0) {
             debts.push({ from: debtor.user, to: creditor.user, amount });
         }
 
         debtor.amount -= amount;
         creditor.amount -= amount;
 
-        if (debtor.amount < 0.01) i++;
-        if (creditor.amount < 0.01) j++;
+        // In integer math, check for 0 directly
+        if (debtor.amount === 0) i++;
+        if (creditor.amount === 0) j++;
     }
 
     return debts;
