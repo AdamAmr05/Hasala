@@ -19,15 +19,29 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
     const [selectedMembers, setSelectedMembers] = useState<string[]>(group.members.map((m: any) => m.user._id));
     const [isSettlement, setIsSettlement] = useState(false);
 
+    // Helper to calculate equal splits with penny allocation
+    const calculateEqualSplits = (total: number, members: string[]) => {
+        const count = members.length;
+        if (count === 0) return {};
+
+        const totalCents = Math.round(total * 100);
+        const baseShareCents = Math.floor(totalCents / count);
+        const remainderCents = totalCents % count;
+
+        const newSplits: { [key: string]: number } = {};
+        members.forEach((id, index) => {
+            // Distribute remainder to the first 'remainderCents' users
+            const shareCents = baseShareCents + (index < remainderCents ? 1 : 0);
+            newSplits[id] = Number((shareCents / 100).toFixed(2));
+        });
+        return newSplits;
+    };
+
     // Handle Split Method Change
     useEffect(() => {
         if (splitMethod === 'EQUAL') {
             const totalAmount = parseFloat(amount) || 0;
-            const count = selectedMembers.length;
-            const val = count > 0 ? totalAmount / count : 0;
-            const newSplits: any = {};
-            selectedMembers.forEach(id => newSplits[id] = val);
-            setSplits(newSplits);
+            setSplits(calculateEqualSplits(totalAmount, selectedMembers));
         } else if (splitMethod === 'EXACT') {
             // Reset to 0s for Exact to avoid confusion
             const newSplits: any = {};
@@ -47,11 +61,7 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
     useEffect(() => {
         if (splitMethod === 'EQUAL') {
             const totalAmount = parseFloat(amount) || 0;
-            const count = selectedMembers.length;
-            const val = count > 0 ? totalAmount / count : 0;
-            const newSplits: any = {};
-            selectedMembers.forEach(id => newSplits[id] = val);
-            setSplits(newSplits);
+            setSplits(calculateEqualSplits(totalAmount, selectedMembers));
         } else if (splitMethod === 'EXACT') {
             // Preserve existing values, add 0 for new members
             setSplits(prev => {
@@ -80,11 +90,7 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
     useEffect(() => {
         if (splitMethod === 'EQUAL') {
             const totalAmount = parseFloat(amount) || 0;
-            const count = selectedMembers.length;
-            const val = count > 0 ? totalAmount / count : 0;
-            const newSplits: any = {};
-            selectedMembers.forEach(id => newSplits[id] = val);
-            setSplits(newSplits);
+            setSplits(calculateEqualSplits(totalAmount, selectedMembers));
         }
     }, [amount]);
 

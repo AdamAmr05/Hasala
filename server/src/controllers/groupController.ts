@@ -160,10 +160,9 @@ export const addExpense = async (req: AuthRequest, res: Response) => {
         // Validate total (Exact integer match)
         // For settlements, we don't strictly enforce sum matching because one person pays 100% of the debt
         if (!isSettlement && totalSplitCents !== amountCents) {
-            // Check if difference is just rounding error (within 1 cent per person involved?)
-            // Actually, frontend should handle remainder. We expect exact match now.
+            const diff = totalSplitCents - amountCents;
             return res.status(400).json({
-                message: `Split amounts (${fromCents(totalSplitCents)}) do not match total (${fromCents(amountCents)})`
+                message: `Split amounts sum to ${fromCents(totalSplitCents)}, but total is ${fromCents(amountCents)}. Difference: ${fromCents(diff)}`
             });
         }
 
