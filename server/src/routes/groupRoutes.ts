@@ -5,7 +5,8 @@ import {
     getUserGroups,
     getGroupDetails,
     addExpense,
-    joinGroup
+    joinGroup,
+    getGroupExpenses
 } from '../controllers/groupController';
 
 const router = express.Router();
@@ -18,6 +19,8 @@ router.post('/join', protect, joinGroup);
 
 router.route('/:id')
     .get(protect, getGroupDetails);
+
+router.get('/:id/expenses', protect, getGroupExpenses);
 
 router.post('/:id/expenses', protect, addExpense);
 
