@@ -12,9 +12,19 @@ export const createGroup = async (req: AuthRequest, res: Response) => {
     try {
         const { name, currency = 'EGP' } = req.body;
 
+        // Generate unique invite code
+        let inviteCode = '';
+        let isUnique = false;
+        while (!isUnique) {
+            inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+            const existing = await SplitGroup.findOne({ inviteCode });
+            if (!existing) isUnique = true;
+        }
+
         const group = await SplitGroup.create({
             name,
             currency,
+            inviteCode,
             createdBy: req.user._id,
             members: [{ user: req.user._id, joinedAt: new Date() }]
         });
@@ -159,7 +169,7 @@ export const addExpense = async (req: AuthRequest, res: Response) => {
 
         // Validate total (Exact integer match)
         // For settlements, we don't strictly enforce sum matching because one person pays 100% of the debt
-        if (!isSettlement && totalSplitCents !== amountCents) {
+        if (totalSplitCents !== amountCents) {
             const diff = totalSplitCents - amountCents;
             return res.status(400).json({
                 message: `Split amounts sum to ${fromCents(totalSplitCents)}, but total is ${fromCents(amountCents)}. Difference: ${fromCents(diff)}`
