@@ -35,7 +35,7 @@ const SplitGroupSchema: Schema = new Schema({
     },
     currency: {
         type: String,
-        default: 'SAR',
+        default: 'EGP',
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,

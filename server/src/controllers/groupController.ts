@@ -115,10 +115,15 @@ export const addExpense = async (req: AuthRequest, res: Response) => {
         if (!isMember) return res.status(403).json({ message: 'Forbidden' });
 
         // Validate split details
+        const memberIds = new Set(group.members.map((m: any) => m.user.toString()));
         let totalSplit = 0;
+
         for (const split of splitDetails) {
             if (!split.user || typeof split.amount !== 'number' || split.amount < 0) {
                 return res.status(400).json({ message: 'Invalid split entry' });
+            }
+            if (!memberIds.has(split.user)) {
+                return res.status(400).json({ message: `User ${split.user} is not a member of this group` });
             }
             totalSplit += split.amount;
         }

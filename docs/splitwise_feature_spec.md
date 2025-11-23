@@ -107,3 +107,15 @@ To suggest the simplest way to settle debts:
 - **Settlement UI**: A dedicated "Settle Up" button that pre-fills a payment transaction.
 - **Notifications**: Alert members when an expense is added.
 - **Activity Log**: Detailed history of changes (e.g., "Alice updated the expense").
+
+### 5. Security & Validation
+- **Authentication**: All routes protected by `protect` middleware.
+- **Authorization**: Explicit checks for group membership in controller.
+- **Input Validation**:
+  - Amounts must be positive (`min: 0.01`).
+  - Split participants must be members of the group.
+  - Split amounts must sum to total (within 0.1 tolerance).
+- **Frontend Safety**:
+  - Safe access for avatars (`name[0]`).
+  - Graceful handling of auth failures.
+  - Strict TypeScript interfaces.
