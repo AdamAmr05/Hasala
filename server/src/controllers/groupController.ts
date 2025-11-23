@@ -1,238 +1,215 @@
 import { Request, Response } from 'express';
-import mongoose from 'mongoose';
 import SplitGroup from '../models/SplitGroup';
 import GroupExpense from '../models/GroupExpense';
-import { IUser } from '../models/User';
-import crypto from 'crypto';
+import { AuthRequest } from '../middleware/authMiddleware';
+import mongoose from 'mongoose';
 
-interface AuthRequest extends Request {
-    user?: IUser;
-}
-
-// @desc    Create a new split group
-// @route   POST /api/groups
-// @access  Private
+// Create a new group
 export const createGroup = async (req: AuthRequest, res: Response) => {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+
     try {
-        const { name, currency } = req.body;
-
-        if (!name) {
-            res.status(400).json({ message: 'Please provide a group name' });
-            return;
-        }
-
-        const inviteCode = crypto.randomBytes(4).toString('hex').toUpperCase();
+        const { name, currency = 'EGP' } = req.body;
 
         const group = await SplitGroup.create({
             name,
-            currency: currency || 'SAR',
-            members: [{
-                user: req.user?._id,
-                joinedAt: new Date()
-            }],
-            inviteCode,
-            createdBy: req.user?._id
+            currency,
+            createdBy: req.user._id,
+            members: [{ user: req.user._id, joinedAt: new Date() }]
         });
 
         res.status(201).json(group);
     } catch (error) {
-        res.status(500).json({ message: (error as Error).message });
+        res.status(400).json({ message: (error as Error).message });
     }
 };
 
-// @desc    Get user's groups
-// @route   GET /api/groups
-// @access  Private
+// Get user's groups
 export const getUserGroups = async (req: AuthRequest, res: Response) => {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+
     try {
         const groups = await SplitGroup.find({
-            'members.user': req.user?._id
+            'members.user': req.user._id
         }).populate('members.user', 'name email avatar');
 
-        res.status(200).json(groups);
+        res.json(groups);
     } catch (error) {
         res.status(500).json({ message: (error as Error).message });
     }
 };
 
-// @desc    Get group details (expenses + balances)
-// @route   GET /api/groups/:id
-// @access  Private
+// Get group details and calculate balances
 export const getGroupDetails = async (req: AuthRequest, res: Response) => {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+
     try {
-        const groupId = req.params.id;
-        const group = await SplitGroup.findById(groupId)
-            .populate('members.user', 'name email avatar');
+        const { id } = req.params;
+        const group = await SplitGroup.findById(id).populate('members.user', 'name email avatar');
 
         if (!group) {
-            res.status(404).json({ message: 'Group not found' });
-            return;
+            return res.status(404).json({ message: 'Group not found' });
         }
 
         // Check membership
-        const isMember = group.members.some(
-            m => (m.user as any)._id.toString() === req.user?._id.toString()
-        );
-
+        const isMember = group.members.some((m: any) => m.user._id.toString() === (req.user as any)._id.toString());
         if (!isMember) {
-            res.status(401).json({ message: 'Not authorized' });
-            return;
+            return res.status(403).json({ message: 'Forbidden' });
         }
 
-        const expenses = await GroupExpense.find({ groupId })
+        const expenses = await GroupExpense.find({ groupId: id })
             .populate('payer', 'name')
-            .populate('splitDetails.user', 'name')
             .sort({ date: -1 });
 
-        // Calculate Balances
+        // Calculate balances
         const balances: { [key: string]: number } = {};
+        group.members.forEach((m: any) => balances[m.user._id.toString()] = 0);
 
-        // Init balances
-        group.members.forEach(m => {
-            balances[(m.user as any)._id.toString()] = 0;
+        expenses.forEach((exp: any) => {
+            const payerId = exp.payer._id.toString();
+            const amount = exp.amount;
+
+            // Payer gets positive balance (owed money)
+            balances[payerId] = (balances[payerId] || 0) + amount;
+
+            // Splitters get negative balance (owe money)
+            exp.splitDetails.forEach((split: any) => {
+                const userId = split.user.toString();
+                balances[userId] = (balances[userId] || 0) - split.amount;
+            });
         });
 
-        expenses.forEach(exp => {
-            const payerId = (exp.payer as any)._id.toString();
+        // Calculate simplified debts
+        const debts = simplifyDebts(balances);
 
-            if (exp.isSettlement) {
-                // Settlement: Payer gave money to Receiver.
-                // Receiver is the first person in splitDetails.
-                // Payer's balance increases (they are owed more/owe less)
-                // Receiver's balance decreases (they are owed less/owe more)
-                if (exp.splitDetails.length > 0) {
-                    const receiverId = (exp.splitDetails[0].user as any)._id.toString();
-                    balances[payerId] = (balances[payerId] || 0) + exp.amount;
-                    balances[receiverId] = (balances[receiverId] || 0) - exp.amount;
-                }
-            } else {
-                // Expense: Payer paid full amount.
-                balances[payerId] = (balances[payerId] || 0) + exp.amount;
-
-                // Subtract split amounts
-                exp.splitDetails.forEach(split => {
-                    const debtorId = (split.user as any)._id.toString();
-                    balances[debtorId] = (balances[debtorId] || 0) - split.amount;
-                });
-            }
-        });
-
-        // Simplify Debts Logic
-        const debts = [];
-        const debtors = [];
-        const creditors = [];
-
-        for (const [userId, amount] of Object.entries(balances)) {
-            const rounded = Math.round(amount * 100) / 100;
-            if (rounded < -0.01) debtors.push({ userId, amount: rounded });
-            if (rounded > 0.01) creditors.push({ userId, amount: rounded });
-        }
-
-        debtors.sort((a, b) => a.amount - b.amount);
-        creditors.sort((a, b) => b.amount - a.amount);
-
-        let i = 0;
-        let j = 0;
-
-        while (i < debtors.length && j < creditors.length) {
-            const debtor = debtors[i];
-            const creditor = creditors[j];
-            const amount = Math.min(Math.abs(debtor.amount), creditor.amount);
-            const roundedAmount = Math.round(amount * 100) / 100;
-
-            if (roundedAmount > 0) {
-                debts.push({
-                    from: debtor.userId,
-                    to: creditor.userId,
-                    amount: roundedAmount
-                });
-            }
-
-            debtor.amount += amount;
-            creditor.amount -= amount;
-
-            if (Math.abs(debtor.amount) < 0.01) i++;
-            if (creditor.amount < 0.01) j++;
-        }
-
-        res.status(200).json({
-            group,
-            expenses,
-            balances,
-            debts
-        });
-
+        res.json({ group, expenses, balances, debts });
     } catch (error) {
         res.status(500).json({ message: (error as Error).message });
     }
 };
 
-// @desc    Add expense to group
-// @route   POST /api/groups/:id/expenses
-// @access  Private
+// Add expense
 export const addExpense = async (req: AuthRequest, res: Response) => {
-    try {
-        const { amount, description, splitDetails, isSettlement } = req.body;
-        const groupId = req.params.id;
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
 
-        // Validate split total matches amount (unless settlement)
-        if (!isSettlement) {
-            const totalSplit = splitDetails.reduce((acc: number, curr: any) => acc + curr.amount, 0);
-            if (Math.abs(totalSplit - amount) > 0.05) { // Allow small float error
-                res.status(400).json({ message: `Split amounts (${totalSplit}) do not match total (${amount})` });
-                return;
+    try {
+        const { id } = req.params;
+        const { description, amount, payer, splitDetails, isSettlement, date } = req.body;
+
+        // Validation
+        if (!amount || typeof amount !== 'number' || amount <= 0) {
+            return res.status(400).json({ message: 'Invalid amount' });
+        }
+        if (!description || typeof description !== 'string') {
+            return res.status(400).json({ message: 'Invalid description' });
+        }
+        if (!Array.isArray(splitDetails) || splitDetails.length === 0) {
+            return res.status(400).json({ message: 'Invalid split details' });
+        }
+
+        // Check group existence and membership
+        const group = await SplitGroup.findById(id);
+        if (!group) return res.status(404).json({ message: 'Group not found' });
+
+        const isMember = group.members.some((m: any) => m.user.toString() === (req.user as any)._id.toString());
+        if (!isMember) return res.status(403).json({ message: 'Forbidden' });
+
+        // Validate split details
+        let totalSplit = 0;
+        for (const split of splitDetails) {
+            if (!split.user || typeof split.amount !== 'number' || split.amount < 0) {
+                return res.status(400).json({ message: 'Invalid split entry' });
             }
+            totalSplit += split.amount;
+        }
+
+        // Validate total (allow small floating point error)
+        if (!isSettlement && Math.abs(totalSplit - amount) > 0.1) {
+            return res.status(400).json({ message: `Split amounts (${totalSplit}) do not match total (${amount})` });
         }
 
         const expense = await GroupExpense.create({
-            groupId,
-            payer: req.user?._id,
+            groupId: id,
+            payer: payer || req.user._id,
             amount,
             description,
+            date: date || new Date(),
             splitDetails,
-            isSettlement: isSettlement || false,
-            date: new Date()
+            isSettlement: isSettlement || false
         });
 
         res.status(201).json(expense);
     } catch (error) {
-        res.status(500).json({ message: (error as Error).message });
+        res.status(400).json({ message: (error as Error).message });
     }
 };
 
-// @desc    Join group via code
-// @route   POST /api/groups/join
-// @access  Private
+// Join group
 export const joinGroup = async (req: AuthRequest, res: Response) => {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+
     try {
         const { inviteCode } = req.body;
-        const group = await SplitGroup.findOne({ inviteCode });
+
+        if (!inviteCode || typeof inviteCode !== 'string' || !inviteCode.trim()) {
+            return res.status(400).json({ message: 'Invalid invite code' });
+        }
+
+        const group = await SplitGroup.findOne({ inviteCode: inviteCode.trim().toUpperCase() });
 
         if (!group) {
-            res.status(404).json({ message: 'Invalid code' });
-            return;
+            return res.status(404).json({ message: 'Group not found' });
         }
 
-        const isMember = group.members.some(m => m.user.toString() === req.user?._id.toString());
+        // Check if already member
+        const isMember = group.members.some((m: any) => m.user.toString() === (req.user as any)._id.toString());
         if (isMember) {
-            res.status(400).json({ message: 'Already a member' });
-            return;
+            return res.status(400).json({ message: 'Already a member' });
         }
 
-        if (!req.user?._id) {
-            res.status(401).json({ message: 'User not found' });
-            return;
-        }
-
-        group.members.push({
-            user: (req.user as any)._id,
-            joinedAt: new Date()
-        });
-
+        group.members.push({ user: req.user._id as any, joinedAt: new Date() });
         await group.save();
-        res.status(200).json(group);
 
+        res.json(group);
     } catch (error) {
-        res.status(500).json({ message: (error as Error).message });
+        res.status(400).json({ message: (error as Error).message });
     }
+};
+
+// Helper: Simplify Debts (Greedy Algorithm)
+const simplifyDebts = (balances: { [key: string]: number }) => {
+    const debtors: { user: string, amount: number }[] = [];
+    const creditors: { user: string, amount: number }[] = [];
+
+    Object.entries(balances).forEach(([user, amount]) => {
+        if (amount < -0.01) debtors.push({ user, amount: -amount }); // Store positive debt
+        if (amount > 0.01) creditors.push({ user, amount });
+    });
+
+    // Sort by amount descending to minimize transactions
+    debtors.sort((a, b) => b.amount - a.amount);
+    creditors.sort((a, b) => b.amount - a.amount);
+
+    const debts: { from: string, to: string, amount: number }[] = [];
+    let i = 0; // debtor index
+    let j = 0; // creditor index
+
+    while (i < debtors.length && j < creditors.length) {
+        const debtor = debtors[i];
+        const creditor = creditors[j];
+
+        const amount = Math.min(debtor.amount, creditor.amount);
+
+        if (amount > 0.01) {
+            debts.push({ from: debtor.user, to: creditor.user, amount });
+        }
+
+        debtor.amount -= amount;
+        creditor.amount -= amount;
+
+        if (debtor.amount < 0.01) i++;
+        if (creditor.amount < 0.01) j++;
+    }
+
+    return debts;
 };
