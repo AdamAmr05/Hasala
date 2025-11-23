@@ -44,6 +44,10 @@ const GroupView: React.FC = () => {
     const [settleDebt, setSettleDebt] = useState<Debt | null>(null);
     const [copied, setCopied] = useState(false);
 
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+
     // Get current user ID from localStorage or context (assuming stored in localStorage for now as per common pattern, or we'd need a context hook)
     // For this snippet, I'll rely on the fact that the API returns data relative to the user, but for UI highlighting I might need it.
     // Let's assume we can derive "Me" from the fact that I'm viewing it, but for "You owe X", I need my ID.
@@ -69,10 +73,33 @@ const GroupView: React.FC = () => {
             setExpenses(res.data.expenses);
             setDebts(res.data.debts);
             setBalances(res.data.balances);
+            setPage(1);
+            setHasMore(res.data.expenses.length === 10);
         } catch (error) {
             console.error('Error fetching group:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadMoreExpenses = async () => {
+        if (loadingMore || !hasMore) return;
+        setLoadingMore(true);
+        try {
+            const nextPage = page + 1;
+            const res = await axios.get(`http://localhost:5001/api/groups/${id}/expenses?page=${nextPage}`, {
+                withCredentials: true
+            });
+            const newExpenses = res.data;
+            if (newExpenses.length < 10) {
+                setHasMore(false);
+            }
+            setExpenses(prev => [...prev, ...newExpenses]);
+            setPage(nextPage);
+        } catch (error) {
+            console.error('Error loading more expenses:', error);
+        } finally {
+            setLoadingMore(false);
         }
     };
 
@@ -207,27 +234,40 @@ const GroupView: React.FC = () => {
                     {expenses.length === 0 ? (
                         <div className="p-12 text-center text-gray-400">No expenses yet.</div>
                     ) : (
-                        expenses.map(exp => (
-                            <div key={exp._id} className="p-5 flex items-center justify-between hover:bg-gray-50 transition-colors group cursor-pointer">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-sm ${exp.isSettlement ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
-                                        }`}>
-                                        {exp.isSettlement ? <Check size={20} /> : <CategoryIcon category={exp.category || 'General'} size={20} />}
+                        <>
+                            {expenses.map(exp => (
+                                <div key={exp._id} className="p-5 flex items-center justify-between hover:bg-gray-50 transition-colors group cursor-pointer">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-sm ${exp.isSettlement ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
+                                            }`}>
+                                            {exp.isSettlement ? <Check size={20} /> : <CategoryIcon category={exp.category || 'General'} size={20} />}
+                                        </div>
+                                        <div>
+                                            <h4 className="text-primary font-bold text-lg">{exp.description}</h4>
+                                            <p className="text-gray-400 text-xs font-medium mt-0.5">
+                                                <span className="text-gray-600">{exp.payer._id === myId ? 'You' : exp.payer.name}</span> paid {exp.amount.toFixed(2)}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h4 className="text-primary font-bold text-lg">{exp.description}</h4>
-                                        <p className="text-gray-400 text-xs font-medium mt-0.5">
-                                            <span className="text-gray-600">{exp.payer._id === myId ? 'You' : exp.payer.name}</span> paid {exp.amount.toFixed(2)}
-                                        </p>
+                                    <div className="text-right">
+                                        <span className="text-gray-400 text-xs font-medium bg-gray-100 px-2 py-1 rounded-lg">
+                                            {new Date(exp.date).toLocaleDateString()}
+                                        </span>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <span className="text-gray-400 text-xs font-medium bg-gray-100 px-2 py-1 rounded-lg">
-                                        {new Date(exp.date).toLocaleDateString()}
-                                    </span>
+                            ))}
+                            {hasMore && (
+                                <div className="p-4 text-center">
+                                    <button
+                                        onClick={loadMoreExpenses}
+                                        disabled={loadingMore}
+                                        className="text-primary font-bold text-sm hover:underline disabled:opacity-50"
+                                    >
+                                        {loadingMore ? 'Loading...' : 'Load More'}
+                                    </button>
                                 </div>
-                            </div>
-                        ))
+                            )}
+                        </>
                     )}
                 </div>
             </div>

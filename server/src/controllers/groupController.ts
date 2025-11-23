@@ -72,15 +72,7 @@ export const getGroupDetails = async (req: AuthRequest, res: Response) => {
             .populate('payer', 'name')
             .sort({ date: -1 });
 
-        // Transform expenses to decimal format for frontend
-        const decimalExpenses = expenses.map((exp: any) => ({
-            ...exp.toObject(),
-            amount: fromCents(exp.amount),
-            splitDetails: exp.splitDetails.map((split: any) => ({
-                ...split,
-                amount: fromCents(split.amount)
-            }))
-        }));
+
 
         // Calculate balances (using integers)
         const balances: { [key: string]: number } = {};
@@ -114,7 +106,55 @@ export const getGroupDetails = async (req: AuthRequest, res: Response) => {
             decimalBalances[key] = fromCents(balances[key]);
         });
 
-        res.json({ group, expenses: decimalExpenses, balances: decimalBalances, debts });
+        // Only return top 10 expenses for initial view
+        const recentExpenses = expenses.slice(0, 10);
+        const recentDecimalExpenses = recentExpenses.map((exp: any) => ({
+            ...exp.toObject(),
+            amount: fromCents(exp.amount),
+            splitDetails: exp.splitDetails.map((split: any) => ({
+                ...split,
+                amount: fromCents(split.amount)
+            }))
+        }));
+
+        res.json({ group, expenses: recentDecimalExpenses, balances: decimalBalances, debts });
+    } catch (error) {
+        res.status(500).json({ message: (error as Error).message });
+    }
+};
+
+// Get paginated expenses
+export const getGroupExpenses = async (req: AuthRequest, res: Response) => {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+
+    try {
+        const { id } = req.params;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const skip = (page - 1) * limit;
+
+        const group = await SplitGroup.findById(id);
+        if (!group) return res.status(404).json({ message: 'Group not found' });
+
+        const isMember = group.members.some((m: any) => m.user.toString() === (req.user as any)._id.toString());
+        if (!isMember) return res.status(403).json({ message: 'Forbidden' });
+
+        const expenses = await GroupExpense.find({ groupId: id })
+            .populate('payer', 'name')
+            .sort({ date: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const decimalExpenses = expenses.map((exp: any) => ({
+            ...exp.toObject(),
+            amount: fromCents(exp.amount),
+            splitDetails: exp.splitDetails.map((split: any) => ({
+                ...split,
+                amount: fromCents(split.amount)
+            }))
+        }));
+
+        res.json(decimalExpenses);
     } catch (error) {
         res.status(500).json({ message: (error as Error).message });
     }
