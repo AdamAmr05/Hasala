@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeft, Plus, Copy, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
 // Modal component
 import AddGroupExpenseModal from './AddGroupExpenseModal';
 import SettleUpModal from './SettleUpModal';
@@ -105,13 +106,15 @@ const GroupView: React.FC = () => {
                         </button>
                     </div>
                 </div>
-                <button
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setShowAddModal(true)}
                     className="px-4 py-3 bg-primary text-white rounded-2xl font-bold hover:bg-black/80 transition-all shadow-lg shadow-primary/20 flex items-center gap-2 text-sm"
                 >
                     <Plus size={18} />
                     Add Expense
-                </button>
+                </motion.button>
             </div>
 
             {/* Balances Summary */}

@@ -378,6 +378,18 @@ Logic: Users define recurring expenses (Rent, Netflix).
 
 Execution (Lazy Injection): Instead of a heavy cron job, the system checks for due recurring expenses whenever the user logs in or requests their dashboard. If the current date > next due date, the system creates the transaction and updates the next due date.
 
+4.5 Splitwise Feature (Group Expenses)
+
+A standalone module for managing shared expenses, inspired by Splitwise.
+
+Goal: Allow users to track debts and shared bills without polluting their personal analytics.
+
+Key Features:
+- **Isolation**: Group expenses are stored in separate collections (`SplitGroup`, `GroupExpense`) and do not affect the user's main transaction history or budget.
+- **Split Methods**: Supports Equal (with penny allocation), Exact amounts, and Percentage splits.
+- **Debt Simplification**: Uses a greedy algorithm to minimize the number of transactions needed to settle up (e.g., A owes B, B owes C -> A pays C).
+- **Settlement**: Dedicated "Settle Up" flow that records a payment transaction to zero out debts.
+
 5. Why This Approach?
 
 Cost Control: By forcing structured JSON outputs and using Flash-Lite, we minimize token usage. By gating custom prompts (categories) behind Premium, we protect margins.

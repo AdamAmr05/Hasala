@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Plus, Users, ArrowRight, Wallet, Loader2, AlertCircle } from 'lucide-react';
 import { api } from '../../services/api';
 
@@ -140,10 +141,12 @@ const GroupsPage: React.FC = () => {
             ) : (
                 <div className="grid gap-4">
                     {groups.map(group => (
-                        <div
+                        <motion.div
                             key={group._id}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                             onClick={() => navigate(`/groups/${group._id}`)}
-                            className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer group active:scale-[0.99]"
+                            className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer group"
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
@@ -164,7 +167,7 @@ const GroupsPage: React.FC = () => {
                                     <ArrowRight size={20} />
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
 
                     <button
