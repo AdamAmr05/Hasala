@@ -6,7 +6,7 @@ import CoinStack from './Dashboard/CoinStack';
 import StatsOverview from './Dashboard/StatsOverview';
 import ActivityFeed from './Dashboard/ActivityFeed';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface DashboardProps {
@@ -46,7 +46,23 @@ const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="pb-32 pt-8 space-y-8 animate-[fadeIn_0.5s_ease-out]">
       {/* Header */}
-      {/* Settings button removed as per user request */}
+      <div className="px-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-primary font-bold text-lg">
+            {user?.name?.[0] || 'U'}
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 font-bold uppercase">Welcome back,</p>
+            <h1 className="text-xl font-bold text-primary">{user?.name?.split(' ')[0] || 'User'}</h1>
+          </div>
+        </div>
+        <button
+          onClick={onSettingsClick}
+          className="w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-400 hover:text-primary hover:bg-gray-50 transition-all"
+        >
+          <Settings size={20} />
+        </button>
+      </div>
 
       {/* Month Navigation */}
       <div className="px-6 flex items-center justify-between">

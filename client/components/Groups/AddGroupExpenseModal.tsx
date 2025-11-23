@@ -19,12 +19,10 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
     const [selectedMembers, setSelectedMembers] = useState<string[]>(group.members.map((m: any) => m.user._id));
     const [isSettlement, setIsSettlement] = useState(false);
 
-    // Initialize splits logic
+    // Handle Split Method Change
     useEffect(() => {
-        const totalAmount = parseFloat(amount) || 0;
-
         if (splitMethod === 'EQUAL') {
-            // Distribute equally among selected members
+            const totalAmount = parseFloat(amount) || 0;
             const count = selectedMembers.length;
             const val = count > 0 ? totalAmount / count : 0;
             const newSplits: any = {};
@@ -36,14 +34,47 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
             selectedMembers.forEach(id => newSplits[id] = 0);
             setSplits(newSplits);
         } else if (splitMethod === 'PERCENT') {
-            // Default to equal percentages if switching to percent
+            // Default to equal percentages
             const count = selectedMembers.length;
             const val = count > 0 ? 100 / count : 0;
             const newSplits: any = {};
             selectedMembers.forEach(id => newSplits[id] = val);
             setSplits(newSplits);
         }
-    }, [splitMethod, selectedMembers.length]); // Removed amount dependency to prevent auto-update on amount change for Exact
+    }, [splitMethod]);
+
+    // Handle Member Selection Change
+    useEffect(() => {
+        if (splitMethod === 'EQUAL') {
+            const totalAmount = parseFloat(amount) || 0;
+            const count = selectedMembers.length;
+            const val = count > 0 ? totalAmount / count : 0;
+            const newSplits: any = {};
+            selectedMembers.forEach(id => newSplits[id] = val);
+            setSplits(newSplits);
+        } else if (splitMethod === 'EXACT') {
+            // Preserve existing values, add 0 for new members
+            setSplits(prev => {
+                const newSplits: any = { ...prev };
+                // Remove deselected
+                Object.keys(newSplits).forEach(id => {
+                    if (!selectedMembers.includes(id)) delete newSplits[id];
+                });
+                // Add new
+                selectedMembers.forEach(id => {
+                    if (newSplits[id] === undefined) newSplits[id] = 0;
+                });
+                return newSplits;
+            });
+        } else if (splitMethod === 'PERCENT') {
+            // Recalculate equal percentages for simplicity when members change
+            const count = selectedMembers.length;
+            const val = count > 0 ? 100 / count : 0;
+            const newSplits: any = {};
+            selectedMembers.forEach(id => newSplits[id] = val);
+            setSplits(newSplits);
+        }
+    }, [selectedMembers]);
 
     // Update Equal splits when amount changes
     useEffect(() => {
@@ -55,7 +86,7 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
             selectedMembers.forEach(id => newSplits[id] = val);
             setSplits(newSplits);
         }
-    }, [amount, splitMethod, selectedMembers.length]);
+    }, [amount]);
 
     // Handle manual split changes (Exact or Percent)
     const handleSplitChange = (userId: string, val: string) => {
@@ -151,14 +182,19 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
                     <div>
                         <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Amount</label>
                         <div className="relative">
-                            <span className="absolute left-5 top-4 text-gray-400 text-lg font-bold">EGP</span>
+                            <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-lg font-bold">EGP</span>
                             <input
-                                type="number"
+                                type="text"
+                                inputMode="decimal"
                                 value={amount}
-                                onChange={e => setAmount(e.target.value)}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-16 pr-5 py-4 text-primary text-2xl font-bold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    if (/^\d*\.?\d{0,2}$/.test(val)) {
+                                        setAmount(val);
+                                    }
+                                }}
+                                className="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-16 pr-5 py-4 text-primary text-2xl font-bold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
                                 placeholder="0.00"
-                                onWheel={(e) => e.currentTarget.blur()}
                             />
                         </div>
                     </div>
@@ -189,20 +225,31 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
                     </div>
 
                     {/* Feedback for Exact/Percent */}
-                    {splitMethod === 'EXACT' && totalAmount > 0 && Math.abs(remaining) > 0.01 && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            className={`text-center text-sm font-bold ${remaining > 0 ? 'text-orange-500' : 'text-red-500'}`}
-                        >
-                            {remaining > 0 ? `${remaining.toFixed(2)} EGP left to split` : `${Math.abs(remaining).toFixed(2)} EGP over total`}
-                        </motion.div>
-                    )}
-                    {splitMethod === 'PERCENT' && Math.abs(remainingPercent) > 0.1 && (
-                        <div className={`text-center text-sm font-bold ${remainingPercent > 0 ? 'text-orange-500' : 'text-red-500'}`}>
-                            {remainingPercent > 0 ? `${remainingPercent.toFixed(1)}% left to split` : `${Math.abs(remainingPercent).toFixed(1)}% over total`}
-                        </div>
-                    )}
+                    {/* Feedback for Exact/Percent */}
+                    <AnimatePresence mode="wait">
+                        {splitMethod === 'EXACT' && totalAmount > 0 && Math.abs(remaining) > 0.01 && (
+                            <motion.div
+                                key="exact-error"
+                                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
+                                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                className={`text-center text-sm font-bold overflow-hidden ${remaining > 0 ? 'text-orange-500' : 'text-red-500'}`}
+                            >
+                                {remaining > 0 ? `${remaining.toFixed(2)} EGP left to split` : `${Math.abs(remaining).toFixed(2)} EGP over total`}
+                            </motion.div>
+                        )}
+                        {splitMethod === 'PERCENT' && Math.abs(remainingPercent) > 0.1 && (
+                            <motion.div
+                                key="percent-error"
+                                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
+                                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                className={`text-center text-sm font-bold overflow-hidden ${remainingPercent > 0 ? 'text-orange-500' : 'text-red-500'}`}
+                            >
+                                {remainingPercent > 0 ? `${remainingPercent.toFixed(1)}% left to split` : `${Math.abs(remainingPercent).toFixed(1)}% over total`}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     {/* Members List */}
                     <div className="space-y-3 mt-4">
@@ -228,37 +275,51 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
                                             initial={{ opacity: 0, width: 0 }}
                                             animate={{ opacity: 1, width: 'auto' }}
                                             exit={{ opacity: 0, width: 0 }}
-                                            className="flex items-center gap-2 overflow-hidden"
+                                            className="flex items-center gap-2 overflow-hidden h-[42px]"
                                         >
                                             {splitMethod === 'EQUAL' && (
-                                                <span className="text-gray-500 font-medium whitespace-nowrap">
-                                                    {amount ? (parseFloat(amount) / selectedMembers.length).toFixed(2) : '0.00'} EGP
-                                                </span>
+                                                <div className="flex items-center h-full px-3">
+                                                    <span className="text-gray-500 font-medium whitespace-nowrap">
+                                                        {amount ? (parseFloat(amount) / selectedMembers.length).toFixed(2) : '0.00'} EGP
+                                                    </span>
+                                                </div>
                                             )}
 
                                             {splitMethod === 'EXACT' && (
-                                                <div className="relative w-28 shrink-0">
-                                                    <span className="absolute left-3 top-2.5 text-gray-400 text-sm font-bold">EGP</span>
+                                                <div className="relative w-24 shrink-0 h-full">
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">EGP</span>
                                                     <input
-                                                        type="number"
+                                                        type="text"
+                                                        inputMode="decimal"
                                                         value={splits[m.user._id] || ''}
-                                                        onChange={e => handleSplitChange(m.user._id, e.target.value)}
-                                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-3 py-2 text-primary font-bold text-right focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+                                                        onChange={e => {
+                                                            const val = e.target.value;
+                                                            if (/^\d*\.?\d{0,2}$/.test(val)) {
+                                                                handleSplitChange(m.user._id, val);
+                                                            }
+                                                        }}
+                                                        className="w-full h-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-2 text-primary font-bold text-right focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all text-sm"
                                                         placeholder="0.00"
                                                     />
                                                 </div>
                                             )}
 
                                             {splitMethod === 'PERCENT' && (
-                                                <div className="relative w-24 shrink-0">
+                                                <div className="relative w-24 shrink-0 h-full">
                                                     <input
-                                                        type="number"
+                                                        type="text"
+                                                        inputMode="decimal"
                                                         value={splits[m.user._id] || ''}
-                                                        onChange={e => handleSplitChange(m.user._id, e.target.value)}
-                                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-3 pr-7 py-2 text-primary font-bold text-right focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+                                                        onChange={e => {
+                                                            const val = e.target.value;
+                                                            if (/^\d*\.?\d{0,1}$/.test(val)) {
+                                                                handleSplitChange(m.user._id, val);
+                                                            }
+                                                        }}
+                                                        className="w-full h-full bg-gray-50 border border-gray-200 rounded-xl pl-3 pr-7 text-primary font-bold text-right focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all text-sm"
                                                         placeholder="0"
                                                     />
-                                                    <span className="absolute right-3 top-2.5 text-gray-400 text-sm font-bold">%</span>
+                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">%</span>
                                                 </div>
                                             )}
                                         </motion.div>
