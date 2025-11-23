@@ -22,10 +22,10 @@ Represents a single shared expense or settlement within a group.
 - **Fields**:
   - `groupId`: ObjectId (Reference to SplitGroup)
   - `payer`: ObjectId (User who paid)
-  - `amount`: Number (Total amount paid)
+  - `amount`: Number (Stored in cents/smallest unit to avoid floating point errors)
   - `description`: String
   - `date`: Date
-  - `splitDetails`: Array of `{ user: ObjectId, amount: Number }` (How much each person owes)
+  - `splitDetails`: Array of `{ user: ObjectId, amount: Number }` (Amounts in cents)
   - `isSettlement`: Boolean (True if this is a payment between users to settle debt)
   - `category`: String (Default 'General')
 - **Purpose**: Stores the raw transaction data. Balances are derived from this.

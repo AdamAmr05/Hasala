@@ -5,6 +5,7 @@ import { ArrowLeft, Plus, Copy, Check } from 'lucide-react';
 // Modal component
 import AddGroupExpenseModal from './AddGroupExpenseModal';
 import SettleUpModal from './SettleUpModal';
+import CategoryIcon from '../UI/CategoryIcon';
 
 interface Member {
     user: {
@@ -54,7 +55,7 @@ const GroupView: React.FC = () => {
         // For now, let's assume the backend response might help or we just check who I am.
         // Actually, let's fetch /api/auth/me to be sure.
         axios.get('http://localhost:5001/api/auth/me', { withCredentials: true })
-            .then(res => setMyId(res.data.data._id))
+            .then(res => setMyId(res.data._id))
             .catch(err => console.error(err));
     }, [id]);
 
@@ -114,7 +115,7 @@ const GroupView: React.FC = () => {
             </div>
 
             {/* Balances Summary */}
-            <div className="grid gap-6 md:grid-cols-2 mb-8">
+            <div className="flex flex-col gap-6 mb-8">
                 {/* My Status */}
                 <div className={`p-8 rounded-3xl border shadow-sm transition-all ${myBalance > 0 ? 'bg-green-50 border-green-100' :
                     myBalance < 0 ? 'bg-red-50 border-red-100' :
@@ -157,26 +158,31 @@ const GroupView: React.FC = () => {
                                 const isMeTo = debt.to === myId;
 
                                 return (
-                                    <div key={idx} className="flex items-center justify-between text-sm p-3 bg-gray-50 rounded-2xl border border-gray-100">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-primary shadow-sm">
+                                    <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 gap-3">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-sm font-bold text-primary shadow-sm shrink-0">
                                                 {fromName[0]}
                                             </div>
-                                            <span className="text-gray-600 font-medium">
-                                                {isMeFrom ? <span className="text-primary font-bold">You</span> : fromName}
-                                                <span className="text-gray-400 mx-1">→</span>
-                                                {isMeTo ? <span className="text-primary font-bold">You</span> : toName}
-                                            </span>
+                                            <div className="flex flex-col truncate">
+                                                <span className="text-gray-900 font-bold text-sm truncate">
+                                                    {isMeFrom ? 'You' : fromName}
+                                                </span>
+                                                <span className="text-gray-400 text-xs flex items-center gap-1">
+                                                    {isMeFrom ? 'owe' : 'owes'} {isMeTo ? 'You' : toName}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className="font-bold text-primary bg-white px-3 py-1 rounded-lg border border-gray-200 shadow-sm">
+
+                                        <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto mt-1 sm:mt-0 pl-12 sm:pl-0">
+                                            <span className="font-bold text-primary text-lg">
                                                 {debt.amount.toFixed(2)}
                                             </span>
                                             {isMeFrom && (
                                                 <button
                                                     onClick={() => setSettleDebt(debt)}
-                                                    className="px-3 py-1 bg-green-500 text-white rounded-lg font-bold text-xs hover:bg-green-600 transition-colors shadow-sm"
+                                                    className="px-4 py-2 bg-primary text-white rounded-xl font-bold text-xs hover:bg-black/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2 active:scale-95 whitespace-nowrap"
                                                 >
+                                                    <Check size={14} strokeWidth={3} />
                                                     Settle
                                                 </button>
                                             )}
@@ -201,9 +207,9 @@ const GroupView: React.FC = () => {
                         expenses.map(exp => (
                             <div key={exp._id} className="p-5 flex items-center justify-between hover:bg-gray-50 transition-colors group cursor-pointer">
                                 <div className="flex items-center gap-4">
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-sm ${exp.isSettlement ? 'bg-green-100 text-green-600' : 'bg-blue-50 text-blue-500'
+                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-sm ${exp.isSettlement ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
                                         }`}>
-                                        {exp.isSettlement ? '$' : '🧾'}
+                                        {exp.isSettlement ? <Check size={20} /> : <CategoryIcon category={exp.category || 'General'} size={20} />}
                                     </div>
                                     <div>
                                         <h4 className="text-primary font-bold text-lg">{exp.description}</h4>
