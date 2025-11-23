@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { X, Users, DollarSign, Percent, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Props {
     group: any;
@@ -27,24 +28,34 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
             const count = selectedMembers.length;
             const val = count > 0 ? totalAmount / count : 0;
             const newSplits: any = {};
-            // Only assign to selected members
             selectedMembers.forEach(id => newSplits[id] = val);
+            setSplits(newSplits);
+        } else if (splitMethod === 'EXACT') {
+            // Reset to 0s for Exact to avoid confusion
+            const newSplits: any = {};
+            selectedMembers.forEach(id => newSplits[id] = 0);
             setSplits(newSplits);
         } else if (splitMethod === 'PERCENT') {
             // Default to equal percentages if switching to percent
-            // But only if splits are empty or we just switched? 
-            // The user said "percent should be split equally until they themselves change it"
-            // We can do this by checking if the current splits sum to ~100 or if it's a fresh switch
-            // For simplicity, let's reset to equal percentages when amount changes or method switches to percent
-            // BUT we must allow manual edits. 
-            // Let's just set it once when switching to PERCENT or when selectedMembers changes
             const count = selectedMembers.length;
             const val = count > 0 ? 100 / count : 0;
             const newSplits: any = {};
             selectedMembers.forEach(id => newSplits[id] = val);
             setSplits(newSplits);
         }
-    }, [amount, splitMethod, selectedMembers.length]); // Re-run when amount, method or selection count changes
+    }, [splitMethod, selectedMembers.length]); // Removed amount dependency to prevent auto-update on amount change for Exact
+
+    // Update Equal splits when amount changes
+    useEffect(() => {
+        if (splitMethod === 'EQUAL') {
+            const totalAmount = parseFloat(amount) || 0;
+            const count = selectedMembers.length;
+            const val = count > 0 ? totalAmount / count : 0;
+            const newSplits: any = {};
+            selectedMembers.forEach(id => newSplits[id] = val);
+            setSplits(newSplits);
+        }
+    }, [amount, splitMethod, selectedMembers.length]);
 
     // Handle manual split changes (Exact or Percent)
     const handleSplitChange = (userId: string, val: string) => {
@@ -61,7 +72,7 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
     };
 
     // Derived values for UI feedback
-    const totalSplit = Object.values(splits).reduce((a: number, b: number) => a + b, 0);
+    const totalSplit = Object.values(splits).reduce((a: number, b: number) => a + b, 0) as number;
     const totalAmount = parseFloat(amount) || 0;
     const remaining = totalAmount - totalSplit;
     const remainingPercent = 100 - totalSplit;
@@ -145,8 +156,9 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
                                 type="number"
                                 value={amount}
                                 onChange={e => setAmount(e.target.value)}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-16 pr-5 py-4 text-primary text-2xl font-bold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-16 pr-5 py-4 text-primary text-2xl font-bold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 placeholder="0.00"
+                                onWheel={(e) => e.currentTarget.blur()}
                             />
                         </div>
                     </div>
@@ -165,7 +177,7 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
                             onClick={() => setSplitMethod('EXACT')}
                             className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${splitMethod === 'EXACT' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            EGP Exact
+                            Exact
                         </button>
                         <button
                             type="button"
@@ -177,10 +189,14 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
                     </div>
 
                     {/* Feedback for Exact/Percent */}
-                    {splitMethod === 'EXACT' && Math.abs(remaining) > 0.01 && (
-                        <div className={`text-center text-sm font-bold ${remaining > 0 ? 'text-orange-500' : 'text-red-500'}`}>
+                    {splitMethod === 'EXACT' && totalAmount > 0 && Math.abs(remaining) > 0.01 && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className={`text-center text-sm font-bold ${remaining > 0 ? 'text-orange-500' : 'text-red-500'}`}
+                        >
                             {remaining > 0 ? `${remaining.toFixed(2)} EGP left to split` : `${Math.abs(remaining).toFixed(2)} EGP over total`}
-                        </div>
+                        </motion.div>
                     )}
                     {splitMethod === 'PERCENT' && Math.abs(remainingPercent) > 0.1 && (
                         <div className={`text-center text-sm font-bold ${remainingPercent > 0 ? 'text-orange-500' : 'text-red-500'}`}>
@@ -208,15 +224,20 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
                                     </div>
 
                                     {isSelected && (
-                                        <>
+                                        <motion.div
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            className="flex items-center gap-2 overflow-hidden"
+                                        >
                                             {splitMethod === 'EQUAL' && (
-                                                <span className="text-gray-500 font-medium">
+                                                <span className="text-gray-500 font-medium whitespace-nowrap">
                                                     {amount ? (parseFloat(amount) / selectedMembers.length).toFixed(2) : '0.00'} EGP
                                                 </span>
                                             )}
 
                                             {splitMethod === 'EXACT' && (
-                                                <div className="relative w-28">
+                                                <div className="relative w-28 shrink-0">
                                                     <span className="absolute left-3 top-2.5 text-gray-400 text-sm font-bold">EGP</span>
                                                     <input
                                                         type="number"
@@ -229,7 +250,7 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
                                             )}
 
                                             {splitMethod === 'PERCENT' && (
-                                                <div className="relative w-24">
+                                                <div className="relative w-24 shrink-0">
                                                     <input
                                                         type="number"
                                                         value={splits[m.user._id] || ''}
@@ -240,7 +261,7 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
                                                     <span className="absolute right-3 top-2.5 text-gray-400 text-sm font-bold">%</span>
                                                 </div>
                                             )}
-                                        </>
+                                        </motion.div>
                                     )}
                                 </div>
                             );
