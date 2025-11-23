@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, MessageCircle, PieChart, Settings, Plus } from 'lucide-react';
+import { Home, MessageCircle, PieChart, Settings, Plus, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -58,10 +58,10 @@ const TabBar: React.FC<TabBarProps> = ({ onAddClick }) => {
           />
 
           <TabButton
-            path="/settings"
-            icon={<Settings size={24} />}
-            label="Settings"
-            isActive={activeTab === '/settings'}
+            path="/groups"
+            icon={<Users size={24} />}
+            label="Split"
+            isActive={activeTab.startsWith('/groups')}
             onClick={handleNavigation}
           />
 

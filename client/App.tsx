@@ -13,13 +13,14 @@ import { Transaction, TransactionType, User } from './types';
 import { authApi, transactionsApi, TransactionPayload } from './services/api';
 import { useMonthlyTransactions } from './hooks/useMonthlyTransactions';
 
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 type AuthMode = 'login' | 'register';
 
 const App: React.FC = () => {
   const [showSmartInput, setShowSmartInput] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
   const [authError, setAuthError] = useState<string | null>(null);
@@ -205,7 +206,7 @@ const App: React.FC = () => {
                         onNextMonth={goToNextMonth}
                         onLoadMore={fetchNextPage}
                         hasMore={hasNextPage}
-                        onSettingsClick={() => { }} // No-op as button is removed
+                        onSettingsClick={() => navigate('/settings')}
                       />
                     )}
                   </div>
