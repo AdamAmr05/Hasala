@@ -4,6 +4,7 @@ import axios from 'axios';
 import { ArrowLeft, Plus, Copy, Check } from 'lucide-react';
 // Modal component
 import AddGroupExpenseModal from './AddGroupExpenseModal';
+import SettleUpModal from './SettleUpModal';
 
 interface Member {
     user: {
@@ -38,6 +39,7 @@ const GroupView: React.FC = () => {
     const [balances, setBalances] = useState<any>({});
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [settleDebt, setSettleDebt] = useState<Debt | null>(null);
     const [copied, setCopied] = useState(false);
 
     // Get current user ID from localStorage or context (assuming stored in localStorage for now as per common pattern, or we'd need a context hook)
@@ -166,9 +168,19 @@ const GroupView: React.FC = () => {
                                                 {isMeTo ? <span className="text-primary font-bold">You</span> : toName}
                                             </span>
                                         </div>
-                                        <span className="font-bold text-primary bg-white px-3 py-1 rounded-lg border border-gray-200 shadow-sm">
-                                            {debt.amount.toFixed(2)}
-                                        </span>
+                                        <div className="flex items-center gap-3">
+                                            <span className="font-bold text-primary bg-white px-3 py-1 rounded-lg border border-gray-200 shadow-sm">
+                                                {debt.amount.toFixed(2)}
+                                            </span>
+                                            {isMeFrom && (
+                                                <button
+                                                    onClick={() => setSettleDebt(debt)}
+                                                    className="px-3 py-1 bg-green-500 text-white rounded-lg font-bold text-xs hover:bg-green-600 transition-colors shadow-sm"
+                                                >
+                                                    Settle
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 );
                             })}
@@ -218,6 +230,18 @@ const GroupView: React.FC = () => {
                     onClose={() => setShowAddModal(false)}
                     onSuccess={() => {
                         setShowAddModal(false);
+                        fetchGroupDetails();
+                    }}
+                />
+            )}
+
+            {settleDebt && (
+                <SettleUpModal
+                    group={group}
+                    debt={settleDebt}
+                    onClose={() => setSettleDebt(null)}
+                    onSuccess={() => {
+                        setSettleDebt(null);
                         fetchGroupDetails();
                     }}
                 />
