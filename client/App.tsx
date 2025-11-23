@@ -5,6 +5,8 @@ import SmartInputSheet from './components/SmartInputSheet';
 import TabBar from './components/UI/TabBar';
 import ChatInterface from './components/Chat/ChatInterface';
 import SettingsPage from './components/Settings/SettingsPage';
+import GroupsPage from './components/Groups/GroupsPage';
+import GroupView from './components/Groups/GroupView';
 import FamilyView from './components/Family/FamilyView';
 import AnalyticsView from './components/Analytics/AnalyticsView';
 import { Transaction, TransactionType, User } from './types';
@@ -225,6 +227,8 @@ const App: React.FC = () => {
                   </div>
                 } />
 
+                <Route path="/groups" element={<GroupsPage />} />
+                <Route path="/groups/:id" element={<GroupView />} />
                 <Route path="/settings" element={
                   <div className="animate-[fadeIn_0.3s_ease-out]">
                     <SettingsPage
