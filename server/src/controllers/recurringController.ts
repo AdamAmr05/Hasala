@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import RecurringTransaction from '../models/RecurringTransaction';
 import Transaction, { TransactionType } from '../models/Transaction';
 import { IUser } from '../models/User';
+import { toCents, fromCents } from '../utils/currency';
 
 interface AuthRequest extends Request {
     user?: IUser;
@@ -13,7 +14,14 @@ interface AuthRequest extends Request {
 export const getRecurringTransactions = async (req: AuthRequest, res: Response) => {
     try {
         const transactions = await RecurringTransaction.find({ user: req.user?._id });
-        res.status(200).json(transactions);
+
+        // Convert cents to decimals for frontend
+        const decimalTransactions = transactions.map(t => ({
+            ...t.toObject(),
+            amount: fromCents(t.amount)
+        }));
+
+        res.status(200).json(decimalTransactions);
     } catch (error) {
         res.status(500).json({ message: (error as Error).message });
     }
@@ -28,7 +36,7 @@ export const addRecurringTransaction = async (req: AuthRequest, res: Response) =
 
         const transaction = await RecurringTransaction.create({
             user: req.user?._id,
-            amount,
+            amount: toCents(amount), // Store in cents
             description,
             category,
             type: type || 'EXPENSE',
@@ -37,7 +45,13 @@ export const addRecurringTransaction = async (req: AuthRequest, res: Response) =
             lastInjected: new Date(),
         });
 
-        res.status(201).json(transaction);
+        // Return decimal version
+        const decimalTransaction = {
+            ...transaction.toObject(),
+            amount: fromCents(transaction.amount)
+        };
+
+        res.status(201).json(decimalTransaction);
     } catch (error) {
         res.status(400).json({ message: (error as Error).message });
     }
