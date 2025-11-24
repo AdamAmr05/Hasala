@@ -28,7 +28,7 @@ const GroupExpenseSchema: Schema = new Schema({
     amount: {
         type: Number,
         required: true,
-        min: [0.01, 'Amount must be positive'],
+        min: [0.01, 'Amount must be positive'], // Stored as decimal (e.g., 50.00)
     },
     description: {
         type: String,
@@ -48,7 +48,7 @@ const GroupExpenseSchema: Schema = new Schema({
         amount: {
             type: Number,
             required: true,
-            min: [0.01, 'Split amount must be positive'],
+            min: [0, 'Split amount must be non-negative'], // Can be 0 if not participating
         }
     }],
     isSettlement: {

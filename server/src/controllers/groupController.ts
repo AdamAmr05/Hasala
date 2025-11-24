@@ -4,7 +4,7 @@ import SplitGroup from '../models/SplitGroup';
 import GroupExpense from '../models/GroupExpense';
 import { AuthRequest } from '../middleware/authMiddleware';
 import mongoose from 'mongoose';
-import { toCents, fromCents } from '../utils/currency';
+// Amounts are now stored directly as decimals - no conversion needed
 
 // Create a new group
 export const createGroup = async (req: AuthRequest, res: Response) => {
@@ -75,13 +75,13 @@ export const getGroupDetails = async (req: AuthRequest, res: Response) => {
 
 
 
-        // Calculate balances (using integers)
+        // Calculate balances (using decimals)
         const balances: { [key: string]: number } = {};
         group.members.forEach((m: any) => balances[m.user._id.toString()] = 0);
 
         expenses.forEach((exp: any) => {
             const payerId = exp.payer._id.toString();
-            const amount = exp.amount; // Already in cents in DB
+            const amount = exp.amount; // Stored as decimal
 
             // Payer gets positive balance (owed money)
             balances[payerId] = (balances[payerId] || 0) + amount;
@@ -93,32 +93,13 @@ export const getGroupDetails = async (req: AuthRequest, res: Response) => {
             });
         });
 
-        // Calculate simplified debts (returns values in cents)
-        const debtsCents = simplifyDebts(balances);
-
-        // Convert debts and balances to decimals for frontend
-        const debts = debtsCents.map(d => ({
-            ...d,
-            amount: fromCents(d.amount)
-        }));
-
-        const decimalBalances: { [key: string]: number } = {};
-        Object.keys(balances).forEach(key => {
-            decimalBalances[key] = fromCents(balances[key]);
-        });
+        // Calculate simplified debts
+        const debts = simplifyDebts(balances);
 
         // Only return top 10 expenses for initial view
         const recentExpenses = expenses.slice(0, 10);
-        const recentDecimalExpenses = recentExpenses.map((exp: any) => ({
-            ...exp.toObject(),
-            amount: fromCents(exp.amount),
-            splitDetails: exp.splitDetails.map((split: any) => ({
-                ...split,
-                amount: fromCents(split.amount)
-            }))
-        }));
 
-        res.json({ group, expenses: recentDecimalExpenses, balances: decimalBalances, debts });
+        res.json({ group, expenses: recentExpenses, balances, debts });
     } catch (error) {
         res.status(500).json({ message: (error as Error).message });
     }
@@ -146,16 +127,7 @@ export const getGroupExpenses = async (req: AuthRequest, res: Response) => {
             .skip(skip)
             .limit(limit);
 
-        const decimalExpenses = expenses.map((exp: any) => ({
-            ...exp.toObject(),
-            amount: fromCents(exp.amount),
-            splitDetails: exp.splitDetails.map((split: any) => ({
-                ...split,
-                amount: fromCents(split.amount)
-            }))
-        }));
-
-        res.json(decimalExpenses);
+        res.json(expenses);
     } catch (error) {
         res.status(500).json({ message: (error as Error).message });
     }
@@ -187,57 +159,39 @@ export const addExpense = async (req: AuthRequest, res: Response) => {
         const isMember = group.members.some((m: any) => m.user.toString() === (req.user as any)._id.toString());
         if (!isMember) return res.status(403).json({ message: 'Forbidden' });
 
-        // Convert to cents
-        const amountCents = toCents(amount);
-        const splitDetailsCents = splitDetails.map((s: any) => ({
-            ...s,
-            amount: toCents(s.amount)
-        }));
-
         // Validate split details
         const memberIds = new Set(group.members.map((m: any) => m.user.toString()));
-        let totalSplitCents = 0;
+        let totalSplit = 0;
 
-        for (const split of splitDetailsCents) {
+        for (const split of splitDetails) {
             if (!split.user || typeof split.amount !== 'number' || split.amount < 0) {
                 return res.status(400).json({ message: 'Invalid split entry' });
             }
             if (!memberIds.has(split.user)) {
                 return res.status(400).json({ message: `User ${split.user} is not a member of this group` });
             }
-            totalSplitCents += split.amount;
+            totalSplit += split.amount;
         }
 
-        // Validate total (Exact integer match)
-        // For settlements, we don't strictly enforce sum matching because one person pays 100% of the debt
-        if (totalSplitCents !== amountCents) {
-            const diff = totalSplitCents - amountCents;
+        // Validate total (allow small floating point tolerance)
+        const diff = Math.abs(totalSplit - amount);
+        if (diff > 0.01) {
             return res.status(400).json({
-                message: `Split amounts sum to ${fromCents(totalSplitCents)}, but total is ${fromCents(amountCents)}. Difference: ${fromCents(diff)}`
+                message: `Split amounts sum to ${totalSplit.toFixed(2)}, but total is ${amount.toFixed(2)}. Difference: ${diff.toFixed(2)}`
             });
         }
 
         const expense = await GroupExpense.create({
             groupId: id,
             payer: payer || req.user._id,
-            amount: amountCents, // Store in cents
+            amount, // Store directly as decimal
             description,
             date: date || new Date(),
-            splitDetails: splitDetailsCents, // Store in cents
+            splitDetails, // Store directly as decimal
             isSettlement: isSettlement || false
         });
 
-        // Return decimal version
-        const expenseDecimal = {
-            ...expense.toObject(),
-            amount: fromCents(expense.amount),
-            splitDetails: expense.splitDetails.map((s: any) => ({
-                ...s,
-                amount: fromCents(s.amount)
-            }))
-        };
-
-        res.status(201).json(expenseDecimal);
+        res.status(201).json(expense);
     } catch (error) {
         res.status(400).json({ message: (error as Error).message });
     }
@@ -275,7 +229,7 @@ export const joinGroup = async (req: AuthRequest, res: Response) => {
     }
 };
 
-// Helper: Simplify Debts (Greedy Algorithm) - Uses Integers
+// Helper: Simplify Debts (Greedy Algorithm)
 const simplifyDebts = (balances: { [key: string]: number }) => {
     const debtors: { user: string, amount: number }[] = [];
     const creditors: { user: string, amount: number }[] = [];
@@ -307,9 +261,9 @@ const simplifyDebts = (balances: { [key: string]: number }) => {
         debtor.amount -= amount;
         creditor.amount -= amount;
 
-        // In integer math, check for 0 directly
-        if (debtor.amount === 0) i++;
-        if (creditor.amount === 0) j++;
+        // Check for near-zero (floating point tolerance)
+        if (debtor.amount < 0.01) i++;
+        if (creditor.amount < 0.01) j++;
     }
 
     return debts;

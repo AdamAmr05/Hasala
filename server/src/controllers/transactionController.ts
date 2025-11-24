@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import Transaction, { ITransaction } from '../models/Transaction';
 import { IUser } from '../models/User';
-import { toCents, fromCents } from '../utils/currency';
+// Amounts are now stored directly as decimals (e.g., 50.00) - no conversion needed
 
 // Interface to extend Request with User
 interface AuthRequest extends Request {
@@ -39,14 +39,8 @@ export const getTransactions = async (req: AuthRequest, res: Response) => {
       .skip((page - 1) * limit)
       .limit(limit);
 
-    // Convert cents to decimals for frontend
-    const decimalTransactions = transactions.map(t => ({
-      ...t.toObject(),
-      amount: fromCents(t.amount)
-    }));
-
     res.status(200).json({
-      data: decimalTransactions,
+      data: transactions,
       meta: {
         total,
         page,
@@ -69,7 +63,7 @@ export const addTransaction = async (req: AuthRequest, res: Response) => {
 
     const transaction = await Transaction.create({
       user: req.user?._id,
-      amount: toCents(amount), // Store in cents
+      amount, // Store directly as decimal
       description,
       category,
       type,
@@ -78,13 +72,7 @@ export const addTransaction = async (req: AuthRequest, res: Response) => {
       relatedPerson,
     });
 
-    // Return decimal version
-    const decimalTransaction = {
-      ...transaction.toObject(),
-      amount: fromCents(transaction.amount)
-    };
-
-    res.status(201).json(decimalTransaction);
+    res.status(201).json(transaction);
   } catch (error) {
     res.status(400).json({ message: (error as Error).message });
   }
@@ -227,15 +215,12 @@ export const getAnalytics = async (req: AuthRequest, res: Response) => {
       { $sort: { total: -1 } }
     ]);
 
-    // Helper to convert aggregation results to decimals
-    const toDecimal = (data: any[]) => data.map(item => ({ ...item, total: fromCents(item.total) }));
-
     res.status(200).json({
-      totals: toDecimal(totals),
-      categoryBreakdown: toDecimal(categoryBreakdown),
-      dailyTrend: toDecimal(dailyTrend),
-      peopleBreakdown: toDecimal(peopleBreakdown),
-      incomeBreakdown: toDecimal(incomeBreakdown)
+      totals,
+      categoryBreakdown,
+      dailyTrend,
+      peopleBreakdown,
+      incomeBreakdown
     });
   } catch (error) {
     res.status(500).json({ message: (error as Error).message });
