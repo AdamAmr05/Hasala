@@ -2,9 +2,30 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { X, Users, DollarSign, Percent, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { api } from '../../services/api';
+
+// Proper TypeScript interfaces
+interface GroupMember {
+    user: {
+        _id: string;
+        name: string;
+        email: string;
+        avatar?: string;
+    };
+    joinedAt: string;
+}
+
+interface Group {
+    _id: string;
+    name: string;
+    currency: string;
+    inviteCode: string;
+    members: GroupMember[];
+    createdBy: string;
+}
 
 interface Props {
-    group: any;
+    group: Group;
     myId: string;
     onClose: () => void;
     onSuccess: () => void;
@@ -16,7 +37,7 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
     const [payer, setPayer] = useState(myId);
     const [splitMethod, setSplitMethod] = useState<'EQUAL' | 'EXACT' | 'PERCENT'>('EQUAL');
     const [splits, setSplits] = useState<{ [key: string]: number }>({});
-    const [selectedMembers, setSelectedMembers] = useState<string[]>(group.members.map((m: any) => m.user._id));
+    const [selectedMembers, setSelectedMembers] = useState<string[]>(group.members.map((m) => m.user._id));
     const [isSettlement, setIsSettlement] = useState(false);
 
     // Helper to calculate equal splits with penny allocation
@@ -44,14 +65,14 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
             setSplits(calculateEqualSplits(totalAmount, selectedMembers));
         } else if (splitMethod === 'EXACT') {
             // Reset to 0s for Exact to avoid confusion
-            const newSplits: any = {};
+            const newSplits: { [key: string]: number } = {};
             selectedMembers.forEach(id => newSplits[id] = 0);
             setSplits(newSplits);
         } else if (splitMethod === 'PERCENT') {
             // Default to equal percentages
             const count = selectedMembers.length;
             const val = count > 0 ? 100 / count : 0;
-            const newSplits: any = {};
+            const newSplits: { [key: string]: number } = {};
             selectedMembers.forEach(id => newSplits[id] = val);
             setSplits(newSplits);
         }
@@ -65,7 +86,7 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
         } else if (splitMethod === 'EXACT') {
             // Preserve existing values, add 0 for new members
             setSplits(prev => {
-                const newSplits: any = { ...prev };
+                const newSplits: { [key: string]: number } = { ...prev };
                 // Remove deselected
                 Object.keys(newSplits).forEach(id => {
                     if (!selectedMembers.includes(id)) delete newSplits[id];
@@ -80,7 +101,7 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
             // Recalculate equal percentages for simplicity when members change
             const count = selectedMembers.length;
             const val = count > 0 ? 100 / count : 0;
-            const newSplits: any = {};
+            const newSplits: { [key: string]: number } = {};
             selectedMembers.forEach(id => newSplits[id] = val);
             setSplits(newSplits);
         }
@@ -131,33 +152,34 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
             }
         }
 
-        // Prepare payload
-        const splitDetails = group.members.map((m: any) => {
+        // Prepare payload - use pre-calculated splits for EQUAL to preserve penny allocation
+        const splitDetails = group.members.map((m) => {
             let userAmount = 0;
             if (selectedMembers.includes(m.user._id)) {
                 if (splitMethod === 'EQUAL') {
-                    userAmount = totalAmount / selectedMembers.length;
+                    // Use the pre-calculated penny-allocated split amount
+                    userAmount = splits[m.user._id] || 0;
                 } else if (splitMethod === 'PERCENT') {
-                    const percent = splits[m.user._id] as number || 0;
+                    const percent = splits[m.user._id] || 0;
                     userAmount = (totalAmount * percent) / 100;
                 } else {
-                    userAmount = splits[m.user._id] as number || 0;
+                    // EXACT mode
+                    userAmount = splits[m.user._id] || 0;
                 }
             }
             return { user: m.user._id, amount: userAmount };
         });
 
         try {
-            await axios.post(`http://localhost:5001/api/groups/${group._id}/expenses`, {
+            await api.post(`/groups/${group._id}/expenses`, {
                 description,
                 amount: totalAmount,
                 payer,
                 splitDetails,
                 isSettlement
-            }, { withCredentials: true });
+            });
             onSuccess();
         } catch (error) {
-            console.error(error);
             alert('Failed to add expense');
         }
     };
@@ -260,7 +282,7 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
                     {/* Members List */}
                     <div className="space-y-3 mt-4">
                         <p className="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase">Split amongst</p>
-                        {group.members.map((m: any) => {
+                        {group.members.map((m) => {
                             const isSelected = selectedMembers.includes(m.user._id);
                             return (
                                 <div key={m.user._id} className={`flex items-center justify-between p-4 rounded-2xl border shadow-sm transition-all ${isSelected ? 'bg-white dark:bg-[#1C1C1E] border-gray-100 dark:border-[#2C2C2E]' : 'bg-gray-50 dark:bg-[#2C2C2E] border-transparent opacity-60'}`}>
@@ -286,7 +308,7 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
                                             {splitMethod === 'EQUAL' && (
                                                 <div className="flex items-center h-full px-3">
                                                     <span className="text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
-                                                        {amount ? (parseFloat(amount) / selectedMembers.length).toFixed(2) : '0.00'} EGP
+                                                        {(splits[m.user._id] || 0).toFixed(2)} EGP
                                                     </span>
                                                 </div>
                                             )}

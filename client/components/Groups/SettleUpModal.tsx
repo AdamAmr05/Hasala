@@ -1,9 +1,29 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { X, Check, ArrowRight } from 'lucide-react';
+import { api } from '../../services/api';
+
+// Proper TypeScript interfaces
+interface GroupMember {
+    user: {
+        _id: string;
+        name: string;
+        email: string;
+        avatar?: string;
+    };
+    joinedAt: string;
+}
+
+interface Group {
+    _id: string;
+    name: string;
+    currency: string;
+    inviteCode: string;
+    members: GroupMember[];
+    createdBy: string;
+}
 
 interface Props {
-    group: any;
+    group: Group;
     debt: {
         from: string;
         to: string;
@@ -17,7 +37,7 @@ const SettleUpModal: React.FC<Props> = ({ group, debt, onClose, onSuccess }) => 
     const [loading, setLoading] = useState(false);
 
     // Find user names
-    const toUser = group.members.find((m: any) => m.user._id === debt.to)?.user;
+    const toUser = group.members.find((m) => m.user._id === debt.to)?.user;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -35,16 +55,15 @@ const SettleUpModal: React.FC<Props> = ({ group, debt, onClose, onSuccess }) => 
         // If Recipient started with +50 (Creditor), adding -50 makes them 0.
 
         try {
-            await axios.post(`http://localhost:5001/api/groups/${group._id}/expenses`, {
+            await api.post(`/groups/${group._id}/expenses`, {
                 description: 'Settlement',
                 amount: debt.amount,
                 payer: debt.from,
                 splitDetails: [{ user: debt.to, amount: debt.amount }],
                 isSettlement: true
-            }, { withCredentials: true });
+            });
             onSuccess();
         } catch (error) {
-            console.error(error);
             alert('Failed to settle up');
         } finally {
             setLoading(false);

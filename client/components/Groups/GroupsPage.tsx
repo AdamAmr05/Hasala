@@ -4,10 +4,20 @@ import { motion } from 'framer-motion';
 import { Plus, Users, ArrowRight, Wallet, Loader2, AlertCircle } from 'lucide-react';
 import { api } from '../../services/api';
 
+interface GroupMember {
+    user: {
+        _id: string;
+        name: string;
+        email: string;
+        avatar?: string;
+    };
+    joinedAt: string;
+}
+
 interface Group {
     _id: string;
     name: string;
-    members: any[];
+    members: GroupMember[];
     inviteCode: string;
     currency: string;
 }
@@ -39,9 +49,9 @@ const GroupsPage: React.FC = () => {
         try {
             const res = await api.get('/groups');
             setGroups(res.data);
-        } catch (error: any) {
-            console.error('Error fetching groups:', error);
-            setError(error.response?.data?.message || 'Failed to load groups. Please try again.');
+        } catch (error: unknown) {
+            const axiosError = error as { response?: { data?: { message?: string } } };
+            setError(axiosError.response?.data?.message || 'Failed to load groups. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -58,9 +68,9 @@ const GroupsPage: React.FC = () => {
             setShowCreateModal(false);
             setNewGroupName('');
             fetchGroups();
-        } catch (error: any) {
-            console.error('Error creating group:', error);
-            setCreateError(error.response?.data?.message || 'Failed to create group. Please try again.');
+        } catch (error: unknown) {
+            const axiosError = error as { response?: { data?: { message?: string } } };
+            setCreateError(axiosError.response?.data?.message || 'Failed to create group. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -77,9 +87,9 @@ const GroupsPage: React.FC = () => {
             setShowJoinModal(false);
             setJoinCode('');
             fetchGroups();
-        } catch (error: any) {
-            console.error('Error joining group:', error);
-            setJoinError(error.response?.data?.message || 'Invalid code or already a member.');
+        } catch (error: unknown) {
+            const axiosError = error as { response?: { data?: { message?: string } } };
+            setJoinError(axiosError.response?.data?.message || 'Invalid code or already a member.');
         } finally {
             setSubmitting(false);
         }

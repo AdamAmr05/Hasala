@@ -7,12 +7,7 @@ export interface AuthRequest extends Request {
 }
 
 export const protect = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  let token;
-
-  token = req.cookies.jwt;
-
-  console.log('Auth check - cookies:', req.cookies);
-  console.log('Auth check - token:', token ? 'present' : 'missing');
+  const token = req.cookies.jwt;
 
   if (token) {
     try {
@@ -26,7 +21,6 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
         res.status(401).json({ message: 'Not authorized, user not found' });
       }
     } catch (error) {
-      console.error(error);
       res.status(401).json({ message: 'Not authorized, token failed' });
     }
   } else {

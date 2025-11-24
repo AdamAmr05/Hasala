@@ -1,20 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { ArrowLeft, Plus, Copy, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 // Modal component
 import AddGroupExpenseModal from './AddGroupExpenseModal';
 import SettleUpModal from './SettleUpModal';
 import CategoryIcon from '../UI/CategoryIcon';
+import { api } from '../../services/api';
 
-interface Member {
+// Proper TypeScript interfaces
+interface GroupMember {
     user: {
         _id: string;
         name: string;
         email: string;
         avatar?: string;
     };
+    joinedAt: string;
+}
+
+interface Group {
+    _id: string;
+    name: string;
+    currency: string;
+    inviteCode: string;
+    members: GroupMember[];
+    createdBy: string;
 }
 
 interface Debt {
@@ -30,15 +41,16 @@ interface Expense {
     payer: { _id: string; name: string };
     date: string;
     isSettlement: boolean;
+    category?: string;
 }
 
 const GroupView: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [group, setGroup] = useState<any>(null);
+    const [group, setGroup] = useState<Group | null>(null);
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [debts, setDebts] = useState<Debt[]>([]);
-    const [balances, setBalances] = useState<any>({});
+    const [balances, setBalances] = useState<{ [key: string]: number }>({});
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
     const [settleDebt, setSettleDebt] = useState<Debt | null>(null);
@@ -48,27 +60,19 @@ const GroupView: React.FC = () => {
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
 
-    // Get current user ID from localStorage or context (assuming stored in localStorage for now as per common pattern, or we'd need a context hook)
-    // For this snippet, I'll rely on the fact that the API returns data relative to the user, but for UI highlighting I might need it.
-    // Let's assume we can derive "Me" from the fact that I'm viewing it, but for "You owe X", I need my ID.
-    // I'll fetch user profile or decode token if needed, but for now let's just use the balances map keys.
     const [myId, setMyId] = useState<string>('');
 
     useEffect(() => {
         fetchGroupDetails();
-        // Quick hack to get my ID: fetch /api/auth/me or parse token. 
-        // For now, let's assume the backend response might help or we just check who I am.
-        // Actually, let's fetch /api/auth/me to be sure.
-        axios.get('http://localhost:5001/api/auth/me', { withCredentials: true })
+        // Fetch current user ID
+        api.get('/auth/me')
             .then(res => setMyId(res.data._id))
-            .catch(err => console.error(err));
+            .catch(() => { /* User will see group but not personalized view */ });
     }, [id]);
 
     const fetchGroupDetails = async () => {
         try {
-            const res = await axios.get(`http://localhost:5001/api/groups/${id}`, {
-                withCredentials: true
-            });
+            const res = await api.get(`/groups/${id}`);
             setGroup(res.data.group);
             setExpenses(res.data.expenses);
             setDebts(res.data.debts);
@@ -76,7 +80,7 @@ const GroupView: React.FC = () => {
             setPage(1);
             setHasMore(res.data.expenses.length === 10);
         } catch (error) {
-            console.error('Error fetching group:', error);
+            // Error handled by loading state
         } finally {
             setLoading(false);
         }
@@ -87,9 +91,7 @@ const GroupView: React.FC = () => {
         setLoadingMore(true);
         try {
             const nextPage = page + 1;
-            const res = await axios.get(`http://localhost:5001/api/groups/${id}/expenses?page=${nextPage}`, {
-                withCredentials: true
-            });
+            const res = await api.get(`/groups/${id}/expenses?page=${nextPage}`);
             const newExpenses = res.data;
             if (newExpenses.length < 10) {
                 setHasMore(false);
@@ -97,7 +99,7 @@ const GroupView: React.FC = () => {
             setExpenses(prev => [...prev, ...newExpenses]);
             setPage(nextPage);
         } catch (error) {
-            console.error('Error loading more expenses:', error);
+            // Error handled silently
         } finally {
             setLoadingMore(false);
         }
@@ -182,8 +184,8 @@ const GroupView: React.FC = () => {
                     ) : (
                         <div className="space-y-4">
                             {debts.map((debt, idx) => {
-                                const fromName = group.members.find((m: any) => m.user._id === debt.from)?.user.name || 'Unknown';
-                                const toName = group.members.find((m: any) => m.user._id === debt.to)?.user.name || 'Unknown';
+                                const fromName = group.members.find((m) => m.user._id === debt.from)?.user.name || 'Unknown';
+                                const toName = group.members.find((m) => m.user._id === debt.to)?.user.name || 'Unknown';
                                 const isMeFrom = debt.from === myId;
                                 const isMeTo = debt.to === myId;
 

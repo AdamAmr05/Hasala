@@ -124,7 +124,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ transactions, categories, o
                                         </div>
                                         <div>
                                             <p className="text-sm font-bold text-primary dark:text-white">{tx.description}</p>
-                                            <p className="text-xs text-gray-400 dark:text-gray-500">{new Date(tx.date).toLocaleDateString()}</p>
+                                            <p className="text-xs text-gray-400 dark:text-gray-300">{new Date(tx.date).toLocaleDateString()}</p>
                                         </div>
                                     </div>
                                     <span className={`font-bold text-sm ${tx.type === TransactionType.INCOME ? 'text-accent-green' : 'text-primary dark:text-white'}`}>

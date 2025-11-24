@@ -6,6 +6,7 @@ import { ChatRequestBody, ChatSender, ToolCall } from '../types/chat';
 import ChatThread from '../models/ChatThread';
 import ChatMessage from '../models/ChatMessage';
 import RecurringTransaction from '../models/RecurringTransaction';
+import { toCents, fromCents } from '../utils/currency';
 import {
   MODEL_NAME,
   TRANSACTION_SCHEMA,
@@ -44,7 +45,7 @@ const buildSystemInstruction = (
   if (remaining < 0) healthStatus = 'Critical (Over Budget Goal)';
   else if (remaining < effectiveBudget * 0.2) healthStatus = 'Low (Caution)';
 
-  // 3. Top Category
+  // 3. Top Category (transaction amounts are in cents in DB)
   const categoryTotals = expenses.reduce((acc, t) => {
     acc[t.category] = (acc[t.category] || 0) + t.amount;
     return acc;
@@ -53,7 +54,7 @@ const buildSystemInstruction = (
   const topCategory = Object.entries(categoryTotals)
     .sort(([, a], [, b]) => b - a)[0];
   const topCategoryName = topCategory ? topCategory[0] : 'None';
-  const topCategoryAmount = topCategory ? topCategory[1] : 0;
+  const topCategoryAmount = topCategory ? fromCents(topCategory[1]) : 0;
 
   // 4. Projections
   const today = new Date();
@@ -65,7 +66,7 @@ const buildSystemInstruction = (
   const summary = transactions
     .slice(0, 15)
     .map(
-      (t) => `${t.date.toISOString().split('T')[0]}: ${t.description} (${t.amount} EGP) - ${t.category}`,
+      (t) => `${t.date.toISOString().split('T')[0]}: ${t.description} (${fromCents(t.amount)} EGP) - ${t.category}`,
     )
     .join('\n');
 
@@ -157,7 +158,7 @@ const executeToolCalls = async (
 
     const created = await Transaction.create({
       user: userId,
-      amount,
+      amount: toCents(amount), // Convert to cents for storage
       description,
       category,
       type,
@@ -218,8 +219,9 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       return acc;
     }, {} as Record<string, number>);
 
+    // Convert from cents to decimals for display
     const peopleStats = Object.entries(peopleMap)
-      .map(([name, total]) => `${name}: ${total} EGP`)
+      .map(([name, total]) => `${name}: ${fromCents(total)} EGP`)
       .join(', ');
 
     // Calculate Upcoming Recurring Expenses
@@ -233,9 +235,10 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       return transaction.dayOfMonth >= today.getDate() && transaction.type === 'EXPENSE';
     });
 
+    // Recurring transactions are also stored in cents
     const upcomingLiabilitiesTotal = upcomingBills.reduce((sum, exp) => sum + exp.amount, 0);
     const upcomingLiabilitiesText = upcomingBills.length > 0
-      ? `${upcomingLiabilitiesTotal.toLocaleString()} EGP (${upcomingBills.map(b => `${b.description}: ${b.amount}`).join(', ')})`
+      ? `${fromCents(upcomingLiabilitiesTotal).toLocaleString()} EGP (${upcomingBills.map(b => `${b.description}: ${fromCents(b.amount)}`).join(', ')})`
       : '';
 
     // --- PERSISTENCE START ---
@@ -319,8 +322,13 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       },
     ]);
 
-    const totalSpentReal = monthlyStats.find((s) => s._id === TransactionType.EXPENSE)?.total || 0;
-    const totalIncomeReal = monthlyStats.find((s) => s._id === TransactionType.INCOME)?.total || 0;
+    // These are in cents from the aggregation
+    const totalSpentCents = monthlyStats.find((s) => s._id === TransactionType.EXPENSE)?.total || 0;
+    const totalIncomeCents = monthlyStats.find((s) => s._id === TransactionType.INCOME)?.total || 0;
+    
+    // Convert to decimals for AI context and tool injections
+    const totalSpentReal = fromCents(totalSpentCents);
+    const totalIncomeReal = fromCents(totalIncomeCents);
 
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
@@ -371,8 +379,9 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       { $sort: { total: -1 } }
     ]);
 
-    const categoryData = categoryStats.map(s => ({ name: s._id, value: s.total }));
-    const peopleData = Object.entries(peopleMap).map(([name, value]) => ({ name, value }));
+    // Convert from cents to decimals for frontend display
+    const categoryData = categoryStats.map(s => ({ name: s._id, value: fromCents(s.total) }));
+    const peopleData = Object.entries(peopleMap).map(([name, value]) => ({ name, value: fromCents(value) }));
 
     // Calculate Income Breakdown for tool
     const incomeStats = await Transaction.aggregate([
@@ -391,7 +400,7 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       },
       { $sort: { total: -1 } }
     ]);
-    const incomeData = incomeStats.map(s => ({ name: s._id, value: s.total }));
+    const incomeData = incomeStats.map(s => ({ name: s._id, value: fromCents(s.total) }));
 
     const rawToolCalls: ToolCall[] =
       response.functionCalls
@@ -399,20 +408,20 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
         .map((call) => {
           const args = (call.args as Record<string, unknown>) || {};
 
-          // Inject accurate server-side stats
+          // Inject accurate server-side stats (already converted to decimals)
           if (call.name === 'renderBudgetOverview') {
             args.totalSpent = totalSpentReal;
             args.totalIncome = totalIncomeReal;
-            args.budget = req.user?.budget || 0;
+            args.budget = req.user?.budget || 0; // Budget is stored as decimal, not cents
           } else if (call.name === 'renderCategoryBreakdown') {
-            args.categories = categoryData;
+            args.categories = categoryData; // Already converted above
           } else if (call.name === 'renderPeopleBreakdown') {
-            args.people = peopleData;
+            args.people = peopleData; // Already converted above
           } else if (call.name === 'renderMonthlyProjection') {
             args.totalSpent = totalSpentReal;
-            args.budget = req.user?.budget || 0;
+            args.budget = req.user?.budget || 0; // Budget is stored as decimal, not cents
           } else if (call.name === 'renderIncomeOverview') {
-            args.incomeSources = incomeData;
+            args.incomeSources = incomeData; // Already converted above
             args.totalIncome = totalIncomeReal;
           }
 
@@ -440,7 +449,7 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       createdTransactions: createdTransactions.length
         ? createdTransactions.map((tx) => ({
           id: tx._id.toString(),
-          amount: tx.amount,
+          amount: fromCents(tx.amount), // Convert back to decimal for frontend
           description: tx.description,
           category: tx.category,
           type: tx.type,

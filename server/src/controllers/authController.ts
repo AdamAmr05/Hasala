@@ -8,14 +8,14 @@ const generateToken = (res: Response, userId: string) => {
     expiresIn: '30d',
   });
 
+  const isProduction = process.env.NODE_ENV === 'production';
+
   res.cookie('jwt', token, {
     httpOnly: true,
-    secure: false, // Must be false for http:// connections
-    sameSite: 'lax', // Allows cookies on same-site requests (including different ports on same domain)
+    secure: isProduction, // Only send cookie over HTTPS in production
+    sameSite: isProduction ? 'strict' : 'lax', // Stricter in production
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
-
-  console.log('Cookie set for user:', userId);
 };
 
 // @desc    Register a new user

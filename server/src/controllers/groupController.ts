@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import crypto from 'crypto';
 import SplitGroup from '../models/SplitGroup';
 import GroupExpense from '../models/GroupExpense';
 import { AuthRequest } from '../middleware/authMiddleware';
@@ -12,11 +13,11 @@ export const createGroup = async (req: AuthRequest, res: Response) => {
     try {
         const { name, currency = 'EGP' } = req.body;
 
-        // Generate unique invite code
+        // Generate unique invite code using cryptographically secure random bytes
         let inviteCode = '';
         let isUnique = false;
         while (!isUnique) {
-            inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+            inviteCode = crypto.randomBytes(4).toString('hex').toUpperCase(); // 8 character hex string
             const existing = await SplitGroup.findOne({ inviteCode });
             if (!existing) isUnique = true;
         }

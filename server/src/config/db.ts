@@ -2,11 +2,6 @@ import mongoose from 'mongoose';
 
 const connectDB = async () => {
   try {
-    const mongoEnvKeys = Object.keys(process.env).filter((key) =>
-      key.toUpperCase().includes('MONGO')
-    );
-    console.log('Mongo-related env keys found:', mongoEnvKeys);
-
     const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
     if (!uri) {
       throw new Error('MONGODB_URI is not defined in environment variables');
