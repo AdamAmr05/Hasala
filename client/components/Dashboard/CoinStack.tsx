@@ -38,9 +38,9 @@ const CoinStack: React.FC<CoinStackProps> = ({ totalSpent, budget, isLoading = f
                         animate={{ opacity: 1, y: 0 }}
                         className="absolute -top-8 z-20 flex flex-col items-center"
                     >
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Remaining</span>
-                        <span className={`text-2xl font-bold whitespace-nowrap ${isOverBudget ? 'text-red-500' : 'text-primary'}`}>
-                            {remaining.toLocaleString()} <span className="text-xs font-normal text-gray-400">EGP</span>
+                        <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Remaining</span>
+                        <span className={`text-2xl font-bold whitespace-nowrap ${isOverBudget ? 'text-red-500' : 'text-primary dark:text-white'}`}>
+                            {remaining.toLocaleString()} <span className="text-xs font-normal text-gray-400 dark:text-gray-500">EGP</span>
                         </span>
                     </motion.div>
                 )}
@@ -90,11 +90,11 @@ const CoinStack: React.FC<CoinStackProps> = ({ totalSpent, budget, isLoading = f
                     })}
                 </div>
                 {/* Base/Pedestal */}
-                <div className="w-32 h-4 bg-gray-200/50 rounded-[100%] absolute bottom-0 blur-sm transform scale-y-50" />
+                <div className="w-32 h-4 bg-gray-200/50 dark:bg-gray-600/30 rounded-[100%] absolute bottom-0 blur-sm transform scale-y-50" />
             </div>
 
             <div className="text-center -mt-2">
-                <p className="text-sm text-gray-500 font-medium">
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
                     {percentage.toFixed(0)}% of Budget Used
                 </p>
             </div>

@@ -181,19 +181,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-xl px-6 py-4 border-b border-gray-200 sticky top-0 z-20 flex justify-between items-center">
+      <div className="bg-white/80 dark:bg-[#1C1C1E]/80 backdrop-blur-xl px-6 py-4 border-b border-gray-200 dark:border-[#2C2C2E] sticky top-0 z-20 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold shadow-sm ring-2 ring-white">
-            <Sparkles size={18} className="text-accent-blue" />
+          <div className="w-10 h-10 rounded-full bg-primary dark:bg-white flex items-center justify-center text-white dark:text-primary font-bold shadow-sm ring-2 ring-white dark:ring-[#0D0D0F]">
+            <Sparkles size={18} className="text-white dark:text-primary" />
           </div>
           <div>
-            <h2 className="font-bold text-primary text-lg tracking-tight">Hasala AI</h2>
-            {activeThreadId && <p className="text-[10px] text-gray-400">Continuing conversation...</p>}
+            <h2 className="font-bold text-primary dark:text-white text-lg tracking-tight">Hasala AI</h2>
+            {activeThreadId && <p className="text-[10px] text-gray-400 dark:text-gray-500">Continuing conversation...</p>}
           </div>
         </div>
         <button
           onClick={() => setIsSidebarOpen(true)}
-          className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+          className="p-2 hover:bg-gray-100 dark:hover:bg-[#2C2C2E] rounded-full text-gray-500 dark:text-gray-400 transition-colors"
         >
           <History size={20} />
         </button>
@@ -221,7 +221,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                px-4 py-3 shadow-sm text-[15px] leading-relaxed max-w-[90%] break-words
                ${msg.sender === ChatSender.USER
                 ? 'bg-accent-blue text-white rounded-[22px] rounded-br-sm'
-                : 'bg-white text-primary rounded-[22px] rounded-bl-sm border border-gray-100'}
+                : 'bg-white dark:bg-[#1C1C1E] text-primary dark:text-white rounded-[22px] rounded-bl-sm border border-gray-100 dark:border-[#2C2C2E]'}
             `}>
               {/* 1. Render Text */}
               {msg.text && <span className="whitespace-pre-wrap block">{renderMessageText(msg.text)}</span>}
@@ -238,7 +238,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               ))}
             </div>
 
-            <span className={`text-[10px] text-gray-400 px-1 mt-1 ${msg.sender === ChatSender.USER ? 'text-right' : 'text-left'}`}>
+            <span className={`text-[10px] text-gray-400 dark:text-gray-500 px-1 mt-1 ${msg.sender === ChatSender.USER ? 'text-right' : 'text-left'}`}>
               {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
@@ -246,10 +246,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         {isTyping && (
           <div className="flex justify-start w-full animate-pulse mb-4">
-            <div className="bg-white px-4 py-4 rounded-[20px] rounded-bl-sm shadow-sm border border-gray-100 flex space-x-1.5 items-center">
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+            <div className="bg-white dark:bg-[#1C1C1E] px-4 py-4 rounded-[20px] rounded-bl-sm shadow-sm border border-gray-100 dark:border-[#2C2C2E] flex space-x-1.5 items-center">
+              <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce delay-100"></div>
+              <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce delay-200"></div>
             </div>
           </div>
         )}
@@ -257,15 +257,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className="px-4 pb-4 pt-2 bg-gradient-to-t from-[#F2F2F7] to-transparent">
-        <div className="bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-1.5 flex items-center border border-gray-200/80 backdrop-blur-sm">
+      <div className="px-4 pb-4 pt-2 bg-gradient-to-t from-[#F2F2F7] dark:from-[#0D0D0F] to-transparent">
+        <div className="bg-white dark:bg-[#1C1C1E] rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.06)] dark:shadow-xl dark:shadow-black/30 p-1.5 flex items-center border border-gray-200/80 dark:border-[#2C2C2E] backdrop-blur-sm">
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Ask Hasala..."
-            className="flex-1 bg-transparent px-4 py-2.5 focus:outline-none text-primary placeholder-gray-400 text-[15px]"
+            className="flex-1 bg-transparent px-4 py-2.5 focus:outline-none text-primary dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-[15px]"
           />
           <button
             onClick={handleSend}

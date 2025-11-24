@@ -41,11 +41,11 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                         animate={{ x: 0 }}
                         exit={{ x: '-100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed top-0 left-0 bottom-0 w-80 bg-white z-50 shadow-2xl flex flex-col"
+                        className="fixed top-0 left-0 bottom-0 w-80 bg-white dark:bg-[#1C1C1E] z-50 shadow-2xl flex flex-col"
                     >
-                        <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                            <h2 className="font-bold text-lg text-gray-800">Chat History</h2>
-                            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-500">
+                        <div className="p-5 border-b border-gray-100 dark:border-[#2C2C2E] flex justify-between items-center bg-gray-50/50 dark:bg-[#0D0D0F]/50">
+                            <h2 className="font-bold text-lg text-gray-800 dark:text-white">Chat History</h2>
+                            <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-[#2C2C2E] rounded-full text-gray-500 dark:text-gray-400">
                                 <X size={20} />
                             </button>
                         </div>
@@ -56,7 +56,7 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                                     onNewChat();
                                     onClose();
                                 }}
-                                className="w-full py-3 px-4 bg-primary text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
+                                className="w-full py-3 px-4 bg-primary dark:bg-white text-white dark:text-primary rounded-xl font-bold shadow-lg shadow-primary/20 dark:shadow-white/20 flex items-center justify-center gap-2 hover:bg-blue-700 dark:hover:bg-gray-200 transition-colors"
                             >
                                 <Plus size={18} />
                                 New Chat
@@ -65,7 +65,7 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
                         <div className="flex-1 overflow-y-auto p-4 space-y-2">
                             {threads.length === 0 ? (
-                                <div className="text-center text-gray-400 mt-10">
+                                <div className="text-center text-gray-400 dark:text-gray-500 mt-10">
                                     <MessageSquare size={48} className="mx-auto mb-3 opacity-20" />
                                     <p className="text-sm">No history yet.</p>
                                 </div>
@@ -74,8 +74,8 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                                     <div
                                         key={thread._id}
                                         className={`group flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer ${activeThreadId === thread._id
-                                            ? 'bg-blue-50 border-blue-200 border'
-                                            : 'hover:bg-gray-50 border border-transparent'
+                                            ? 'bg-blue-50 dark:bg-white/10 border-blue-200 dark:border-white/30 border'
+                                            : 'hover:bg-gray-50 dark:hover:bg-[#2C2C2E] border border-transparent'
                                             }`}
                                         onClick={() => {
                                             onSelectThread(thread._id);
@@ -83,16 +83,16 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                                         }}
                                     >
                                         <div className="flex items-center gap-3 min-w-0">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${activeThreadId === thread._id ? 'bg-blue-100 text-primary' : 'bg-gray-100 text-gray-500'
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${activeThreadId === thread._id ? 'bg-blue-100 dark:bg-white/20 text-primary dark:text-white' : 'bg-gray-100 dark:bg-[#2C2C2E] text-gray-500 dark:text-gray-400'
                                                 }`}>
                                                 <MessageSquare size={14} />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className={`text-sm font-medium truncate ${activeThreadId === thread._id ? 'text-primary' : 'text-gray-700'
+                                                <p className={`text-sm font-medium truncate ${activeThreadId === thread._id ? 'text-primary dark:text-white' : 'text-gray-700 dark:text-gray-200'
                                                     }`}>
                                                     {thread.title}
                                                 </p>
-                                                <p className="text-[10px] text-gray-400">
+                                                <p className="text-[10px] text-gray-400 dark:text-gray-500">
                                                     {new Date(thread.lastMessageAt).toLocaleDateString()}
                                                 </p>
                                             </div>
@@ -104,7 +104,7 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                                                     onDeleteThread(thread._id);
                                                 }
                                             }}
-                                            className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                            className="p-1.5 text-gray-300 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
                                         >
                                             <Trash2 size={14} />
                                         </button>

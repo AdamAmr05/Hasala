@@ -152,8 +152,8 @@ const App: React.FC = () => {
 
   if (userLoading) {
     return (
-      <div className="min-h-screen bg-[#F2F2F7] text-gray-900 font-sans selection:bg-primary selection:text-white flex items-center justify-center">
-        <p className="text-sm text-gray-500 animate-pulse">Checking your session...</p>
+      <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#0D0D0F] text-gray-900 dark:text-white font-sans selection:bg-primary selection:text-white flex items-center justify-center">
+        <p className="text-sm text-gray-500 dark:text-gray-400 animate-pulse">Checking your session...</p>
       </div>
     );
   }
@@ -161,19 +161,19 @@ const App: React.FC = () => {
   const showAuthForm = !user;
 
   return (
-    <div className="min-h-screen bg-[#F2F2F7] text-gray-900 font-sans selection:bg-primary selection:text-white">
-      <div className="max-w-md mx-auto bg-gray-50 min-h-screen relative shadow-2xl overflow-hidden">
+    <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#0D0D0F] text-gray-900 dark:text-white font-sans selection:bg-primary selection:text-white">
+      <div className="max-w-md mx-auto bg-gray-50 dark:bg-[#0D0D0F] min-h-screen relative shadow-2xl overflow-hidden">
         {!showAuthForm ? (
           <>
             {location.pathname !== '/chat' && location.pathname !== '/settings' && ( // Exclude header for chat and settings
-              <header className="px-6 py-4 flex justify-between items-center border-b border-gray-200 bg-white/70 backdrop-blur-sm">
+              <header className="px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-[#2C2C2E] bg-white/70 dark:bg-[#1C1C1E]/70 backdrop-blur-sm">
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-widest">Welcome back</p>
-                  <h1 className="font-bold text-lg text-gray-900">{user?.name}</h1>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-widest">Welcome back</p>
+                  <h1 className="font-bold text-lg text-gray-900 dark:text-white">{user?.name}</h1>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="text-xs font-semibold text-primary hover:text-blue-700 transition-colors"
+                  className="text-xs font-semibold text-primary dark:text-white hover:text-blue-700 dark:hover:text-gray-300 transition-colors"
                 >
                   Logout
                 </button>
@@ -185,13 +185,13 @@ const App: React.FC = () => {
                 <Route path="/" element={
                   <div className="animate-[fadeIn_0.3s_ease-out]">
                     {transactionsLoading && transactions.length === 0 ? (
-                      <div className="p-6 text-center text-gray-500">Loading your wallet...</div>
+                      <div className="p-6 text-center text-gray-500 dark:text-gray-400">Loading your wallet...</div>
                     ) : transactionsError ? (
                       <div className="p-6 text-center flex flex-col items-center gap-2">
                         <p className="text-red-500">Could not load transactions.</p>
                         <button
                           onClick={() => refreshTransactions()}
-                          className="px-4 py-2 bg-white rounded-xl text-sm font-semibold text-gray-700 shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+                          className="px-4 py-2 bg-white dark:bg-[#2C2C2E] rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-sm border border-gray-200 dark:border-[#3A3A3C] hover:bg-gray-50 dark:hover:bg-[#3A3A3C] transition-colors"
                         >
                           Retry
                         </button>
@@ -260,69 +260,69 @@ const App: React.FC = () => {
           <div className="min-h-screen flex items-center justify-center p-6">
             <form
               onSubmit={handleAuthSubmit}
-              className="bg-white w-full rounded-3xl p-8 shadow-xl space-y-6"
+              className="bg-white dark:bg-[#1C1C1E] w-full rounded-3xl p-8 shadow-xl dark:shadow-2xl dark:shadow-black/50 space-y-6"
             >
               <div className="text-center space-y-2">
-                <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
+                <p className="text-xs uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500">
                   {authMode === 'login' ? 'Login' : 'Create Account'}
                 </p>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                   {authMode === 'login' ? 'Welcome to Hasala' : 'Join Hasala'}
                 </h1>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Frictionless money tracking built for Egyptian students.
                 </p>
               </div>
 
               {authMode === 'register' && (
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Full Name
                   </label>
                   <input
                     type="text"
                     value={authForm.name}
                     onChange={(e) => setAuthForm((prev) => ({ ...prev, name: e.target.value }))}
-                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                    className="w-full rounded-2xl border border-gray-200 dark:border-[#3A3A3C] bg-gray-50 dark:bg-[#2C2C2E] dark:text-white px-4 py-3 focus:border-primary dark:focus:border-accent-blue focus:ring-2 focus:ring-primary/20 dark:focus:ring-accent-blue/20 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                     placeholder="Youssef Hassan"
                   />
                 </div>
               )}
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Email
                 </label>
                 <input
                   type="email"
                   value={authForm.email}
                   onChange={(e) => setAuthForm((prev) => ({ ...prev, email: e.target.value }))}
-                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  className="w-full rounded-2xl border border-gray-200 dark:border-[#3A3A3C] bg-gray-50 dark:bg-[#2C2C2E] dark:text-white px-4 py-3 focus:border-primary dark:focus:border-accent-blue focus:ring-2 focus:ring-primary/20 dark:focus:ring-accent-blue/20 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   placeholder="student@university.edu"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Password
                 </label>
                 <input
                   type="password"
                   value={authForm.password}
                   onChange={(e) => setAuthForm((prev) => ({ ...prev, password: e.target.value }))}
-                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  className="w-full rounded-2xl border border-gray-200 dark:border-[#3A3A3C] bg-gray-50 dark:bg-[#2C2C2E] dark:text-white px-4 py-3 focus:border-primary dark:focus:border-accent-blue focus:ring-2 focus:ring-primary/20 dark:focus:ring-accent-blue/20 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   placeholder="Minimum 6 characters"
                 />
               </div>
 
               {authError && (
-                <p className="text-sm text-red-500 bg-red-50 rounded-2xl px-4 py-2">{authError}</p>
+                <p className="text-sm text-red-500 bg-red-50 dark:bg-red-500/10 rounded-2xl px-4 py-2">{authError}</p>
               )}
 
               <button
                 type="submit"
                 disabled={authMutation.isPending}
-                className="w-full py-4 rounded-2xl bg-primary text-white font-semibold shadow-lg shadow-primary/30 hover:bg-blue-600 transition disabled:opacity-60"
+                className="w-full py-4 rounded-2xl bg-primary dark:bg-white text-white dark:text-primary font-semibold shadow-lg shadow-primary/30 dark:shadow-white/20 hover:bg-blue-600 dark:hover:bg-gray-200 transition disabled:opacity-60"
               >
                 {authMutation.isPending
                   ? 'Just a sec...'
@@ -331,13 +331,13 @@ const App: React.FC = () => {
                     : 'Create Account'}
               </button>
 
-              <p className="text-xs text-center text-gray-500">
+              <p className="text-xs text-center text-gray-500 dark:text-gray-400">
                 {authMode === 'login' ? (
                   <>
                     No account yet?{' '}
                     <button
                       type="button"
-                      className="text-primary font-semibold"
+                      className="text-primary dark:text-white font-semibold"
                       onClick={() => {
                         setAuthMode('register');
                         setAuthError(null);
@@ -351,7 +351,7 @@ const App: React.FC = () => {
                     Already have an account?{' '}
                     <button
                       type="button"
-                      className="text-primary font-semibold"
+                      className="text-primary dark:text-white font-semibold"
                       onClick={() => {
                         setAuthMode('login');
                         setAuthError(null);

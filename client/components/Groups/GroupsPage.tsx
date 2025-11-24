@@ -88,7 +88,7 @@ const GroupsPage: React.FC = () => {
     if (loading && groups.length === 0) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
-                <Loader2 className="animate-spin text-primary" size={32} />
+                <Loader2 className="animate-spin text-primary dark:text-white" size={32} />
             </div>
         );
     }
@@ -97,19 +97,19 @@ const GroupsPage: React.FC = () => {
         <div className="p-6 pb-32 animate-[fadeIn_0.5s_ease-out]">
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-primary">Groups</h1>
-                    <p className="text-gray-400 font-medium mt-1">Manage shared expenses</p>
+                    <h1 className="text-3xl font-bold text-primary dark:text-white">Groups</h1>
+                    <p className="text-gray-400 dark:text-gray-500 font-medium mt-1">Manage shared expenses</p>
                 </div>
                 <button
                     onClick={() => setShowCreateModal(true)}
-                    className="w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 hover:bg-black/80 transition-all hover:scale-105 active:scale-95"
+                    className="w-12 h-12 bg-primary dark:bg-white text-white dark:text-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 dark:shadow-white/20 hover:bg-black/80 dark:hover:bg-gray-200 transition-all hover:scale-105 active:scale-95"
                 >
                     <Plus size={24} />
                 </button>
             </div>
 
             {error && (
-                <div className="bg-red-50 border border-red-100 rounded-2xl p-4 mb-6 flex items-center gap-3 text-red-600">
+                <div className="bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-2xl p-4 mb-6 flex items-center gap-3 text-red-600">
                     <AlertCircle size={20} />
                     <span className="font-medium">{error}</span>
                     <button onClick={fetchGroups} className="ml-auto text-sm font-bold underline hover:text-red-800">Retry</button>
@@ -117,22 +117,22 @@ const GroupsPage: React.FC = () => {
             )}
 
             {groups.length === 0 && !loading && !error ? (
-                <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-gray-200">
-                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
+                <div className="text-center py-12 bg-white dark:bg-[#1C1C1E] rounded-3xl border border-dashed border-gray-200 dark:border-[#3A3A3C]">
+                    <div className="w-16 h-16 bg-gray-50 dark:bg-[#2C2C2E] rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300 dark:text-gray-500">
                         <Users size={32} />
                     </div>
-                    <h3 className="text-lg font-bold text-primary mb-2">No groups yet</h3>
-                    <p className="text-gray-400 text-sm mb-6 max-w-xs mx-auto">Create a group to start splitting bills with friends or family.</p>
+                    <h3 className="text-lg font-bold text-primary dark:text-white mb-2">No groups yet</h3>
+                    <p className="text-gray-400 dark:text-gray-500 text-sm mb-6 max-w-xs mx-auto">Create a group to start splitting bills with friends or family.</p>
                     <div className="flex gap-3 justify-center">
                         <button
                             onClick={() => setShowCreateModal(true)}
-                            className="px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:bg-black/80 transition-all"
+                            className="px-6 py-3 bg-primary dark:bg-white text-white dark:text-primary rounded-xl font-bold text-sm shadow-lg shadow-primary/20 dark:shadow-white/20 hover:bg-black/80 dark:hover:bg-gray-200 transition-all"
                         >
                             Create Group
                         </button>
                         <button
                             onClick={() => setShowJoinModal(true)}
-                            className="px-6 py-3 bg-white text-primary border border-gray-200 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all"
+                            className="px-6 py-3 bg-white dark:bg-[#2C2C2E] text-primary dark:text-white border border-gray-200 dark:border-[#3A3A3C] rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-[#3A3A3C] transition-all"
                         >
                             Join via Code
                         </button>
@@ -146,24 +146,24 @@ const GroupsPage: React.FC = () => {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => navigate(`/groups/${group._id}`)}
-                            className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                            className="bg-white dark:bg-[#1C1C1E] p-5 rounded-3xl border border-gray-100 dark:border-[#2C2C2E] shadow-sm hover:shadow-md dark:hover:shadow-xl dark:hover:shadow-black/20 transition-all cursor-pointer group"
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center text-xl font-bold text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                                    <div className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-[#2C2C2E] border border-gray-100 dark:border-[#3A3A3C] flex items-center justify-center text-xl font-bold text-primary dark:text-white group-hover:bg-primary dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-primary transition-colors">
                                         {group.name?.charAt(0).toUpperCase() || '?'}
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-primary mb-1">{group.name}</h3>
-                                        <div className="flex items-center gap-2 text-xs font-medium text-gray-400">
+                                        <h3 className="text-lg font-bold text-primary dark:text-white mb-1">{group.name}</h3>
+                                        <div className="flex items-center gap-2 text-xs font-medium text-gray-400 dark:text-gray-500">
                                             <Users size={14} />
                                             <span>{group.members.length} members</span>
-                                            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                            <span className="w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></span>
                                             <span>{group.currency}</span>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-[#2C2C2E] flex items-center justify-center text-gray-400 dark:text-gray-500 group-hover:bg-primary/10 dark:group-hover:bg-white/10 group-hover:text-primary dark:group-hover:text-white transition-colors">
                                     <ArrowRight size={20} />
                                 </div>
                             </div>
@@ -172,7 +172,7 @@ const GroupsPage: React.FC = () => {
 
                     <button
                         onClick={() => setShowJoinModal(true)}
-                        className="mt-4 w-full py-4 border border-dashed border-gray-300 rounded-3xl text-gray-400 font-bold hover:bg-gray-50 hover:border-gray-400 transition-all flex items-center justify-center gap-2"
+                        className="mt-4 w-full py-4 border border-dashed border-gray-300 dark:border-[#3A3A3C] rounded-3xl text-gray-400 dark:text-gray-500 font-bold hover:bg-gray-50 dark:hover:bg-[#1C1C1E] hover:border-gray-400 dark:hover:border-gray-500 transition-all flex items-center justify-center gap-2"
                     >
                         <Wallet size={20} />
                         Have an invite code? Join Group
@@ -182,12 +182,12 @@ const GroupsPage: React.FC = () => {
 
             {/* Create Modal */}
             {showCreateModal && (
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
-                    <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-[slideUp_0.3s_ease-out]">
-                        <h2 className="text-xl font-bold text-primary mb-4">Create New Group</h2>
+                <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
+                    <div className="bg-white dark:bg-[#1C1C1E] w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-[slideUp_0.3s_ease-out]">
+                        <h2 className="text-xl font-bold text-primary dark:text-white mb-4">Create New Group</h2>
 
                         {createError && (
-                            <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl font-medium flex items-start gap-2">
+                            <div className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 text-red-600 text-sm rounded-xl font-medium flex items-start gap-2">
                                 <AlertCircle size={16} className="mt-0.5 shrink-0" />
                                 {createError}
                             </div>
@@ -199,21 +199,21 @@ const GroupsPage: React.FC = () => {
                                 value={newGroupName}
                                 onChange={e => setNewGroupName(e.target.value)}
                                 placeholder="Group Name (e.g. Ski Trip)"
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-primary font-semibold mb-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+                                className="w-full bg-gray-50 dark:bg-[#2C2C2E] border border-gray-200 dark:border-[#3A3A3C] rounded-xl px-4 py-3 text-primary dark:text-white font-semibold mb-4 focus:outline-none focus:border-primary dark:focus:border-accent-blue focus:ring-2 focus:ring-primary/10 dark:focus:ring-accent-blue/10 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                 autoFocus
                             />
                             <div className="flex gap-3">
                                 <button
                                     type="button"
                                     onClick={() => { setShowCreateModal(false); setCreateError(null); }}
-                                    className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all"
+                                    className="flex-1 py-3 bg-gray-100 dark:bg-[#2C2C2E] text-gray-600 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-[#3A3A3C] transition-all"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={submitting}
-                                    className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-black/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    className="flex-1 py-3 bg-primary dark:bg-white text-white dark:text-primary rounded-xl font-bold hover:bg-black/80 dark:hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
                                     {submitting && <Loader2 size={16} className="animate-spin" />}
                                     Create
@@ -226,12 +226,12 @@ const GroupsPage: React.FC = () => {
 
             {/* Join Modal */}
             {showJoinModal && (
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
-                    <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-[slideUp_0.3s_ease-out]">
-                        <h2 className="text-xl font-bold text-primary mb-4">Join Group</h2>
+                <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
+                    <div className="bg-white dark:bg-[#1C1C1E] w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-[slideUp_0.3s_ease-out]">
+                        <h2 className="text-xl font-bold text-primary dark:text-white mb-4">Join Group</h2>
 
                         {joinError && (
-                            <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl font-medium flex items-start gap-2">
+                            <div className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 text-red-600 text-sm rounded-xl font-medium flex items-start gap-2">
                                 <AlertCircle size={16} className="mt-0.5 shrink-0" />
                                 {joinError}
                             </div>
@@ -243,21 +243,21 @@ const GroupsPage: React.FC = () => {
                                 value={joinCode}
                                 onChange={e => setJoinCode(e.target.value.toUpperCase())}
                                 placeholder="Enter Invite Code"
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-primary font-semibold mb-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all uppercase tracking-widest"
+                                className="w-full bg-gray-50 dark:bg-[#2C2C2E] border border-gray-200 dark:border-[#3A3A3C] rounded-xl px-4 py-3 text-primary dark:text-white font-semibold mb-4 focus:outline-none focus:border-primary dark:focus:border-accent-blue focus:ring-2 focus:ring-primary/10 dark:focus:ring-accent-blue/10 transition-all uppercase tracking-widest placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                 autoFocus
                             />
                             <div className="flex gap-3">
                                 <button
                                     type="button"
                                     onClick={() => { setShowJoinModal(false); setJoinError(null); }}
-                                    className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all"
+                                    className="flex-1 py-3 bg-gray-100 dark:bg-[#2C2C2E] text-gray-600 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-[#3A3A3C] transition-all"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={submitting}
-                                    className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-black/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    className="flex-1 py-3 bg-primary dark:bg-white text-white dark:text-primary rounded-xl font-bold hover:bg-black/80 dark:hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
                                     {submitting && <Loader2 size={16} className="animate-spin" />}
                                     Join

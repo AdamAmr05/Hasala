@@ -163,32 +163,32 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
     };
 
     return (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
-            <div className="bg-white w-full max-w-lg rounded-3xl p-8 shadow-2xl max-h-[90vh] overflow-y-auto animate-[slideUp_0.3s_ease-out]">
+        <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+            <div className="bg-white dark:bg-[#1C1C1E] w-full max-w-lg rounded-3xl p-8 shadow-2xl max-h-[90vh] overflow-y-auto animate-[slideUp_0.3s_ease-out]">
                 <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-2xl font-bold text-primary">Add Expense</h2>
-                    <button onClick={onClose} className="p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors">
+                    <h2 className="text-2xl font-bold text-primary dark:text-white">Add Expense</h2>
+                    <button onClick={onClose} className="p-2 bg-gray-100 dark:bg-[#2C2C2E] rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-[#3A3A3C] transition-colors">
                         <X size={20} />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Description</label>
+                        <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase mb-2">Description</label>
                         <input
                             type="text"
                             value={description}
                             onChange={e => setDescription(e.target.value)}
-                            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-primary text-lg font-semibold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+                            className="w-full bg-gray-50 dark:bg-[#2C2C2E] border border-gray-200 dark:border-[#3A3A3C] rounded-2xl px-5 py-4 text-primary dark:text-white text-lg font-semibold focus:outline-none focus:border-primary dark:focus:border-accent-blue focus:ring-2 focus:ring-primary/10 dark:focus:ring-accent-blue/10 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                             placeholder="e.g. Dinner"
                             autoFocus
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Amount</label>
+                        <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase mb-2">Amount</label>
                         <div className="relative">
-                            <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-lg font-bold">EGP</span>
+                            <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-lg font-bold">EGP</span>
                             <input
                                 type="text"
                                 inputMode="decimal"
@@ -199,32 +199,32 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
                                         setAmount(val);
                                     }
                                 }}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-16 pr-5 py-4 text-primary text-2xl font-bold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+                                className="w-full bg-gray-50 dark:bg-[#2C2C2E] border border-gray-200 dark:border-[#3A3A3C] rounded-2xl pl-16 pr-5 py-4 text-primary dark:text-white text-2xl font-bold focus:outline-none focus:border-primary dark:focus:border-accent-blue focus:ring-2 focus:ring-primary/10 dark:focus:ring-accent-blue/10 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                 placeholder="0.00"
                             />
                         </div>
                     </div>
 
                     {/* Split Method Tabs */}
-                    <div className="flex p-1 bg-gray-100 rounded-2xl">
+                    <div className="flex p-1 bg-gray-100 dark:bg-[#2C2C2E] rounded-2xl">
                         <button
                             type="button"
                             onClick={() => setSplitMethod('EQUAL')}
-                            className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${splitMethod === 'EQUAL' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${splitMethod === 'EQUAL' ? 'bg-white dark:bg-[#3A3A3C] text-primary dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
                         >
                             = Equal
                         </button>
                         <button
                             type="button"
                             onClick={() => setSplitMethod('EXACT')}
-                            className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${splitMethod === 'EXACT' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${splitMethod === 'EXACT' ? 'bg-white dark:bg-[#3A3A3C] text-primary dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
                         >
                             Exact
                         </button>
                         <button
                             type="button"
                             onClick={() => setSplitMethod('PERCENT')}
-                            className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${splitMethod === 'PERCENT' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${splitMethod === 'PERCENT' ? 'bg-white dark:bg-[#3A3A3C] text-primary dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
                         >
                             % Percent
                         </button>
@@ -259,20 +259,20 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
 
                     {/* Members List */}
                     <div className="space-y-3 mt-4">
-                        <p className="text-gray-400 text-xs font-bold uppercase">Split amongst</p>
+                        <p className="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase">Split amongst</p>
                         {group.members.map((m: any) => {
                             const isSelected = selectedMembers.includes(m.user._id);
                             return (
-                                <div key={m.user._id} className={`flex items-center justify-between p-4 rounded-2xl border shadow-sm transition-all ${isSelected ? 'bg-white border-gray-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                                <div key={m.user._id} className={`flex items-center justify-between p-4 rounded-2xl border shadow-sm transition-all ${isSelected ? 'bg-white dark:bg-[#1C1C1E] border-gray-100 dark:border-[#2C2C2E]' : 'bg-gray-50 dark:bg-[#2C2C2E] border-transparent opacity-60'}`}>
                                     <div className="flex items-center gap-3 cursor-pointer" onClick={() => toggleMemberSelection(m.user._id)}>
-                                        <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary' : 'border-gray-300 bg-white'}`}>
-                                            {isSelected && <Check size={14} className="text-white" />}
+                                        <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary dark:bg-white border-primary dark:border-white' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-[#3A3A3C]'}`}>
+                                            {isSelected && <Check size={14} className="text-white dark:text-primary" />}
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-sm font-bold text-primary">
+                                            <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-[#2C2C2E] border border-gray-200 dark:border-[#3A3A3C] flex items-center justify-center text-sm font-bold text-primary dark:text-white">
                                                 {m.user.name[0]}
                                             </div>
-                                            <span className="text-primary font-bold">{m.user.name}</span>
+                                            <span className="text-primary dark:text-white font-bold">{m.user.name}</span>
                                         </div>
                                     </div>
 
@@ -285,7 +285,7 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
                                         >
                                             {splitMethod === 'EQUAL' && (
                                                 <div className="flex items-center h-full px-3">
-                                                    <span className="text-gray-500 font-medium whitespace-nowrap">
+                                                    <span className="text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
                                                         {amount ? (parseFloat(amount) / selectedMembers.length).toFixed(2) : '0.00'} EGP
                                                     </span>
                                                 </div>
@@ -293,7 +293,7 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
 
                                             {splitMethod === 'EXACT' && (
                                                 <div className="relative w-24 shrink-0 h-full">
-                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">EGP</span>
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm font-bold">EGP</span>
                                                     <input
                                                         type="text"
                                                         inputMode="decimal"
@@ -304,7 +304,7 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
                                                                 handleSplitChange(m.user._id, val);
                                                             }
                                                         }}
-                                                        className="w-full h-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-2 text-primary font-bold text-right focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all text-sm"
+                                                        className="w-full h-full bg-gray-50 dark:bg-[#2C2C2E] border border-gray-200 dark:border-[#3A3A3C] rounded-xl pl-10 pr-2 text-primary dark:text-white font-bold text-right focus:outline-none focus:border-primary dark:focus:border-accent-blue focus:ring-2 focus:ring-primary/10 dark:focus:ring-accent-blue/10 transition-all text-sm"
                                                         placeholder="0.00"
                                                     />
                                                 </div>
@@ -322,10 +322,10 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
                                                                 handleSplitChange(m.user._id, val);
                                                             }
                                                         }}
-                                                        className="w-full h-full bg-gray-50 border border-gray-200 rounded-xl pl-3 pr-7 text-primary font-bold text-right focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all text-sm"
+                                                        className="w-full h-full bg-gray-50 dark:bg-[#2C2C2E] border border-gray-200 dark:border-[#3A3A3C] rounded-xl pl-3 pr-7 text-primary dark:text-white font-bold text-right focus:outline-none focus:border-primary dark:focus:border-accent-blue focus:ring-2 focus:ring-primary/10 dark:focus:ring-accent-blue/10 transition-all text-sm"
                                                         placeholder="0"
                                                     />
-                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">%</span>
+                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm font-bold">%</span>
                                                 </div>
                                             )}
                                         </motion.div>
@@ -337,7 +337,7 @@ const AddGroupExpenseModal: React.FC<Props> = ({ group, myId, onClose, onSuccess
 
                     <button
                         type="submit"
-                        className="w-full py-4 bg-primary text-white rounded-2xl font-bold shadow-xl shadow-primary/30 hover:bg-black/80 hover:scale-[1.02] active:scale-[0.98] transition-all mt-4"
+                        className="w-full py-4 bg-primary dark:bg-white text-white dark:text-primary rounded-2xl font-bold shadow-xl shadow-primary/30 dark:shadow-white/20 hover:bg-black/80 dark:hover:bg-gray-200 hover:scale-[1.02] active:scale-[0.98] transition-all mt-4"
                     >
                         Save Expense
                     </button>

@@ -154,7 +154,7 @@ const SmartInputSheet: React.FC<SmartInputSheetProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/20 dark:bg-black/50 backdrop-blur-sm z-50"
           />
           <motion.div
             initial={{ y: '100%' }}
@@ -163,38 +163,38 @@ const SmartInputSheet: React.FC<SmartInputSheetProps> = ({
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-8"
           >
-            <div className="bg-white rounded-[2rem] shadow-float p-6 w-full max-w-md mx-auto overflow-hidden relative">
+            <div className="bg-white dark:bg-[#1C1C1E] rounded-[2rem] shadow-float dark:shadow-2xl dark:shadow-black/50 p-6 w-full max-w-md mx-auto overflow-hidden relative">
 
               {/* Header / Close */}
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {mode === 'idle' && (transactionType === TransactionType.EXPENSE ? "What did you spend?" : "What did you earn?")}
                   {mode === 'text' && "Type it out"}
                   {mode === 'voice' && "Listening..."}
                   {mode === 'processing' && "Thinking..."}
                 </h3>
-                <button onClick={onClose} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
-                  <X size={18} className="text-gray-500" />
+                <button onClick={onClose} className="p-2 bg-gray-100 dark:bg-[#2C2C2E] rounded-full hover:bg-gray-200 dark:hover:bg-[#3A3A3C] transition-colors">
+                  <X size={18} className="text-gray-500 dark:text-gray-400" />
                 </button>
               </div>
 
               {/* Segmented Control for Type */}
               {mode === 'idle' && (
-                <div className="flex bg-gray-100 p-1 rounded-xl mb-6 relative">
+                <div className="flex bg-gray-100 dark:bg-[#2C2C2E] p-1 rounded-xl mb-6 relative">
                   <motion.div
                     layoutId="activeType"
-                    className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-lg shadow-sm ${transactionType === TransactionType.EXPENSE ? 'bg-white left-1' : 'bg-white right-1'}`}
+                    className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-lg shadow-sm ${transactionType === TransactionType.EXPENSE ? 'bg-white dark:bg-[#3A3A3C] left-1' : 'bg-white dark:bg-[#3A3A3C] right-1'}`}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                   <button
                     onClick={() => setTransactionType(TransactionType.EXPENSE)}
-                    className={`flex-1 py-2 text-sm font-medium z-10 transition-colors ${transactionType === TransactionType.EXPENSE ? 'text-gray-900' : 'text-gray-500'}`}
+                    className={`flex-1 py-2 text-sm font-medium z-10 transition-colors ${transactionType === TransactionType.EXPENSE ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}
                   >
                     Expense
                   </button>
                   <button
                     onClick={() => setTransactionType(TransactionType.INCOME)}
-                    className={`flex-1 py-2 text-sm font-medium z-10 transition-colors ${transactionType === TransactionType.INCOME ? 'text-gray-900' : 'text-gray-500'}`}
+                    className={`flex-1 py-2 text-sm font-medium z-10 transition-colors ${transactionType === TransactionType.INCOME ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}
                   >
                     Income
                   </button>
@@ -211,10 +211,10 @@ const SmartInputSheet: React.FC<SmartInputSheetProps> = ({
                       disabled={isBusy}
                       className="flex flex-col items-center gap-3 group disabled:opacity-50"
                     >
-                      <div className="w-16 h-16 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center group-hover:scale-105 group-active:scale-95 transition-all shadow-sm">
-                        <Keyboard className="text-gray-600" size={28} />
+                      <div className="w-16 h-16 rounded-full bg-gray-50 dark:bg-[#2C2C2E] border border-gray-100 dark:border-[#3A3A3C] flex items-center justify-center group-hover:scale-105 group-active:scale-95 transition-all shadow-sm">
+                        <Keyboard className="text-gray-600 dark:text-gray-300" size={28} />
                       </div>
-                      <span className="text-sm font-medium text-gray-600">Type</span>
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Type</span>
                     </button>
 
                     <button
@@ -225,7 +225,7 @@ const SmartInputSheet: React.FC<SmartInputSheetProps> = ({
                       <div className={`w-16 h-16 rounded-full border flex items-center justify-center group-hover:scale-105 group-active:scale-95 transition-all shadow-sm ${transactionType === TransactionType.EXPENSE ? 'bg-[#FF3B30]/10 border-[#FF3B30]/20' : 'bg-[#34C759]/10 border-[#34C759]/20'}`}>
                         <Mic className={transactionType === TransactionType.EXPENSE ? "text-[#FF3B30]" : "text-[#34C759]"} size={28} />
                       </div>
-                      <span className="text-sm font-medium text-gray-600">Speak</span>
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Speak</span>
                     </button>
                   </div>
                 )}
@@ -241,7 +241,7 @@ const SmartInputSheet: React.FC<SmartInputSheetProps> = ({
                       onKeyDown={(e) => e.key === 'Enter' && handleTextSubmit()}
                       placeholder="e.g., 50 egp for coffee"
                       disabled={isBusy}
-                      className="w-full text-lg px-4 py-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-accent-blue/20 focus:bg-white transition-all outline-none placeholder:text-gray-400 disabled:opacity-60"
+                      className="w-full text-lg px-4 py-4 bg-gray-50 dark:bg-[#2C2C2E] dark:text-white rounded-2xl border-none focus:ring-2 focus:ring-accent-blue/20 focus:bg-white dark:focus:bg-[#3A3A3C] transition-all outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500 disabled:opacity-60"
                     />
                     <button
                       onClick={handleTextSubmit}
@@ -256,7 +256,7 @@ const SmartInputSheet: React.FC<SmartInputSheetProps> = ({
                 {/* VOICE STATE */}
                 {mode === 'voice' && (
                   <div className="flex flex-col items-center w-full">
-                    <div className={`w-full h-24 bg-gradient-to-r rounded-2xl flex items-center justify-center mb-4 relative overflow-hidden ${transactionType === TransactionType.EXPENSE ? 'from-orange-50 to-pink-50' : 'from-green-50 to-emerald-50'}`}>
+                    <div className={`w-full h-24 bg-gradient-to-r rounded-2xl flex items-center justify-center mb-4 relative overflow-hidden ${transactionType === TransactionType.EXPENSE ? 'from-orange-50 dark:from-orange-500/10 to-pink-50 dark:to-pink-500/10' : 'from-green-50 dark:from-green-500/10 to-emerald-50 dark:to-emerald-500/10'}`}>
                       {/* Animated Waveform Placeholder */}
                       <motion.div
                         animate={{ scale: [1, 1.2, 1] }}
@@ -277,7 +277,7 @@ const SmartInputSheet: React.FC<SmartInputSheetProps> = ({
                     <button
                       onClick={stopRecording}
                       disabled={isBusy}
-                      className="px-6 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60"
+                      className="px-6 py-2 bg-white dark:bg-[#2C2C2E] border border-gray-200 dark:border-[#3A3A3C] rounded-full text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#3A3A3C] transition-colors shadow-sm disabled:opacity-60"
                     >
                       Stop Recording
                     </button>
@@ -287,8 +287,8 @@ const SmartInputSheet: React.FC<SmartInputSheetProps> = ({
                 {/* PROCESSING STATE */}
                 {(mode === 'processing' || isSubmitting) && (
                   <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 rounded-full border-4 border-gray-100 border-t-accent-blue animate-spin" />
-                    <p className="text-sm text-gray-500">Making magic happen...</p>
+                    <div className="w-12 h-12 rounded-full border-4 border-gray-100 dark:border-[#3A3A3C] border-t-accent-blue animate-spin" />
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Making magic happen...</p>
                   </div>
                 )}
 

@@ -23,36 +23,36 @@ const StatsOverview: React.FC<StatsOverviewProps> = ({ currentDate, income, expe
   return (
     <div className="grid grid-cols-2 gap-4 px-6">
       {/* Money In */}
-      <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between h-32">
-        <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center mb-2">
+      <div className="bg-white dark:bg-[#1C1C1E] rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-[#2C2C2E] flex flex-col justify-between h-32">
+        <div className="w-10 h-10 rounded-full bg-green-50 dark:bg-green-500/10 flex items-center justify-center mb-2">
           <ArrowDown className="text-accent-green" size={20} />
         </div>
         <div>
-          <p className="text-xs text-gray-500 font-medium mb-1">Income</p>
-          <p className="text-xl font-bold text-primary">{income.toLocaleString()}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Income</p>
+          <p className="text-xl font-bold text-primary dark:text-white">{income.toLocaleString()}</p>
         </div>
       </div>
 
       {/* Money Out */}
-      <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between h-32">
-        <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center mb-2">
+      <div className="bg-white dark:bg-[#1C1C1E] rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-[#2C2C2E] flex flex-col justify-between h-32">
+        <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-500/10 flex items-center justify-center mb-2">
           <ArrowUp className="text-[#FF3B30]" size={20} />
         </div>
         <div>
-          <p className="text-xs text-gray-500 font-medium mb-1">Spent</p>
-          <p className="text-xl font-bold text-primary">{expense.toLocaleString()}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Spent</p>
+          <p className="text-xl font-bold text-primary dark:text-white">{expense.toLocaleString()}</p>
         </div>
       </div>
 
       {/* Daily Average Banner */}
-      <div className="col-span-2 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between">
+      <div className="col-span-2 bg-white dark:bg-[#1C1C1E] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-[#2C2C2E] flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-            <TrendingUp className="text-accent-blue" size={16} />
+          <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-white/10 flex items-center justify-center">
+            <TrendingUp className="text-accent-blue dark:text-white" size={16} />
           </div>
-          <span className="text-sm font-medium text-gray-600">Daily Average</span>
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Daily Average</span>
         </div>
-        <span className="font-bold text-primary">{dailyAvg.toLocaleString()} <span className="text-xs font-normal text-gray-400">EGP</span></span>
+        <span className="font-bold text-primary dark:text-white">{dailyAvg.toLocaleString()} <span className="text-xs font-normal text-gray-400 dark:text-gray-500">EGP</span></span>
       </div>
     </div>
   );

@@ -32,19 +32,19 @@ const AnalyticsView: React.FC = () => {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                <div className="w-8 h-8 border-4 border-primary dark:border-white border-t-transparent rounded-full animate-spin" />
             </div>
         );
     }
 
     if (isError || !data) {
         return (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-500 space-y-4">
+            <div className="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400 space-y-4">
                 <AlertCircle size={32} className="text-red-500" />
                 <p>Could not load analytics.</p>
                 <button
                     onClick={() => refetch()}
-                    className="px-4 py-2 bg-gray-100 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-200 transition-colors"
+                    className="px-4 py-2 bg-gray-100 dark:bg-[#2C2C2E] rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#3A3A3C] transition-colors"
                 >
                     Retry
                 </button>
@@ -86,24 +86,24 @@ const AnalyticsView: React.FC = () => {
             {/* Header & Month Navigation */}
             <div className="px-6 space-y-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-primary tracking-tight">Analytics</h1>
-                    <p className="text-sm text-gray-500">Deep dive into your spending habits.</p>
+                    <h1 className="text-2xl font-bold text-primary dark:text-white tracking-tight">Analytics</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Deep dive into your spending habits.</p>
                 </div>
 
-                <div className="flex items-center justify-between bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
-                    <button onClick={onPrevMonth} className="p-2 hover:bg-gray-50 rounded-xl transition-colors">
-                        <ChevronLeft size={20} className="text-gray-500" />
+                <div className="flex items-center justify-between bg-white dark:bg-[#1C1C1E] p-2 rounded-2xl shadow-sm border border-gray-100 dark:border-[#2C2C2E]">
+                    <button onClick={onPrevMonth} className="p-2 hover:bg-gray-50 dark:hover:bg-[#2C2C2E] rounded-xl transition-colors">
+                        <ChevronLeft size={20} className="text-gray-500 dark:text-gray-400" />
                     </button>
                     <motion.h2
                         key={monthName}
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-lg font-bold text-primary"
+                        className="text-lg font-bold text-primary dark:text-white"
                     >
                         {monthName}
                     </motion.h2>
-                    <button onClick={onNextMonth} className="p-2 hover:bg-gray-50 rounded-xl transition-colors">
-                        <ChevronRight size={20} className="text-gray-500" />
+                    <button onClick={onNextMonth} className="p-2 hover:bg-gray-50 dark:hover:bg-[#2C2C2E] rounded-xl transition-colors">
+                        <ChevronRight size={20} className="text-gray-500 dark:text-gray-400" />
                     </button>
                 </div>
             </div>
@@ -111,19 +111,19 @@ const AnalyticsView: React.FC = () => {
             {/* Income Overview Section */}
             {data.incomeBreakdown && data.incomeBreakdown.length > 0 && (
                 <div className="px-6">
-                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                    <div className="bg-white dark:bg-[#1C1C1E] rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#2C2C2E]">
                         <div className="flex items-center gap-2 mb-4">
-                            <div className="p-2 bg-green-50 rounded-full">
+                            <div className="p-2 bg-green-50 dark:bg-green-500/10 rounded-full">
                                 <TrendingUp size={18} className="text-green-500" />
                             </div>
-                            <h3 className="font-bold text-gray-900">Income Sources</h3>
+                            <h3 className="font-bold text-gray-900 dark:text-white">Income Sources</h3>
                         </div>
 
                         {/* Total Income Display */}
-                        <div className="mb-6 p-4 bg-gray-50 rounded-2xl">
-                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total Income</p>
-                            <p className="text-2xl font-bold text-gray-900">
-                                {data.totals.find(t => t._id === 'INCOME')?.total.toLocaleString() || 0} <span className="text-sm text-gray-500">EGP</span>
+                        <div className="mb-6 p-4 bg-gray-50 dark:bg-[#2C2C2E] rounded-2xl">
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Total Income</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                                {data.totals.find(t => t._id === 'INCOME')?.total.toLocaleString() || 0} <span className="text-sm text-gray-500 dark:text-gray-400">EGP</span>
                             </p>
                         </div>
 
@@ -136,12 +136,12 @@ const AnalyticsView: React.FC = () => {
                                 return (
                                     <div key={source._id} className="space-y-1">
                                         <div className="flex justify-between items-center text-sm">
-                                            <span className="font-medium text-gray-700">{source._id}</span>
-                                            <span className="font-bold text-gray-900">{source.total.toLocaleString()} EGP</span>
+                                            <span className="font-medium text-gray-700 dark:text-gray-200">{source._id}</span>
+                                            <span className="font-bold text-gray-900 dark:text-white">{source.total.toLocaleString()} EGP</span>
                                         </div>
 
                                         {/* Progress Bar */}
-                                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                        <div className="h-2 w-full bg-gray-100 dark:bg-[#2C2C2E] rounded-full overflow-hidden">
                                             <motion.div
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${percentage}%` }}
@@ -160,12 +160,12 @@ const AnalyticsView: React.FC = () => {
             {/* 0. People Section */}
             {peopleData.length > 0 && (
                 <div className="px-6">
-                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                    <div className="bg-white dark:bg-[#1C1C1E] rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#2C2C2E]">
                         <div className="flex items-center gap-2 mb-4">
-                            <div className="p-2 bg-indigo-50 rounded-full">
+                            <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-full">
                                 <Users size={18} className="text-indigo-500" />
                             </div>
-                            <h3 className="font-bold text-gray-900">People</h3>
+                            <h3 className="font-bold text-gray-900 dark:text-white">People</h3>
                         </div>
 
                         <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
@@ -179,8 +179,8 @@ const AnalyticsView: React.FC = () => {
                                         {person.name[0].toUpperCase()}
                                     </div>
                                     <div className="text-center">
-                                        <p className="text-xs font-bold text-gray-900 truncate max-w-[80px]">{person.name}</p>
-                                        <p className="text-[10px] text-gray-500 font-medium">{person.value.toLocaleString()} EGP</p>
+                                        <p className="text-xs font-bold text-gray-900 dark:text-white truncate max-w-[80px]">{person.name}</p>
+                                        <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">{person.value.toLocaleString()} EGP</p>
                                     </div>
                                 </div>
                             ))}
@@ -191,13 +191,13 @@ const AnalyticsView: React.FC = () => {
 
             {/* 1. Spending Trend Chart */}
             <div className="px-6">
-                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <div className="bg-white dark:bg-[#1C1C1E] rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#2C2C2E]">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-2">
-                            <div className="p-2 bg-blue-50 rounded-full">
-                                <TrendingUp size={18} className="text-accent-blue" />
+                            <div className="p-2 bg-blue-50 dark:bg-white/10 rounded-full">
+                                <TrendingUp size={18} className="text-accent-blue dark:text-white" />
                             </div>
-                            <h3 className="font-bold text-gray-900">Spending Trend</h3>
+                            <h3 className="font-bold text-gray-900 dark:text-white">Spending Trend</h3>
                         </div>
                     </div>
 
@@ -210,7 +210,7 @@ const AnalyticsView: React.FC = () => {
                                         <stop offset="95%" stopColor="#007AFF" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5EA" />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5EA" className="dark:opacity-20" />
                                 <XAxis
                                     dataKey="date"
                                     axisLine={false}
@@ -238,12 +238,12 @@ const AnalyticsView: React.FC = () => {
 
             {/* 2. Category Breakdown */}
             <div className="px-6">
-                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <div className="bg-white dark:bg-[#1C1C1E] rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#2C2C2E]">
                     <div className="flex items-center gap-2 mb-6">
-                        <div className="p-2 bg-orange-50 rounded-full">
+                        <div className="p-2 bg-orange-50 dark:bg-orange-500/10 rounded-full">
                             <PieIcon size={18} className="text-orange-500" />
                         </div>
-                        <h3 className="font-bold text-gray-900">Top Categories</h3>
+                        <h3 className="font-bold text-gray-900 dark:text-white">Top Categories</h3>
                     </div>
 
                     <div className="flex flex-col md:flex-row items-center gap-8">
@@ -268,7 +268,7 @@ const AnalyticsView: React.FC = () => {
                             </ResponsiveContainer>
                             {/* Center Text */}
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <span className="text-xs font-bold text-gray-400">BY CAT</span>
+                                <span className="text-xs font-bold text-gray-400 dark:text-gray-500">BY CAT</span>
                             </div>
                         </div>
 
@@ -278,9 +278,9 @@ const AnalyticsView: React.FC = () => {
                                 <div key={cat.name} className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                                        <span className="text-sm font-medium text-gray-700">{cat.name}</span>
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{cat.name}</span>
                                     </div>
-                                    <span className="text-sm font-bold text-gray-900">{cat.value.toLocaleString()}</span>
+                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{cat.value.toLocaleString()}</span>
                                 </div>
                             ))}
                         </div>
@@ -290,12 +290,12 @@ const AnalyticsView: React.FC = () => {
 
             {/* 3. Day of Week Analysis */}
             <div className="px-6">
-                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <div className="bg-white dark:bg-[#1C1C1E] rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#2C2C2E]">
                     <div className="flex items-center gap-2 mb-6">
-                        <div className="p-2 bg-purple-50 rounded-full">
+                        <div className="p-2 bg-purple-50 dark:bg-purple-500/10 rounded-full">
                             <Calendar size={18} className="text-purple-500" />
                         </div>
-                        <h3 className="font-bold text-gray-900">Weekly Pattern</h3>
+                        <h3 className="font-bold text-gray-900 dark:text-white">Weekly Pattern</h3>
                     </div>
 
                     <div className="h-40 w-full">
@@ -303,7 +303,7 @@ const AnalyticsView: React.FC = () => {
                             <BarChart data={dayData}>
                                 <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#8E8E93' }} />
                                 <Tooltip
-                                    cursor={{ fill: '#F2F2F7' }}
+                                    cursor={{ fill: 'rgba(242, 242, 247, 0.5)' }}
                                     contentStyle={{ borderRadius: '8px', border: 'none' }}
                                 />
                                 <Bar dataKey="amount" radius={[4, 4, 4, 4]}>

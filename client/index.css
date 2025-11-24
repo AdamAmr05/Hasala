@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Enable class-based dark mode instead of media query based */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Cairo', sans-serif;
 
@@ -19,6 +22,54 @@
   }
 }
 
+/* ===================================
+   DARK MODE SYSTEM
+   =================================== 
+   
+   Dark mode is activated by adding 'dark' class to <html>.
+   Uses class-based dark mode for explicit control.
+   
+   Color Palette (Dark):
+   - Background:   #0D0D0F (near black, subtle warmth)
+   - Surface:      #1C1C1E (cards, elevated surfaces)
+   - Surface-2:    #2C2C2E (secondary surfaces, inputs)
+   - Surface-3:    #3A3A3C (borders, dividers)
+   - Text Primary: #FFFFFF
+   - Text Secondary: #8E8E93
+   - Text Muted:   #636366
+*/
+
+/* Dark mode base styles */
+.dark body {
+  background-color: #0D0D0F;
+  color: #FFFFFF;
+}
+
+/* Dark mode utility classes for common patterns */
+.dark .dark-bg-base {
+  background-color: #0D0D0F;
+}
+
+.dark .dark-bg-surface {
+  background-color: #1C1C1E;
+}
+
+.dark .dark-bg-surface-2 {
+  background-color: #2C2C2E;
+}
+
+.dark .dark-text-primary {
+  color: #FFFFFF;
+}
+
+.dark .dark-text-secondary {
+  color: #8E8E93;
+}
+
+.dark .dark-border {
+  border-color: #3A3A3C;
+}
+
 /* Hide scrollbar for clean UI */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
@@ -36,6 +87,12 @@
 
 .glass-dark {
   @apply bg-[#1C1C1E]/85 backdrop-blur-xl;
+}
+
+/* Dark mode glass effect */
+.dark .glass {
+  background-color: rgba(28, 28, 30, 0.85);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Coin Stack 3D Styles */
@@ -100,4 +157,93 @@
   /* Gray-200 with opacity */
   border-color: rgba(209, 213, 219, 0.5);
   box-shadow: none;
+}
+
+/* Dark mode coin ghost */
+.dark .coin-ghost {
+  background: rgba(60, 60, 67, 0.3);
+  border-color: rgba(99, 99, 102, 0.5);
+}
+
+/* Dark mode coin stack pedestal */
+.dark .coin-pedestal {
+  background-color: rgba(60, 60, 67, 0.5);
+}
+
+/* ===================================
+   DARK MODE COMPONENT OVERRIDES
+   =================================== */
+
+/* Input focus styles for dark mode */
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: #007AFF;
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+}
+
+/* Tooltip/Popover dark styles for charts */
+.dark .recharts-default-tooltip {
+  background-color: #2C2C2E !important;
+  border-color: #3A3A3C !important;
+  border-radius: 12px !important;
+}
+
+.dark .recharts-tooltip-label {
+  color: #FFFFFF !important;
+}
+
+.dark .recharts-tooltip-item {
+  color: #8E8E93 !important;
+}
+
+/* Custom scrollbar for dark mode */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1C1C1E;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #3A3A3C;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #48484A;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Spinner animation improvement for dark mode */
+.dark .animate-spin {
+  border-top-color: #007AFF;
+}
+
+/* Selection color */
+.dark ::selection {
+  background-color: #007AFF;
+  color: #FFFFFF;
 }

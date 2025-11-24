@@ -48,17 +48,17 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Header */}
       <div className="px-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-primary font-bold text-lg">
+          <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-[#2C2C2E] border border-gray-200 dark:border-[#3A3A3C] flex items-center justify-center text-primary dark:text-white font-bold text-lg">
             {user?.name?.[0] || 'U'}
           </div>
           <div>
-            <p className="text-xs text-gray-400 font-bold uppercase">Welcome back,</p>
-            <h1 className="text-xl font-bold text-primary">{user?.name?.split(' ')[0] || 'User'}</h1>
+            <p className="text-xs text-gray-400 dark:text-gray-500 font-bold uppercase">Welcome back,</p>
+            <h1 className="text-xl font-bold text-primary dark:text-white">{user?.name?.split(' ')[0] || 'User'}</h1>
           </div>
         </div>
         <button
           onClick={onSettingsClick}
-          className="w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-400 hover:text-primary hover:bg-gray-50 transition-all"
+          className="w-10 h-10 rounded-full bg-white dark:bg-[#2C2C2E] border border-gray-200 dark:border-[#3A3A3C] shadow-sm flex items-center justify-center text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-50 dark:hover:bg-[#3A3A3C] transition-all"
         >
           <Settings size={20} />
         </button>
@@ -66,19 +66,19 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Month Navigation */}
       <div className="px-6 flex items-center justify-between">
-        <button onClick={onPrevMonth} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-          <ChevronLeft size={20} className="text-gray-500" />
+        <button onClick={onPrevMonth} className="p-2 hover:bg-gray-100 dark:hover:bg-[#2C2C2E] rounded-full transition-colors">
+          <ChevronLeft size={20} className="text-gray-500 dark:text-gray-400" />
         </button>
         <motion.h2
           key={monthName}
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-lg font-bold text-primary"
+          className="text-lg font-bold text-primary dark:text-white"
         >
           {monthName}
         </motion.h2>
-        <button onClick={onNextMonth} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-          <ChevronRight size={20} className="text-gray-500" />
+        <button onClick={onNextMonth} className="p-2 hover:bg-gray-100 dark:hover:bg-[#2C2C2E] rounded-full transition-colors">
+          <ChevronRight size={20} className="text-gray-500 dark:text-gray-400" />
         </button>
       </div>
 

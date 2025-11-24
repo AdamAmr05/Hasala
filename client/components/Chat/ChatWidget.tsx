@@ -49,22 +49,22 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
       })).reverse();
 
     if (data.length === 0) return (
-      <div className="p-3 bg-gray-50 rounded-xl text-center text-gray-400 text-xs my-2">No recent spending to chart</div>
+      <div className="p-3 bg-gray-50 dark:bg-[#2C2C2E] rounded-xl text-center text-gray-400 dark:text-gray-500 text-xs my-2">No recent spending to chart</div>
     );
 
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full overflow-hidden bg-white rounded-[24px] p-5 my-3 shadow-sm border border-gray-100"
+        className="w-full overflow-hidden bg-white dark:bg-[#1C1C1E] rounded-[24px] p-5 my-3 shadow-sm border border-gray-100 dark:border-[#2C2C2E]"
       >
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Spending Trend</h3>
-            <p className="text-lg font-bold text-primary mt-0.5">Last 7 Transactions</p>
+            <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Spending Trend</h3>
+            <p className="text-lg font-bold text-primary dark:text-white mt-0.5">Last 7 Transactions</p>
           </div>
-          <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-            <TrendingUp size={16} className="text-accent-blue" />
+          <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-white/10 flex items-center justify-center">
+            <TrendingUp size={16} className="text-accent-blue dark:text-white" />
           </div>
         </div>
         <div className="h-40 w-full -ml-4">
@@ -119,25 +119,25 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-[24px] overflow-hidden my-3 shadow-sm border border-gray-100"
+        className="bg-white dark:bg-[#1C1C1E] rounded-[24px] overflow-hidden my-3 shadow-sm border border-gray-100 dark:border-[#2C2C2E]"
       >
-        <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Recent Activity</span>
-          <Calendar size={14} className="text-gray-400" />
+        <div className="px-5 py-4 border-b border-gray-100 dark:border-[#2C2C2E] bg-gray-50/50 dark:bg-[#0D0D0F]/50 flex justify-between items-center">
+          <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Recent Activity</span>
+          <Calendar size={14} className="text-gray-400 dark:text-gray-500" />
         </div>
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-gray-100 dark:divide-[#2C2C2E]">
           {recent.map((t, i) => (
-            <div key={i} className="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors group">
+            <div key={i} className="flex items-center justify-between px-5 py-4 hover:bg-gray-50 dark:hover:bg-[#2C2C2E] transition-colors group">
               <div className="flex items-center gap-4 min-w-0">
-                <div className={`w-10 h-10 rounded-2xl transition-all flex items-center justify-center text-lg shrink-0 ${t.type === TransactionType.EXPENSE ? 'bg-gray-100 text-gray-600 group-hover:bg-white group-hover:shadow-sm' : 'bg-green-50 text-accent-green'}`}>
+                <div className={`w-10 h-10 rounded-2xl transition-all flex items-center justify-center text-lg shrink-0 ${t.type === TransactionType.EXPENSE ? 'bg-gray-100 dark:bg-[#2C2C2E] text-gray-600 dark:text-gray-300 group-hover:bg-white dark:group-hover:bg-[#3A3A3C] group-hover:shadow-sm' : 'bg-green-50 dark:bg-green-500/10 text-accent-green'}`}>
                   {CATEGORY_ICONS[t.category] || <MoreHorizontal size={18} />}
                 </div>
                 <div className="min-w-0 flex flex-col">
-                  <p className="text-sm font-bold text-primary truncate">{t.description}</p>
-                  <p className="text-[10px] text-gray-400 font-medium">{new Date(t.date).toLocaleDateString()}</p>
+                  <p className="text-sm font-bold text-primary dark:text-white truncate">{t.description}</p>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">{new Date(t.date).toLocaleDateString()}</p>
                 </div>
               </div>
-              <span className={`text-sm font-bold whitespace-nowrap ${t.type === TransactionType.EXPENSE ? 'text-primary' : 'text-accent-green'}`}>
+              <span className={`text-sm font-bold whitespace-nowrap ${t.type === TransactionType.EXPENSE ? 'text-primary dark:text-white' : 'text-accent-green'}`}>
                 {t.type === TransactionType.EXPENSE ? '-' : '+'}{t.amount}
               </span>
             </div>
@@ -248,9 +248,9 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-[24px] p-5 my-3 shadow-sm border border-gray-100"
+        className="bg-white dark:bg-[#1C1C1E] rounded-[24px] p-5 my-3 shadow-sm border border-gray-100 dark:border-[#2C2C2E]"
       >
-        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Top Categories</h3>
+        <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">Top Categories</h3>
         <div className="flex items-center gap-4">
           <div className="w-32 h-32 relative">
             <ResponsiveContainer width="100%" height="100%">
@@ -276,9 +276,9 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
               <div key={index} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                  <span className="text-gray-600 font-medium truncate max-w-[80px]">{entry.name}</span>
+                  <span className="text-gray-600 dark:text-gray-300 font-medium truncate max-w-[80px]">{entry.name}</span>
                 </div>
-                <span className="font-bold text-primary">{entry.value}</span>
+                <span className="font-bold text-primary dark:text-white">{entry.value}</span>
               </div>
             ))}
           </div>
@@ -314,11 +314,11 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-[24px] p-5 my-3 shadow-sm border border-gray-100"
+        className="bg-white dark:bg-[#1C1C1E] rounded-[24px] p-5 my-3 shadow-sm border border-gray-100 dark:border-[#2C2C2E]"
       >
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">End of Month Forecast</h3>
+            <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">End of Month Forecast</h3>
             <p className={`text-lg font-bold mt-1 ${isOverBudget ? 'text-red-500' : 'text-green-500'}`}>
               {isOverBudget ? '⚠️ Risk of Overspending' : '✅ On Track to Save'}
             </p>
@@ -346,10 +346,10 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
           </ResponsiveContainer>
         </div>
 
-        <div className="mt-2 p-3 bg-gray-50 rounded-xl">
-          <p className="text-xs text-gray-500 leading-relaxed">
-            At your current rate of <span className="font-bold text-primary">{Math.round(dailyAvg)} EGP/day</span>,
-            you will spend <span className="font-bold text-primary">{Math.round(projectedTotal)} EGP</span> by month end.
+        <div className="mt-2 p-3 bg-gray-50 dark:bg-[#2C2C2E] rounded-xl">
+          <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+            At your current rate of <span className="font-bold text-primary dark:text-white">{Math.round(dailyAvg)} EGP/day</span>,
+            you will spend <span className="font-bold text-primary dark:text-white">{Math.round(projectedTotal)} EGP</span> by month end.
           </p>
         </div>
       </motion.div>
@@ -378,16 +378,16 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
     data = data.slice(0, 5);
 
     if (data.length === 0) return (
-      <div className="p-3 bg-gray-50 rounded-xl text-center text-gray-400 text-xs my-2">No people tracked yet.</div>
+      <div className="p-3 bg-gray-50 dark:bg-[#2C2C2E] rounded-xl text-center text-gray-400 dark:text-gray-500 text-xs my-2">No people tracked yet.</div>
     );
 
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-[24px] p-5 my-3 shadow-sm border border-gray-100"
+        className="bg-white dark:bg-[#1C1C1E] rounded-[24px] p-5 my-3 shadow-sm border border-gray-100 dark:border-[#2C2C2E]"
       >
-        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">People You Support</h3>
+        <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">People You Support</h3>
 
         <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
           {data.map((person, index) => (
@@ -400,8 +400,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
                 {person.name[0].toUpperCase()}
               </div>
               <div className="text-center">
-                <p className="text-xs font-bold text-gray-900 truncate max-w-[80px]">{person.name}</p>
-                <p className="text-[10px] text-gray-500 font-medium">{person.value.toLocaleString()} EGP</p>
+                <p className="text-xs font-bold text-gray-900 dark:text-white truncate max-w-[80px]">{person.name}</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">{person.value.toLocaleString()} EGP</p>
               </div>
             </div>
           ))}
