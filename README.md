@@ -20,7 +20,7 @@ Hasala is a personal finance application designed specifically for Egyptian univ
 Unlike traditional expense trackers that require tedious manual entry, Hasala leverages localized AI to understand Egyptian spending habits (e.g., "Koshary," "Uber," "Fawry") via voice and text, providing automated categorization and intelligent financial coaching.
 
 **Concept:** An AI-powered financial wellness platform for Egyptian students.  
-**Core Value:** Frictionless tracking (Voice/AI) + Actionable Insight (Generative UI).  
+**Core Value:** Frictionless tracking (Voice/AI) + Actionable Insight (Generative UI) + Social Expense Splitting.  
 **Link to Fin-Tech Course Document:** [Insert Link if applicable]
 
 ## 3. Feature Breakdown
@@ -36,6 +36,7 @@ List of all potential features envisioned for the complete product:
 - **Bill Payment Integration:** Direct integration with payment providers (Fawry/Telda).
 - **Recurring Expenses:** Auto-injection of fixed monthly costs.
 - **Custom AI Categories:** User-defined spending categories that retrain the AI parsing logic.
+- **Split Groups:** Splitwise-like expense splitting with friends, debt simplification, and settlement tracking.
 
 ### 3.2 Selected MVP Use Cases (Course Scope)
 
@@ -48,6 +49,7 @@ These are the 7 core features we will implement for the MVP:
 5. **Family/Guardian View:** A collaborative view for linked family members to monitor specific spending categories.
 6. **Budget Management:** Creating and tracking monthly spending limits per category.
 7. **Fixed Monthly Costs:** Logic to auto-inject recurring expenses (Rent, Subscriptions) at the start of each billing cycle.
+8. **Split Groups:** Group expense management with multiple split methods (equal, percentage, exact), debt simplification algorithm, and settlement tracking.
 
 ## 4. Feature Assignments (Accountability)
 
@@ -58,6 +60,7 @@ These are the 7 core features we will implement for the MVP:
 | Adam Amr | AI Core Integration | Development of the shared AI service layer used by both logging and chat features. |
 | Adam Amr | User Authentication | Full-stack auth flow: bcrypt hashing, JWT generation, secure cookie handling, and protected routes middleware. |
 | Adam Amr | AI Financial Coach (Chat) | The Chat Interface, history storage in MongoDB, and context-aware system prompting logic. |
+| Adam Amr | Split Groups | Group creation, expense splitting (equal/percentage/exact), debt simplification algorithm, and settlement flow. |
 | Ahmed Yasser | Intelligent Dashboard | Aggregation logic (summing totals, calculating category %) and the main Home View visualization components. (analytics and charts) |
 | Mohamed Wael | Family/Guardian View | Logic for linking users, FamilyGroup schema, and the collaborative dashboard view. |
 | Andrew George | Budget Management | CRUD for budgets, progress calculation logic, and visual budget indicators. (not completely separate from analytics) |
@@ -68,34 +71,30 @@ These are the 7 core features we will implement for the MVP:
 
 ```javascript
 const UserSchema = new mongoose.Schema({
-  username: { type: String, required: true },
+  name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true }, // Hashed
-  settings: {
-    currency: { type: String, default: 'EGP' },
-    language: { type: String, default: 'en' }
-  },
-  createdAt: { type: Date, default: Date.now }
-});
+  password: { type: String, required: true }, // Hashed with bcrypt
+  budget: { type: Number, default: 0 } // Monthly spending limit
+}, { timestamps: true });
 ```
 
 ### Transaction Schema
 
 ```javascript
 const TransactionSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  amount: { type: Number, required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  amount: { type: Number, required: true }, // Stored as decimal 
   description: { type: String, required: true },
   category: { 
     type: String, 
-    enum: ['Food', 'Transport', 'Entertainment', 'Shopping', 'Bills', 'Education', 'Income', 'Other'],
+    enum: ['Food', 'Transport', 'Entertainment', 'Shopping', 'Bills', 'Education', 'Income', 'Salary', 'Giving', 'Housing', 'Other'],
     required: true 
   },
   type: { type: String, enum: ['EXPENSE', 'INCOME'], required: true },
   date: { type: Date, default: Date.now },
   isRecurring: { type: Boolean, default: false },
-  isVoiceEntry: { type: Boolean, default: false }
-});
+  relatedPerson: { type: String, trim: true } // Track who received money (for Giving)
+}, { timestamps: true });
 ```
 
 ### Budget Schema
@@ -122,17 +121,19 @@ const FamilyGroupSchema = new mongoose.Schema({
 });
 ```
 
-### RecurringExpense Schema
+### RecurringTransaction Schema
 
 ```javascript
-const RecurringExpenseSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+const RecurringTransactionSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   amount: { type: Number, required: true },
   description: { type: String, required: true },
   category: { type: String, required: true },
-  dayOfMonth: { type: Number, required: true }, // 1st or 15th etc.
+  type: { type: String, enum: ['EXPENSE', 'INCOME'], default: 'EXPENSE' },
+  dayOfMonth: { type: Number, required: true, min: 1, max: 31 },
+  lastInjected: { type: Date, required: true }, // For lazy injection pattern
   isActive: { type: Boolean, default: true }
-});
+}, { timestamps: true });
 ```
 
 ---

@@ -1,7 +1,7 @@
-# Splitwise Feature Specification
+# Split Feature Specification
 
 ## Overview
-This feature implements a standalone group expense management system within Hasala, similar to Splitwise. It allows users to create groups, add shared expenses, and track balances/debts between members. The feature is completely isolated from the user's personal transaction history and analytics.
+This feature implements a standalone group expense management system within Hasala, similar to Split. It allows users to create groups, add shared expenses, and track balances/debts between members. The feature is completely isolated from the user's personal transaction history and analytics.
 
 ## Architecture
 
