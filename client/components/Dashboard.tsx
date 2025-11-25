@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Transaction } from '../types';
 import { transactionsApi } from '../services/api';
 import CoinStack from './Dashboard/CoinStack';
+import CategoryCarousel from './Dashboard/CategoryCarousel';
 import StatsOverview from './Dashboard/StatsOverview';
 import ActivityFeed from './Dashboard/ActivityFeed';
 
@@ -32,6 +33,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   hasMore,
   onSettingsClick
 }) => {
+  const [viewMode, setViewMode] = React.useState<'stack' | 'carousel'>('stack');
   const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
   const { data: stats, isLoading } = useQuery({
@@ -82,12 +84,45 @@ const Dashboard: React.FC<DashboardProps> = ({
         </button>
       </div>
 
-      {/* Main Interactive Coin Stack */}
-      <CoinStack
-        totalSpent={expense}
-        budget={income}
-        isLoading={isLoading}
-      />
+      {/* Main Interactive Area */}
+      <div className="relative min-h-[300px]">
+        <AnimatePresence mode="wait">
+          {viewMode === 'stack' ? (
+            <motion.div
+              key="stack"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setViewMode('carousel')}
+              className="cursor-pointer"
+            >
+              <CoinStack
+                totalSpent={expense}
+                budget={income}
+                isLoading={isLoading}
+              />
+              <p className="text-center text-xs text-gray-400 mt-2 animate-pulse">
+                Tap to see breakdown
+              </p>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="carousel"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+            >
+              <CategoryCarousel
+                categories={stats?.categoryBreakdown || []}
+                totalSpent={expense}
+                onBack={() => setViewMode('stack')}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Quick Stats */}
       <StatsOverview income={income} expense={expense} currentDate={currentDate} />

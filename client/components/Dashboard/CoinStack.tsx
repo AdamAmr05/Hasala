@@ -5,9 +5,10 @@ interface CoinStackProps {
     totalSpent: number;
     budget: number;
     isLoading?: boolean;
+    layoutId?: string;
 }
 
-const CoinStack: React.FC<CoinStackProps> = ({ totalSpent, budget, isLoading = false }) => {
+const CoinStack: React.FC<CoinStackProps> = ({ totalSpent, budget, isLoading = false, layoutId }) => {
     // 1. Calculate percentage (capped at 100% for visual stack height, but color logic handles overflow)
     const percentage = Math.min((totalSpent / budget) * 100, 100);
     const remaining = Math.max(0, budget - totalSpent);
@@ -29,7 +30,10 @@ const CoinStack: React.FC<CoinStackProps> = ({ totalSpent, budget, isLoading = f
 
     return (
         <div className="flex flex-col items-center justify-center py-8">
-            <div className="relative w-32 h-48 flex flex-col justify-end items-center">
+            <motion.div
+                layoutId={layoutId}
+                className="relative w-32 h-48 flex flex-col justify-end items-center"
+            >
 
                 {/* Floating Badge */}
                 {!isLoading && (
@@ -91,14 +95,14 @@ const CoinStack: React.FC<CoinStackProps> = ({ totalSpent, budget, isLoading = f
                 </div>
                 {/* Base/Pedestal */}
                 <div className="w-32 h-4 bg-gray-200/50 dark:bg-gray-600/30 rounded-[100%] absolute bottom-0 blur-sm transform scale-y-50" />
-            </div>
+            </motion.div>
 
             <div className="text-center -mt-2">
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
                     {percentage.toFixed(0)}% of Budget Used
                 </p>
             </div>
-        </div>
+        </div >
     );
 };
 
