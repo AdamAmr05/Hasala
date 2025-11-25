@@ -58,12 +58,11 @@ These are the 7 core features we will implement for the MVP:
 | Adam Amr | Smart Transaction Logging | Implementation of the Transaction model, AI parsing logic (AI integration), and the "Add Transaction" UI/Voice flow. |
 | Ahmed yasser | Fixed Monthly Costs | Logic to auto-inject recurring expenses based on date triggers and manage subscription lists. |
 | Adam Amr | AI Core Integration | Development of the shared AI service layer used by both logging and chat features. |
-| Adam Amr | User Authentication | Full-stack auth flow: bcrypt hashing, JWT generation, secure cookie handling, and protected routes middleware. |
 | Adam Amr | AI Financial Coach (Chat) | The Chat Interface, history storage in MongoDB, and context-aware system prompting logic. |
 | Adam Amr | Split Groups | Group creation, expense splitting (equal/percentage/exact), debt simplification algorithm, and settlement flow. |
 | Ahmed Yasser | Intelligent Dashboard | Aggregation logic (summing totals, calculating category %) and the main Home View visualization components. (analytics and charts) |
 | Mohamed Wael | Family/Guardian View | Logic for linking users, FamilyGroup schema, and the collaborative dashboard view. |
-| Andrew George | Budget Management | CRUD for budgets, progress calculation logic, and visual budget indicators. (not completely separate from analytics) |
+| Andrew George | User Authentication | Secure user registration and login system with session management. |
 
 ## 5. Data Model (Initial Schemas)
 
