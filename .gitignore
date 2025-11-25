@@ -6,7 +6,11 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+# Cookie files (may contain sensitive JWT tokens)
 cookies.txt
+**/cookies.txt
+server/cookies.txt
+server/server/cookies.txt
 
 node_modules
 dist
