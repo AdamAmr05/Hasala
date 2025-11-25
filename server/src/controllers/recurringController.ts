@@ -102,8 +102,11 @@ export const checkAndInjectRecurring = async (userId: string) => {
     const createdTransactions = [];
 
     for (const recurring of recurringTransactions) {
+        // Store the original lastInjected for atomic comparison
+        let currentLastInjected = new Date(recurring.lastInjected);
+        
         // Start checking from the month AFTER the last injection
-        let targetDate = new Date(recurring.lastInjected);
+        let targetDate = new Date(currentLastInjected);
         targetDate.setMonth(targetDate.getMonth() + 1);
 
         // Set the day, clamping to the last day of the month if needed
@@ -113,22 +116,37 @@ export const checkAndInjectRecurring = async (userId: string) => {
 
         // While the target date is in the past (before or equal to now)
         while (targetDate <= now) {
-            // Create the transaction
+            // ATOMIC UPDATE: Only succeeds if lastInjected hasn't changed
+            // This prevents race conditions where two requests try to inject the same month
+            const updated = await RecurringTransaction.findOneAndUpdate(
+                { 
+                    _id: recurring._id,
+                    lastInjected: currentLastInjected // Only update if unchanged
+                },
+                { $set: { lastInjected: targetDate } },
+                { new: true }
+            );
+
+            if (!updated) {
+                // Another request already processed this - skip to avoid duplicates
+                break;
+            }
+
+            // Successfully claimed this injection - now create the transaction
             const newTransaction = await Transaction.create({
                 user: userId,
                 amount: recurring.amount,
                 description: recurring.description + ' (Auto)',
                 category: recurring.category,
-                type: recurring.type, // Use the type from the recurring rule
+                type: recurring.type,
                 date: targetDate, // Backdated!
                 isRecurring: true,
             });
 
             createdTransactions.push(newTransaction);
 
-            // Update lastInjected to this date
-            recurring.lastInjected = targetDate;
-            await recurring.save();
+            // Update our reference for the next iteration
+            currentLastInjected = targetDate;
 
             // Move to next month
             targetDate = new Date(targetDate); // Clone

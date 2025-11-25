@@ -66,7 +66,7 @@ const buildSystemInstruction = (
   const summary = transactions
     .slice(0, 15)
     .map(
-      (t) => `${t.date.toISOString().split('T')[0]}: ${t.description} (${t.amount} EGP) - ${t.category}`,
+      (t) => `${t.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}: ${t.description} (${t.amount} EGP) - ${t.category}`,
     )
     .join('\n');
 
