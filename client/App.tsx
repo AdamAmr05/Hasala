@@ -165,20 +165,7 @@ const App: React.FC = () => {
       <div className="max-w-md mx-auto bg-gray-50 dark:bg-[#0D0D0F] min-h-screen relative shadow-2xl overflow-hidden">
         {!showAuthForm ? (
           <>
-            {location.pathname !== '/chat' && location.pathname !== '/settings' && ( // Exclude header for chat and settings
-              <header className="px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-[#2C2C2E] bg-white/70 dark:bg-[#1C1C1E]/70 backdrop-blur-sm">
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-widest">Welcome back</p>
-                  <h1 className="font-bold text-lg text-gray-900 dark:text-white">{user?.name}</h1>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="text-xs font-semibold text-primary dark:text-white hover:text-blue-700 dark:hover:text-gray-300 transition-colors"
-                >
-                  Logout
-                </button>
-              </header>
-            )}
+
             <main className="h-full pb-32">
 
               <Routes>

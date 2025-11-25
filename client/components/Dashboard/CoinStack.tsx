@@ -10,7 +10,9 @@ interface CoinStackProps {
 
 const CoinStack: React.FC<CoinStackProps> = ({ totalSpent, budget, isLoading = false, layoutId }) => {
     // 1. Calculate percentage (capped at 100% for visual stack height, but color logic handles overflow)
-    const percentage = Math.min((totalSpent / budget) * 100, 100);
+    // Handle division by zero or loading state
+    const safeBudget = budget || 1;
+    const percentage = isLoading ? 0 : Math.min((totalSpent / safeBudget) * 100, 100);
     const remaining = Math.max(0, budget - totalSpent);
     const isOverBudget = totalSpent > budget;
 
@@ -25,11 +27,11 @@ const CoinStack: React.FC<CoinStackProps> = ({ totalSpent, budget, isLoading = f
     if (isOverBudget) {
         redCoinsCount = MAX_COINS;
     } else {
-        redCoinsCount = Math.round((totalSpent / budget) * MAX_COINS);
+        redCoinsCount = Math.round((totalSpent / safeBudget) * MAX_COINS);
     }
 
     return (
-        <div className="flex flex-col items-center justify-center py-8">
+        <div className="flex flex-col items-center justify-center pt-2 pb-2">
             <motion.div
                 layoutId={layoutId}
                 className="relative w-32 h-48 flex flex-col justify-end items-center"
@@ -40,7 +42,7 @@ const CoinStack: React.FC<CoinStackProps> = ({ totalSpent, budget, isLoading = f
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="absolute -top-8 z-20 flex flex-col items-center"
+                        className="absolute -top-6 z-20 flex flex-col items-center"
                     >
                         <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Remaining</span>
                         <span className={`text-2xl font-bold whitespace-nowrap ${isOverBudget ? 'text-red-500' : 'text-primary dark:text-white'}`}>
@@ -97,12 +99,12 @@ const CoinStack: React.FC<CoinStackProps> = ({ totalSpent, budget, isLoading = f
                 <div className="w-32 h-4 bg-gray-200/50 dark:bg-gray-600/30 rounded-[100%] absolute bottom-0 blur-sm transform scale-y-50" />
             </motion.div>
 
-            <div className="text-center -mt-2">
+            <div className="text-center mt-1">
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                    {percentage.toFixed(0)}% of Budget Used
+                    {isLoading ? 'Loading...' : `${percentage.toFixed(0)}% of Budget Used`}
                 </p>
             </div>
-        </div >
+        </div>
     );
 };
 

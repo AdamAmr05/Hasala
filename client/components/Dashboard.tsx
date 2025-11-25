@@ -46,7 +46,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const expense = stats?.totals.find(t => t._id === 'EXPENSE')?.total || 0;
 
   return (
-    <div className="pb-32 pt-8 space-y-8 animate-[fadeIn_0.5s_ease-out]">
+    <div className="pb-32 pt-8 space-y-5 animate-[fadeIn_0.5s_ease-out]">
       {/* Header */}
       <div className="px-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -85,7 +85,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* Main Interactive Area */}
-      <div className="relative min-h-[300px]">
+      <div className="relative min-h-[270px]">
         <AnimatePresence mode="wait">
           {viewMode === 'stack' ? (
             <motion.div
@@ -102,7 +102,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 budget={income}
                 isLoading={isLoading}
               />
-              <p className="text-center text-xs text-gray-400 mt-2 animate-pulse">
+              <p className="text-center text-xs text-gray-400 mt-1 animate-pulse">
                 Tap to see breakdown
               </p>
             </motion.div>
