@@ -159,8 +159,14 @@ export const addExpense = async (req: AuthRequest, res: Response) => {
         const isMember = group.members.some((m: any) => m.user.toString() === (req.user as any)._id.toString());
         if (!isMember) return res.status(403).json({ message: 'Forbidden' });
 
-        // Validate split details
+        // Validate payer is a member
         const memberIds = new Set(group.members.map((m: any) => m.user.toString()));
+        const actualPayer = payer || req.user._id.toString();
+        if (!memberIds.has(actualPayer.toString())) {
+            return res.status(400).json({ message: 'Payer must be a member of this group' });
+        }
+
+        // Validate split details
         let totalSplit = 0;
 
         for (const split of splitDetails) {
