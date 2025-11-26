@@ -47,7 +47,7 @@ These are the 7 core features we will implement for the MVP:
 3. **Intelligent Dashboard:** Real-time visualization of balance, spending pace, and recent activity.
 4. **AI Financial Coach (Chat):** A conversational interface that queries transaction history and renders dynamic insights (Generative UI).
 5. **Family/Guardian View:** A collaborative view for linked family members to monitor specific spending categories.
-6. **Budget Management:** Creating and tracking monthly spending limits per category.
+6. **Budget Management:** Creating and tracking monthly spending limits.
 7. **Fixed Monthly Costs:** Logic to auto-inject recurring expenses (Rent, Subscriptions) at the start of each billing cycle.
 8. **Split Groups:** Group expense management with multiple split methods (equal, percentage, exact), debt simplification algorithm, and settlement tracking.
 
