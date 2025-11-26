@@ -35,7 +35,10 @@ export const useMonthlyTransactions = (userId?: string) => {
         enabled: !!userId,
     });
 
-    const transactions = data?.pages.flatMap((page) => page.data) || [];
+    const allTransactions = data?.pages.flatMap((page) => page.data) || [];
+    // Deduplicate transactions by ID to prevent "duplicate key" warnings in React
+    // This can happen if pagination shifts while fetching (e.g., new item added at top)
+    const transactions = Array.from(new Map(allTransactions.map(tx => [tx.id, tx])).values());
 
     const goToPreviousMonth = () => {
         setCurrentDate(new Date(year, month - 1, 1));
