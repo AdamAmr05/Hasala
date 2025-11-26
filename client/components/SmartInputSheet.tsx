@@ -60,7 +60,7 @@ const SmartInputSheet: React.FC<SmartInputSheetProps> = ({
       amount,
       description: result.description.trim(),
       category: (result.category as Category) || (transactionType === TransactionType.INCOME ? Category.INCOME : Category.OTHER),
-      type: transactionType, // Force the selected type
+      type: transactionType, // STRICTLY FORCE the selected type from UI
       date: new Date().toISOString(),
       relatedPerson: result.relatedPerson,
     };
@@ -72,11 +72,20 @@ const SmartInputSheet: React.FC<SmartInputSheetProps> = ({
     setLocalError(null);
     try {
       const result = await aiApi.parseText(textInput);
-      const payload = buildPayload(result);
-      if (!payload) {
+
+      if (!result.transactions || result.transactions.length === 0) {
+        throw new Error('No transactions found.');
+      }
+
+      const payloads = result.transactions
+        .map(tx => buildPayload(tx))
+        .filter((p): p is TransactionPayload => p !== null);
+
+      if (payloads.length === 0) {
         throw new Error('Could not understand the input. Try rephrasing.');
       }
-      await onTransactionAdded(payload);
+
+      await Promise.all(payloads.map(p => onTransactionAdded(p)));
       onClose();
     } catch (error) {
       console.error('Failed to parse text:', error);
@@ -108,11 +117,20 @@ const SmartInputSheet: React.FC<SmartInputSheetProps> = ({
             const rawBase64 = reader.result.split(',')[1] || reader.result;
             try {
               const parsed = await aiApi.parseVoice(rawBase64);
-              const payload = buildPayload(parsed);
-              if (!payload) {
+
+              if (!parsed.transactions || parsed.transactions.length === 0) {
+                throw new Error('No transactions found.');
+              }
+
+              const payloads = parsed.transactions
+                .map(tx => buildPayload(tx))
+                .filter((p): p is TransactionPayload => p !== null);
+
+              if (payloads.length === 0) {
                 throw new Error('Could not parse voice input.');
               }
-              await onTransactionAdded(payload);
+
+              await Promise.all(payloads.map(p => onTransactionAdded(p)));
               onClose();
             } catch (e) {
               console.error(e);

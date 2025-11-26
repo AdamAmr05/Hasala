@@ -64,7 +64,7 @@ const AnalyticsView: React.FC = () => {
     }));
 
     const peopleData = data.peopleBreakdown.map(p => ({
-        name: p._id,
+        name: p._id || 'Unknown',
         value: p.total
     }));
 

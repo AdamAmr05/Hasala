@@ -32,6 +32,18 @@ export const TRANSACTION_SCHEMA: Schema = {
   required: ['amount', 'description', 'category', 'type'],
 };
 
+export const MULTI_TRANSACTION_SCHEMA: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    transactions: {
+      type: Type.ARRAY,
+      description: 'Array of transactions extracted from the input',
+      items: TRANSACTION_SCHEMA,
+    },
+  },
+  required: ['transactions'],
+};
+
 export const addTransactionTool: FunctionDeclaration = {
   name: 'addTransaction',
   description: 'Add a new financial transaction (expense or income) to the database.',

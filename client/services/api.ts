@@ -164,13 +164,15 @@ export const chatApi = {
   deleteThread: (threadId: string) => api.delete(`/chat/${threadId}`),
 };
 
-type ParsedTransactionResponse = Partial<{
-  amount: number;
-  description: string;
-  category: string;
-  type: TransactionType;
-  relatedPerson: string;
-}>;
+type ParsedTransactionResponse = {
+  transactions: Array<Partial<{
+    amount: number;
+    description: string;
+    category: string;
+    type: TransactionType;
+    relatedPerson: string;
+  }>>;
+};
 
 export interface RecurringTransaction {
   _id: string;

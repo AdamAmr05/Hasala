@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { GoogleGenAI } from '@google/genai';
-import { MODEL_NAME, TRANSACTION_SCHEMA } from '../utils/geminiConfig';
+import { MODEL_NAME, MULTI_TRANSACTION_SCHEMA } from '../utils/geminiConfig';
 import Transaction from '../models/Transaction';
 import { AuthRequest } from '../middleware/authMiddleware';
 
@@ -52,12 +52,12 @@ export const parseTransactionText = async (req: AuthRequest, res: Response) => {
       contents: [
         {
           role: 'user',
-          parts: [{ text: `Extract transaction details from: "${input}". ${peopleContext} Return JSON only.` }],
+          parts: [{ text: `Extract ALL transactions from: "${input}". ${peopleContext} Return JSON only.` }],
         },
       ],
       config: {
         responseMimeType: 'application/json',
-        responseSchema: TRANSACTION_SCHEMA,
+        responseSchema: MULTI_TRANSACTION_SCHEMA,
       },
     });
 
@@ -83,24 +83,43 @@ export const parseTransactionVoice = async (req: AuthRequest, res: Response) => 
       ? `Existing people this month: ${existingPeople.join(', ')}. Match names if possible.`
       : '';
 
-    const response = await ai.models.generateContent({
-      model: MODEL_NAME,
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            { inlineData: { mimeType: 'audio/webm', data: audio.split(',')[1] || audio } },
-            { text: `Extract transaction details (amount, description, category, type, relatedPerson) as JSON. Default to EGP currency if not specified. ${peopleContext}` },
-          ],
-        },
-      ],
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: TRANSACTION_SCHEMA,
-      },
-    });
+    let retries = 3;
+    let lastError;
 
-    return res.json(parseResponse(response.text));
+    while (retries > 0) {
+      try {
+        const response = await ai.models.generateContent({
+          model: MODEL_NAME,
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                { inlineData: { mimeType: 'audio/webm', data: audio.split(',')[1] || audio } },
+                { text: `Extract ALL transactions (amount, description, category, type, relatedPerson) as JSON. Default to EGP currency if not specified. ${peopleContext}` },
+              ],
+            },
+          ],
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: MULTI_TRANSACTION_SCHEMA,
+          },
+        });
+
+        return res.json(parseResponse(response.text));
+      } catch (error: any) {
+        lastError = error;
+        // Only retry on 503 (Service Unavailable) or 429 (Too Many Requests)
+        if (error?.status === 503 || error?.status === 429 || error?.message?.includes('overloaded')) {
+          console.log(`Gemini overloaded, retrying... (${retries} attempts left)`);
+          retries--;
+          await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries))); // Exponential backoff: 1s, 2s, 3s
+          continue;
+        }
+        throw error; // Throw other errors immediately
+      }
+    }
+
+    throw lastError;
   } catch (error) {
     console.error('Parse voice error:', error);
     const message = error instanceof Error ? error.message : 'Could not process voice input.';

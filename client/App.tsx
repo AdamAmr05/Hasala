@@ -211,7 +211,7 @@ const App: React.FC = () => {
 
                 <Route path="/analytics" element={
                   <div className="animate-[fadeIn_0.3s_ease-out]">
-                    <AnalyticsView transactions={transactions} />
+                    <AnalyticsView />
                   </div>
                 } />
 
