@@ -1,12 +1,12 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import { Category } from './Transaction';
+import { Category, TransactionType } from './Transaction';
 
 export interface IRecurringTransaction extends Document {
     user: mongoose.Schema.Types.ObjectId;
     amount: number;
     description: string;
-    category: string;
-    type: 'EXPENSE' | 'INCOME';
+    category: Category;
+    type: TransactionType;
     dayOfMonth: number; // 1-31
     lastInjected: Date;
     isActive: boolean;
@@ -33,8 +33,8 @@ const RecurringTransactionSchema: Schema = new Schema({
     },
     type: {
         type: String,
-        enum: ['EXPENSE', 'INCOME'],
-        default: 'EXPENSE',
+        enum: Object.values(TransactionType),
+        default: TransactionType.EXPENSE,
         required: [true, 'Please add a type'],
     },
     dayOfMonth: {

@@ -175,12 +175,13 @@
    =================================== */
 
 /* Input focus styles for dark mode */
-.dark input:focus,
+/* Input focus styles for dark mode - REMOVED per user request */
+/* .dark input:focus,
 .dark textarea:focus,
 .dark select:focus {
   border-color: #007AFF;
   box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
-}
+} */
 
 /* Tooltip/Popover dark styles for charts */
 .dark .recharts-default-tooltip {
@@ -221,6 +222,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -231,6 +233,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

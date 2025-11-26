@@ -127,14 +127,14 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
         </div>
         <div className="divide-y divide-gray-100 dark:divide-[#2C2C2E]">
           {recent.map((t, i) => (
-            <div key={i} className="flex items-center justify-between px-5 py-4 hover:bg-gray-50 dark:hover:bg-[#2C2C2E] transition-colors group">
+            <div key={i} className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 dark:hover:bg-[#2C2C2E] transition-colors group">
               <div className="flex items-center gap-4 min-w-0">
-                <div className={`w-10 h-10 rounded-2xl transition-all flex items-center justify-center text-lg shrink-0 ${t.type === TransactionType.EXPENSE ? 'bg-gray-100 dark:bg-[#2C2C2E] text-gray-600 dark:text-gray-300 group-hover:bg-white dark:group-hover:bg-[#3A3A3C] group-hover:shadow-sm' : 'bg-green-50 dark:bg-green-500/10 text-accent-green'}`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0 ${t.type === TransactionType.EXPENSE ? 'bg-gray-100 dark:bg-[#2C2C2E] text-gray-600 dark:text-gray-300' : 'bg-green-50 dark:bg-green-500/10 text-accent-green'}`}>
                   {CATEGORY_ICONS[t.category] || <MoreHorizontal size={18} />}
                 </div>
                 <div className="min-w-0 flex flex-col">
                   <p className="text-sm font-bold text-primary dark:text-white truncate">{t.description}</p>
-                  <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">{new Date(t.date).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-300 font-medium">{new Date(t.date).toLocaleDateString()}</p>
                 </div>
               </div>
               <span className={`text-sm font-bold whitespace-nowrap ${t.type === TransactionType.EXPENSE ? 'text-primary dark:text-white' : 'text-accent-green'}`}>

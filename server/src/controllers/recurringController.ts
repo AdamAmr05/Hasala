@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import RecurringTransaction from '../models/RecurringTransaction';
 import Transaction, { TransactionType } from '../models/Transaction';
+import { TransactionService } from '../services/transactionService';
 import { IUser } from '../models/User';
 // Amounts are now stored directly as decimals - no conversion needed
 
@@ -104,7 +105,7 @@ export const checkAndInjectRecurring = async (userId: string) => {
     for (const recurring of recurringTransactions) {
         // Store the original lastInjected for atomic comparison
         let currentLastInjected = new Date(recurring.lastInjected);
-        
+
         // Start checking from the month AFTER the last injection
         let targetDate = new Date(currentLastInjected);
         targetDate.setMonth(targetDate.getMonth() + 1);
@@ -119,7 +120,7 @@ export const checkAndInjectRecurring = async (userId: string) => {
             // ATOMIC UPDATE: Only succeeds if lastInjected hasn't changed
             // This prevents race conditions where two requests try to inject the same month
             const updated = await RecurringTransaction.findOneAndUpdate(
-                { 
+                {
                     _id: recurring._id,
                     lastInjected: currentLastInjected // Only update if unchanged
                 },
@@ -133,7 +134,7 @@ export const checkAndInjectRecurring = async (userId: string) => {
             }
 
             // Successfully claimed this injection - now create the transaction
-            const newTransaction = await Transaction.create({
+            const newTransaction = await TransactionService.createTransaction({
                 user: userId,
                 amount: recurring.amount,
                 description: recurring.description + ' (Auto)',

@@ -9,6 +9,7 @@ interface AuthRequest extends Request {
 }
 
 import { checkAndInjectRecurring } from './recurringController';
+import { TransactionService } from '../services/transactionService';
 
 // @desc    Get all transactions
 // @route   GET /api/transactions
@@ -61,14 +62,14 @@ export const addTransaction = async (req: AuthRequest, res: Response) => {
   try {
     const { amount, description, category, type, date, isRecurring, relatedPerson } = req.body;
 
-    const transaction = await Transaction.create({
-      user: req.user?._id,
-      amount, // Store directly as decimal
+    const transaction = await TransactionService.createTransaction({
+      user: req.user?._id.toString() || '',
+      amount,
       description,
       category,
       type,
-      date: date || Date.now(),
-      isRecurring: isRecurring || false,
+      date,
+      isRecurring,
       relatedPerson,
     });
 
@@ -91,13 +92,10 @@ export const addTransactionsBulk = async (req: AuthRequest, res: Response) => {
 
     const transactionsWithUser = transactions.map(tx => ({
       ...tx,
-      user: req.user?._id,
-      amount: tx.amount, // Store directly as decimal
-      date: tx.date || Date.now(),
-      isRecurring: tx.isRecurring || false,
+      user: req.user?._id.toString() || '',
     }));
 
-    const createdTransactions = await Transaction.insertMany(transactionsWithUser);
+    const createdTransactions = await TransactionService.createTransactionsBulk(transactionsWithUser);
 
     res.status(201).json(createdTransactions);
   } catch (error) {

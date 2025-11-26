@@ -19,6 +19,7 @@ import {
   renderPeopleBreakdownTool,
   renderIncomeOverviewTool,
 } from '../utils/geminiConfig';
+import { TransactionService } from '../services/transactionService';
 
 const buildSystemInstruction = (
   transactions: ITransaction[],
@@ -156,9 +157,9 @@ const executeToolCalls = async (
       typeof args.date === 'string' || args.date instanceof Date ? args.date : undefined;
     const relatedPerson = typeof args.relatedPerson === 'string' ? args.relatedPerson : undefined;
 
-    const created = await Transaction.create({
+    const created = await TransactionService.createTransaction({
       user: userId,
-      amount, // Store directly as decimal
+      amount,
       description,
       category,
       type,
