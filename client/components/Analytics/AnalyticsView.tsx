@@ -7,6 +7,7 @@ import {
 import { transactionsApi } from '../../services/api';
 import { TrendingUp, Calendar, PieChart as PieIcon, Users, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import FunEquivalents from './FunEquivalents';
 
 const AnalyticsView: React.FC = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -81,6 +82,9 @@ const AnalyticsView: React.FC = () => {
 
     const COLORS = ['#007AFF', '#34C759', '#FF9500', '#FF3B30', '#5856D6', '#AF52DE'];
 
+    // Calculate Total Expense for Fun Equivalents
+    const totalExpense = data.totals.find(t => t._id === 'EXPENSE')?.total || 0;
+
     return (
         <div className="pb-32 pt-8 space-y-8 animate-[fadeIn_0.5s_ease-out]">
             {/* Header & Month Navigation */}
@@ -107,6 +111,11 @@ const AnalyticsView: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Fun Equivalents Section */}
+            {totalExpense > 0 && (
+                <FunEquivalents totalSpent={totalExpense} />
+            )}
 
             {/* Income Overview Section */}
             {data.incomeBreakdown && data.incomeBreakdown.length > 0 && (
