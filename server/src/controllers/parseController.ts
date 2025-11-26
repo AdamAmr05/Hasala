@@ -86,7 +86,7 @@ export const parseTransactionVoice = async (req: AuthRequest, res: Response) => 
     let retries = 3;
     let lastError;
 
-    while (retries > 0) {
+    for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         const response = await ai.models.generateContent({
           model: MODEL_NAME,
@@ -107,15 +107,15 @@ export const parseTransactionVoice = async (req: AuthRequest, res: Response) => 
 
         return res.json(parseResponse(response.text));
       } catch (error: any) {
-        lastError = error;
-        // Only retry on 503 (Service Unavailable) or 429 (Too Many Requests)
-        if (error?.status === 503 || error?.status === 429 || error?.message?.includes('overloaded')) {
-          console.log(`Gemini overloaded, retrying... (${retries} attempts left)`);
-          retries--;
-          await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries))); // Exponential backoff: 1s, 2s, 3s
-          continue;
+        // If it's the last attempt, or if it's not a retryable error, throw it
+        const isRetryable = error?.status === 503 || error?.status === 429 || error?.message?.includes('overloaded');
+
+        if (attempt === 3 || !isRetryable) {
+          throw error;
         }
-        throw error; // Throw other errors immediately
+
+        console.log(`Gemini overloaded, retrying... (Attempt ${attempt}/3)`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Backoff: 1s, 2s
       }
     }
 
