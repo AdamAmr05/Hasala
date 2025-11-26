@@ -97,8 +97,6 @@ const App: React.FC = () => {
     onSuccess: () => {
       setTransactionError(null);
       setShowSmartInput(false);
-      // setActiveTab('home'); // Navigation handled by user or separate logic
-      // Invalidate all relevant queries to ensure UI updates immediately
       queryClient.invalidateQueries({ queryKey: ['monthlyStats'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -106,6 +104,21 @@ const App: React.FC = () => {
     },
     onError: () => {
       setTransactionError('Could not save the transaction. Please try again.');
+    },
+  });
+
+  const transactionBulkMutation = useMutation({
+    mutationFn: transactionsApi.createBulk,
+    onSuccess: () => {
+      setTransactionError(null);
+      setShowSmartInput(false);
+      queryClient.invalidateQueries({ queryKey: ['monthlyStats'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      refreshTransactions();
+    },
+    onError: () => {
+      setTransactionError('Could not save transactions. Please try again.');
     },
   });
 
@@ -142,6 +155,10 @@ const App: React.FC = () => {
 
   const handleAddTransaction = async (payload: TransactionPayload) => {
     await transactionMutation.mutateAsync(payload);
+  };
+
+  const handleBulkAddTransaction = async (payloads: TransactionPayload[]) => {
+    await transactionBulkMutation.mutateAsync(payloads);
   };
 
 
@@ -235,7 +252,8 @@ const App: React.FC = () => {
               isOpen={showSmartInput}
               onClose={() => setShowSmartInput(false)}
               onTransactionAdded={handleAddTransaction}
-              isSubmitting={transactionMutation.isPending}
+              onTransactionsAdded={handleBulkAddTransaction}
+              isSubmitting={transactionMutation.isPending || transactionBulkMutation.isPending}
               submitError={transactionError}
             />
 

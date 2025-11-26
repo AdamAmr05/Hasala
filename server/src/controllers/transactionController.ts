@@ -78,6 +78,33 @@ export const addTransaction = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// @desc    Add multiple transactions
+// @route   POST /api/transactions/bulk
+// @access  Private
+export const addTransactionsBulk = async (req: AuthRequest, res: Response) => {
+  try {
+    const transactions = req.body; // Expecting an array of transaction objects
+
+    if (!Array.isArray(transactions) || transactions.length === 0) {
+      return res.status(400).json({ message: 'Invalid input: Expected an array of transactions.' });
+    }
+
+    const transactionsWithUser = transactions.map(tx => ({
+      ...tx,
+      user: req.user?._id,
+      amount: tx.amount, // Store directly as decimal
+      date: tx.date || Date.now(),
+      isRecurring: tx.isRecurring || false,
+    }));
+
+    const createdTransactions = await Transaction.insertMany(transactionsWithUser);
+
+    res.status(201).json(createdTransactions);
+  } catch (error) {
+    res.status(400).json({ message: (error as Error).message });
+  }
+};
+
 // @desc    Delete a transaction
 // @route   DELETE /api/transactions/:id
 // @access  Private

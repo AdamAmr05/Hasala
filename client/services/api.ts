@@ -123,13 +123,17 @@ export interface TransactionListResponse {
 }
 
 export const transactionsApi = {
-  list: (params?: { page?: number; limit?: number; month?: number; year?: number; signal?: AbortSignal }) =>
-    api.get<{ data: ApiTransaction[]; meta: any }>('/transactions', { params, signal: params?.signal }).then((res) => ({
+  list: (params?: { page?: number; limit?: number; month?: number; year?: number; signal?: AbortSignal }) => {
+    const { signal, ...queryParams } = params || {};
+    return api.get<{ data: ApiTransaction[]; meta: any }>('/transactions', { params: queryParams, signal }).then((res) => ({
       data: res.data.data.map(normalizeTransaction),
       meta: res.data.meta,
-    })),
+    }));
+  },
   create: (payload: TransactionPayload) =>
     api.post<ApiTransaction>('/transactions', payload).then((res) => normalizeTransaction(res.data)),
+  createBulk: (payloads: TransactionPayload[]) =>
+    api.post<ApiTransaction[]>('/transactions/bulk', payloads).then((res) => res.data.map(normalizeTransaction)),
   remove: (id: string) => api.delete(`/transactions/${id}`),
   getAnalytics: (period: number = 30, month?: number, year?: number) =>
     api.get<AnalyticsResponse>('/transactions/analytics', { params: { period, month, year } }).then((res) => res.data),

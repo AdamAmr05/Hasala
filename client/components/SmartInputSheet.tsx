@@ -8,6 +8,7 @@ interface SmartInputSheetProps {
   isOpen: boolean;
   onClose: () => void;
   onTransactionAdded: (tx: TransactionPayload) => Promise<void> | void;
+  onTransactionsAdded?: (txs: TransactionPayload[]) => Promise<void> | void;
   isSubmitting?: boolean;
   submitError?: string | null;
 }
@@ -18,6 +19,7 @@ const SmartInputSheet: React.FC<SmartInputSheetProps> = ({
   isOpen,
   onClose,
   onTransactionAdded,
+  onTransactionsAdded,
   isSubmitting = false,
   submitError,
 }) => {
@@ -85,7 +87,11 @@ const SmartInputSheet: React.FC<SmartInputSheetProps> = ({
         throw new Error('Could not understand the input. Try rephrasing.');
       }
 
-      await Promise.all(payloads.map(p => onTransactionAdded(p)));
+      if (onTransactionsAdded) {
+        await onTransactionsAdded(payloads);
+      } else {
+        await Promise.all(payloads.map(p => onTransactionAdded(p)));
+      }
       onClose();
     } catch (error) {
       console.error('Failed to parse text:', error);
@@ -130,7 +136,11 @@ const SmartInputSheet: React.FC<SmartInputSheetProps> = ({
                 throw new Error('Could not parse voice input.');
               }
 
-              await Promise.all(payloads.map(p => onTransactionAdded(p)));
+              if (onTransactionsAdded) {
+                await onTransactionsAdded(payloads);
+              } else {
+                await Promise.all(payloads.map(p => onTransactionAdded(p)));
+              }
               onClose();
             } catch (e) {
               console.error(e);

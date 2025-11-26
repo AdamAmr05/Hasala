@@ -4,6 +4,7 @@ import { aiApi } from '../services/api';
 
 interface AddTransactionProps {
   onAdd: (t: Omit<Transaction, 'id'>) => Promise<void> | void;
+  onBulkAdd?: (ts: Omit<Transaction, 'id'>[]) => Promise<void> | void;
   onCancel: () => void;
   isSubmitting?: boolean;
   submitError?: string | null;
@@ -11,6 +12,7 @@ interface AddTransactionProps {
 
 const AddTransaction: React.FC<AddTransactionProps> = ({
   onAdd,
+  onBulkAdd,
   onCancel,
   isSubmitting = false,
   submitError,
@@ -57,15 +59,23 @@ const AddTransaction: React.FC<AddTransactionProps> = ({
     try {
       const result = await aiApi.parseText(aiInput.trim());
       if (result?.transactions && result.transactions.length > 0) {
-        for (const tx of result.transactions) {
-          if (tx.amount && tx.description) {
-            await onAdd({
-              amount: Number(tx.amount),
-              description: tx.description,
-              category: (tx.category as Category) || Category.OTHER,
-              date: new Date().toISOString(),
-              type: (tx.type as TransactionType) || TransactionType.EXPENSE,
-            });
+        const payloads = result.transactions
+          .filter(tx => tx.amount && tx.description)
+          .map(tx => ({
+            amount: Number(tx.amount),
+            description: tx.description!,
+            category: (tx.category as Category) || Category.OTHER,
+            date: new Date().toISOString(),
+            type: (tx.type as TransactionType) || TransactionType.EXPENSE,
+          }));
+
+        if (payloads.length > 0) {
+          if (onBulkAdd) {
+            await onBulkAdd(payloads);
+          } else {
+            for (const p of payloads) {
+              await onAdd(p);
+            }
           }
         }
       } else {
@@ -102,15 +112,23 @@ const AddTransaction: React.FC<AddTransactionProps> = ({
           try {
             const result = await aiApi.parseVoice(rawBase64);
             if (result?.transactions && result.transactions.length > 0) {
-              for (const tx of result.transactions) {
-                if (tx.amount && tx.description) {
-                  await onAdd({
-                    amount: Number(tx.amount),
-                    description: tx.description,
-                    category: (tx.category as Category) || Category.OTHER,
-                    date: new Date().toISOString(),
-                    type: (tx.type as TransactionType) || TransactionType.EXPENSE,
-                  });
+              const payloads = result.transactions
+                .filter(tx => tx.amount && tx.description)
+                .map(tx => ({
+                  amount: Number(tx.amount),
+                  description: tx.description!,
+                  category: (tx.category as Category) || Category.OTHER,
+                  date: new Date().toISOString(),
+                  type: (tx.type as TransactionType) || TransactionType.EXPENSE,
+                }));
+
+              if (payloads.length > 0) {
+                if (onBulkAdd) {
+                  await onBulkAdd(payloads);
+                } else {
+                  for (const p of payloads) {
+                    await onAdd(p);
+                  }
                 }
               }
             } else {
