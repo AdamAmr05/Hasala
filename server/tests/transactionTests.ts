@@ -217,7 +217,7 @@ async function runTests() {
     try {
         console.log('6. Testing Chat (AI Text Parse)...');
         const payload = { input: "Spent 50 on coffee" };
-        const res = await fetch(`${BASE_URL}/parse/text`, {
+        const res = await fetch(`${BASE_URL}/ai/parse-text`, {
             method: 'POST',
             headers,
             body: JSON.stringify(payload)
@@ -225,9 +225,10 @@ async function runTests() {
 
         if (res.ok) {
             const data: any = await res.json();
-            // Expecting an array of transactions or a single object depending on the prompt
-            // The parser returns a list of transactions to be confirmed
-            if (Array.isArray(data) && data.length > 0 && data[0].amount === 50) {
+            // The parser returns { transactions: [...] }
+            const txList = data.transactions || data;
+
+            if (Array.isArray(txList) && txList.length > 0 && txList[0].amount === 50) {
                 console.log('✅ Chat parse successful.');
             } else {
                 console.warn('⚠️ Chat parse returned unexpected data:', data);
@@ -247,7 +248,7 @@ async function runTests() {
         // The AI will likely reject it or return garbage, but we test the endpoint connectivity.
         const dummyAudio = "data:audio/webm;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
 
-        const res = await fetch(`${BASE_URL}/parse/voice`, {
+        const res = await fetch(`${BASE_URL}/ai/parse-voice`, {
             method: 'POST',
             headers,
             body: JSON.stringify({ audio: dummyAudio })
