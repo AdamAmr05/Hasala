@@ -11,6 +11,7 @@ import FunEquivalents from './FunEquivalents';
 
 const AnalyticsView: React.FC = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
     const month = currentDate.getMonth();
     const year = currentDate.getFullYear();
@@ -228,7 +229,19 @@ const AnalyticsView: React.FC = () => {
                                     interval="preserveStartEnd"
                                 />
                                 <Tooltip
-                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                    content={({ active, payload, label }) => {
+                                        if (active && payload && payload.length) {
+                                            return (
+                                                <div className="bg-white dark:bg-[#2C2C2E] p-3 rounded-2xl shadow-xl border border-gray-100 dark:border-[#3A3A3C]">
+                                                    <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 mb-1 uppercase tracking-wider">{label}</p>
+                                                    <p className="text-lg font-bold text-primary dark:text-white">
+                                                        {Number(payload[0].value).toLocaleString()} <span className="text-xs font-medium text-gray-400">EGP</span>
+                                                    </p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
                                     cursor={{ stroke: '#007AFF', strokeWidth: 1, strokeDasharray: '4 4' }}
                                 />
                                 <Area
@@ -238,6 +251,7 @@ const AnalyticsView: React.FC = () => {
                                     strokeWidth={3}
                                     fillOpacity={1}
                                     fill="url(#colorAmount)"
+                                    activeDot={{ r: 6, strokeWidth: 0, fill: '#007AFF' }}
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
@@ -257,9 +271,9 @@ const AnalyticsView: React.FC = () => {
 
                     <div className="flex flex-col md:flex-row items-center gap-8">
                         {/* Donut Chart */}
-                        <div className="w-48 h-48 relative">
+                        <div className="w-48 h-48 relative outline-none" tabIndex={-1}>
                             <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
+                                <PieChart style={{ outline: 'none' }}>
                                     <Pie
                                         data={categoryData}
                                         cx="50%"
@@ -268,16 +282,34 @@ const AnalyticsView: React.FC = () => {
                                         outerRadius={80}
                                         paddingAngle={5}
                                         dataKey="value"
+                                        onMouseEnter={(_, index) => setActiveIndex(index)}
+                                        onMouseLeave={() => setActiveIndex(null)}
+                                        style={{ outline: 'none' }}
                                     >
                                         {categoryData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            <Cell
+                                                key={`cell-${index}`}
+                                                fill={COLORS[index % COLORS.length]}
+                                                style={{ outline: 'none' }}
+                                                className="transition-all duration-300 ease-out"
+                                                stroke="none"
+                                                fillOpacity={activeIndex === null || activeIndex === index ? 1 : 0.3}
+                                            />
                                         ))}
                                     </Pie>
                                 </PieChart>
                             </ResponsiveContainer>
                             {/* Center Text */}
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <span className="text-xs font-bold text-gray-400 dark:text-gray-500">BY CAT</span>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-all duration-200">
+                                <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                                    {activeIndex !== null ? categoryData[activeIndex].name : 'Total'}
+                                </span>
+                                <span className="text-lg font-bold text-primary dark:text-white">
+                                    {activeIndex !== null
+                                        ? categoryData[activeIndex].value.toLocaleString()
+                                        : categoryData.reduce((acc, curr) => acc + curr.value, 0).toLocaleString()}
+                                </span>
+                                {activeIndex === null && <span className="text-[10px] text-gray-400">EGP</span>}
                             </div>
                         </div>
 

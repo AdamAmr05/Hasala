@@ -36,6 +36,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 };
 
 const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, data: propsData }) => {
+  const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
 
   // 1. Spending Chart Widget (Area Chart)
   if (type === 'renderSpendingChart') {
@@ -252,9 +253,9 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
       >
         <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">Top Categories</h3>
         <div className="flex items-center gap-4">
-          <div className="w-32 h-32 relative">
+          <div className="w-32 h-32 relative outline-none" tabIndex={-1}>
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart style={{ outline: 'none' }}>
                 <Pie
                   data={data}
                   innerRadius={35}
@@ -262,21 +263,42 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
                   paddingAngle={5}
                   dataKey="value"
                   stroke="none"
+                  onMouseEnter={(_, index) => setActiveIndex(index)}
+                  onMouseLeave={() => setActiveIndex(null)}
+                  style={{ outline: 'none' }}
                 >
                   {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                      style={{ outline: 'none' }}
+                      className="transition-all duration-300 ease-out"
+                      stroke="none"
+                      fillOpacity={activeIndex === null || activeIndex === index ? 1 : 0.3}
+                    />
                   ))}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
+            {/* Center Text */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-all duration-200">
+              <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                {activeIndex !== null ? data[activeIndex].name : 'Total'}
+              </span>
+              <span className="text-sm font-bold text-primary dark:text-white">
+                {activeIndex !== null
+                  ? data[activeIndex].value.toLocaleString()
+                  : data.reduce((acc, curr) => acc + curr.value, 0).toLocaleString()}
+              </span>
+            </div>
           </div>
 
-          <div className="flex-1 space-y-2">
+          <div className="flex-1 space-y-1.5">
             {data.map((entry, index) => (
-              <div key={index} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                  <span className="text-gray-600 dark:text-gray-300 font-medium truncate max-w-[80px]">{entry.name}</span>
+              <div key={index} className="flex items-center justify-between text-[9px]">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                  <span className="text-gray-600 dark:text-gray-300 font-medium truncate max-w-[70px]">{entry.name}</span>
                 </div>
                 <span className="font-bold text-primary dark:text-white">{entry.value}</span>
               </div>

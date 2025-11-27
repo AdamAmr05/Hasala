@@ -250,3 +250,20 @@
   background-color: #007AFF;
   color: #FFFFFF;
 }
+
+/* ===================================
+   RECHARTS OVERRIDES
+   =================================== */
+
+/* Remove default focus outline from Recharts wrappers and surfaces */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-layer {
+  outline: none !important;
+}
+
+.recharts-wrapper:focus,
+.recharts-surface:focus,
+.recharts-layer:focus {
+  outline: none !important;
+}
