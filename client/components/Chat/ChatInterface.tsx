@@ -9,6 +9,7 @@ import { chatApi, ChatThread } from '../../services/api';
 import ChatWidget from './ChatWidget';
 import ChatHistorySidebar from './ChatHistorySidebar';
 import { Send, Sparkles, History } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 interface ChatInterfaceProps {
   transactions: Transaction[];
@@ -226,7 +227,25 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 : 'bg-white dark:bg-[#1C1C1E] text-primary dark:text-white rounded-[22px] rounded-bl-sm border border-gray-100 dark:border-[#2C2C2E]'}
             `}>
               {/* 1. Render Text */}
-              {msg.text && <span className="whitespace-pre-wrap block">{renderMessageText(msg.text)}</span>}
+              {msg.text && (
+                <div className="prose dark:prose-invert prose-sm max-w-none leading-relaxed">
+                  <ReactMarkdown
+                    components={{
+                      p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                      ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2 space-y-1" {...props} />,
+                      ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2 space-y-1" {...props} />,
+                      li: ({ node, ...props }) => <li className="pl-1" {...props} />,
+                      strong: ({ node, ...props }) => <span className="font-bold text-gray-900 dark:text-white" {...props} />,
+                      em: ({ node, ...props }) => <span className="italic text-gray-800 dark:text-gray-200" {...props} />,
+                      h1: ({ node, ...props }) => <h1 className="text-lg font-bold mb-2 mt-4 first:mt-0" {...props} />,
+                      h2: ({ node, ...props }) => <h2 className="text-base font-bold mb-2 mt-3 first:mt-0" {...props} />,
+                      h3: ({ node, ...props }) => <h3 className="text-sm font-bold mb-1 mt-2 first:mt-0" {...props} />,
+                    }}
+                  >
+                    {msg.text}
+                  </ReactMarkdown>
+                </div>
+              )}
 
               {/* 2. Render Tools (Generative UI) */}
               {msg.toolCalls?.map((tool, index) => (

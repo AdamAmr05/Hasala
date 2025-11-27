@@ -372,30 +372,50 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
     // 3. Lazy Load View Data (Using Fresh DB State)
     const finalViewCalls: ToolCall[] = [];
 
+    // Re-fetch totals if actions occurred to ensure accuracy
+    let freshTotalSpent = totalSpentReal;
+    let freshTotalIncome = totalIncomeReal;
+
+    if (createdTransactions.length > 0) {
+      const freshMonthlyStats = await Transaction.aggregate([
+        {
+          $match: {
+            user: req.user._id,
+            date: { $gte: startOfCurrentMonth },
+          },
+        },
+        {
+          $group: {
+            _id: '$type',
+            total: { $sum: '$amount' },
+          },
+        },
+      ]);
+      freshTotalSpent = freshMonthlyStats.find((s) => s._id === TransactionType.EXPENSE)?.total || 0;
+      freshTotalIncome = freshMonthlyStats.find((s) => s._id === TransactionType.INCOME)?.total || 0;
+    }
+
+    // Snapshot Recent Transactions (Check both View and Action calls)
+    let recentTransactionsData: any[] = [];
+    const needsRecentTransactions = viewCalls.some(c => c.name === 'renderRecentTransactions') ||
+      executedActionCalls.some(c => c.name === 'renderRecentTransactions') ||
+      createdTransactions.length > 0; // Force if we added a transaction
+
+    if (needsRecentTransactions) {
+      const recent = await Transaction.find({ user: req.user._id })
+        .sort({ date: -1 })
+        .limit(4);
+
+      recentTransactionsData = recent.map(t => ({
+        description: t.description,
+        amount: t.amount,
+        date: t.date,
+        category: t.category,
+        type: t.type
+      }));
+    }
+
     if (viewCalls.length > 0) {
-      // Re-fetch totals if actions occurred to ensure accuracy
-      let freshTotalSpent = totalSpentReal;
-      let freshTotalIncome = totalIncomeReal;
-
-      if (createdTransactions.length > 0) {
-        const freshMonthlyStats = await Transaction.aggregate([
-          {
-            $match: {
-              user: req.user._id,
-              date: { $gte: startOfCurrentMonth },
-            },
-          },
-          {
-            $group: {
-              _id: '$type',
-              total: { $sum: '$amount' },
-            },
-          },
-        ]);
-        freshTotalSpent = freshMonthlyStats.find((s) => s._id === TransactionType.EXPENSE)?.total || 0;
-        freshTotalIncome = freshMonthlyStats.find((s) => s._id === TransactionType.INCOME)?.total || 0;
-      }
-
       // Check what data we need
       const needsCategory = viewCalls.some(c => c.name === 'renderCategoryBreakdown');
       const needsIncome = viewCalls.some(c => c.name === 'renderIncomeOverview');
@@ -487,13 +507,38 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
           args.totalIncome = freshTotalIncome;
         } else if (call.name === 'renderSpendingChart') {
           args.trend = trendData;
+        } else if (call.name === 'renderRecentTransactions') {
+          args.recentTransactions = recentTransactionsData;
         }
 
         finalViewCalls.push({ name: call.name, args });
       }
     }
 
-    const finalToolCalls = [...executedActionCalls, ...finalViewCalls];
+    // Inject Snapshot into Executed Action Calls (Implicit Views)
+    // We use map to ensure we create new objects with the injected data
+    const finalActionCalls = executedActionCalls.map(call => {
+      if (call.name === 'renderRecentTransactions') {
+        return {
+          ...call,
+          args: {
+            ...call.args,
+            recentTransactions: recentTransactionsData
+          }
+        };
+      }
+      return call;
+    });
+
+    // Safety: If we created transactions but somehow renderRecentTransactions is missing, add it
+    if (createdTransactions.length > 0 && !finalActionCalls.some(c => c.name === 'renderRecentTransactions')) {
+      finalActionCalls.push({
+        name: 'renderRecentTransactions',
+        args: { recentTransactions: recentTransactionsData }
+      });
+    }
+
+    const finalToolCalls = [...finalActionCalls, ...finalViewCalls];
 
     // --- PERSISTENCE START ---
     const aiMessage = await ChatMessage.create({

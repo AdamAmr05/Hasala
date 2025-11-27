@@ -140,7 +140,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
 
   // 2. Recent Transactions Widget (Timeline)
   if (type === 'renderRecentTransactions') {
-    const recent = transactions.slice(0, 4);
+    // Use injected snapshot if available, otherwise fallback to live prop (legacy)
+    const recent = propsData?.recentTransactions || transactions.slice(0, 4);
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
