@@ -2,13 +2,13 @@
 import React from 'react';
 import { Transaction, TransactionType, Category } from '../../types';
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line, ReferenceLine
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
+  LineChart, Line, XAxis, ReferenceLine, YAxis, AreaChart, Area, CartesianGrid
 } from 'recharts';
 import { motion } from 'framer-motion';
 import {
   TrendingUp, TrendingDown, Calendar, AlertCircle, CheckCircle2,
-  ShoppingBag, Coffee, Home, Car, Zap, MoreHorizontal, HandHeart
+  ShoppingBag, Coffee, Home, Car, Zap, MoreHorizontal, HandHeart, AlertTriangle
 } from 'lucide-react';
 
 import IncomeOverview from './Tools/IncomeOverview';
@@ -336,26 +336,62 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
 
   // 5. Monthly Projection Widget (Forecast Graph)
   if (type === 'renderMonthlyProjection') {
-    // Simple linear projection logic
-    const today = new Date();
-    const dayOfMonth = today.getDate();
-    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    // 1. Try Server Data (Snapshot)
+    let spent = propsData?.spent;
+    let budgetGoal = propsData?.budget;
+    let projected = propsData?.projected;
+    let dailyAvg = propsData?.dailyAverage;
+    let dayOfMonth = propsData?.dayOfMonth;
+    let daysInMonth = propsData?.daysInMonth;
 
-    const totalSpent = propsData?.totalSpent ?? transactions
-      .filter(t => t.type === TransactionType.EXPENSE)
-      .reduce((sum, t) => sum + t.amount, 0);
+    // 2. Fallback to Client Calculation (for old messages or missing data)
+    if (spent === undefined || spent === 0) {
+      const today = new Date();
+      dayOfMonth = today.getDate();
+      daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
 
-    const budgetGoal = propsData?.budget ?? budget;
+      spent = transactions
+        .filter(t => t.type === TransactionType.EXPENSE)
+        .reduce((sum, t) => sum + t.amount, 0);
 
-    const dailyAvg = totalSpent / Math.max(1, dayOfMonth);
-    const projectedTotal = dailyAvg * daysInMonth;
-    const isOverBudget = projectedTotal > budgetGoal;
+      budgetGoal = budget; // Use global budget prop
+      dailyAvg = spent / Math.max(1, dayOfMonth);
+      projected = dailyAvg * daysInMonth;
+    }
 
-    const data = [
-      { day: 'Day 1', amount: 0 },
-      { day: `Day ${dayOfMonth}`, amount: totalSpent },
-      { day: 'End', amount: projectedTotal, projected: true }
+    // Safe defaults
+    spent = spent ?? 0;
+    budgetGoal = budgetGoal ?? 0;
+    projected = projected ?? 0;
+    dailyAvg = dailyAvg ?? 0;
+
+    const isOverBudget = projected > budgetGoal;
+    const statusColor = isOverBudget ? 'text-red-500' : 'text-green-500';
+    const statusBg = isOverBudget ? 'bg-red-50 dark:bg-red-500/10' : 'bg-green-50 dark:bg-green-500/10';
+    const statusIcon = isOverBudget ? <AlertTriangle size={16} className="text-red-500" /> : <TrendingUp size={16} className="text-green-500" />;
+
+    // Generate Curve Data (Start -> Today -> End)
+    // We use a few more points to make the curve look nice if we want, but 3 is enough for monotone
+    const chartData = [
+      { day: 'Start', amount: 0 },
+      { day: 'Today', amount: spent },
+      { day: 'End', amount: projected }
     ];
+
+    // Custom Dot to mask the dashed line
+    const CustomDot = (props: any) => {
+      const { cx, cy, stroke } = props;
+      return (
+        <circle
+          cx={cx}
+          cy={cy}
+          r={4.5}
+          stroke={stroke}
+          strokeWidth={2}
+          className="fill-white dark:fill-[#1C1C1E]" // Matches card bg to mask the line
+        />
+      );
+    };
 
     return (
       <motion.div
@@ -363,40 +399,79 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
         animate={{ opacity: 1, y: 0 }}
         className="bg-white dark:bg-[#1C1C1E] rounded-[24px] p-5 my-3 shadow-sm border border-gray-100 dark:border-[#2C2C2E]"
       >
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">End of Month Forecast</h3>
-            <p className={`text-lg font-bold mt-1 ${isOverBudget ? 'text-red-500' : 'text-green-500'}`}>
-              {isOverBudget ? '⚠️ Risk of Overspending' : '✅ On Track to Save'}
-            </p>
+            <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">End of Month Forecast</h3>
+            <div className={`flex items-center gap-2 px-2.5 py-1 rounded-full w-fit ${statusBg}`}>
+              {statusIcon}
+              <span className={`text-sm font-bold ${statusColor}`}>
+                {isOverBudget ? 'Risk of Overspending' : 'On Track'}
+              </span>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Budget</p>
+            <p className="text-sm font-bold text-primary dark:text-white">{budgetGoal.toLocaleString()} EGP</p>
           </div>
         </div>
 
-        <div className="h-32 w-full -ml-4">
+        <div className="h-40 w-full relative">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
-              <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#8E8E93' }} />
-              <Tooltip
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                formatter={(value: number) => [`${Math.round(value)} EGP`, 'Total']}
+            <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5EA" className="dark:opacity-10" />
+              <XAxis
+                dataKey="day"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 11, fill: '#8E8E93' }}
+                padding={{ left: 10, right: 10 }}
               />
-              <ReferenceLine y={budget} stroke="#E5E5EA" strokeDasharray="3 3" label={{ value: 'Limit', position: 'insideTopRight', fontSize: 10, fill: '#8E8E93' }} />
+              <YAxis hide domain={[0, Math.max(projected, budgetGoal) * 1.1]} />
+              <Tooltip
+                cursor={{ stroke: isOverBudget ? '#FF3B30' : '#34C759', strokeWidth: 1, strokeDasharray: '4 4' }}
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="bg-white dark:bg-[#2C2C2E] p-2 rounded-xl shadow-lg border border-gray-100 dark:border-[#3A3A3C]">
+                        <p className="text-xs font-bold text-primary dark:text-white">
+                          {Math.round(Number(payload[0].value)).toLocaleString()} EGP
+                        </p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              {/* Budget Limit Line */}
+              <ReferenceLine
+                y={budgetGoal}
+                stroke="#8E8E93"
+                strokeDasharray="3 3"
+                label={{
+                  position: 'insideTopRight',
+                  value: 'Limit',
+                  fill: '#8E8E93',
+                  fontSize: 10,
+                  fontWeight: 500
+                }}
+              />
               <Line
                 type="monotone"
                 dataKey="amount"
                 stroke={isOverBudget ? '#FF3B30' : '#34C759'}
                 strokeWidth={3}
-                dot={{ r: 4, strokeWidth: 2, fill: 'white', strokeDasharray: '' }}
+                dot={<CustomDot />}
+                activeDot={{ r: 6, strokeWidth: 0, fill: isOverBudget ? '#FF3B30' : '#34C759' }}
                 strokeDasharray="5 5"
               />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="mt-2 p-3 bg-gray-50 dark:bg-[#2C2C2E] rounded-xl">
+        <div className="mt-4 p-3 bg-gray-50 dark:bg-[#2C2C2E] rounded-xl">
           <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-            At your current rate of <span className="font-bold text-primary dark:text-white">{Math.round(dailyAvg)} EGP/day</span>,
-            you will spend <span className="font-bold text-primary dark:text-white">{Math.round(projectedTotal)} EGP</span> by month end.
+            At your current rate of <span className="font-bold text-primary dark:text-white">{Math.round(dailyAvg).toLocaleString()} EGP/day</span>,
+            you will spend <span className={`font-bold ${statusColor}`}>{Math.round(projected).toLocaleString()} EGP</span> by month end.
           </p>
         </div>
       </motion.div>

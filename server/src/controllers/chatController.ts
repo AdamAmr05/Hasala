@@ -448,8 +448,17 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
           } else if (call.name === 'renderPeopleBreakdown') {
             args.people = peopleData; // Already converted above
           } else if (call.name === 'renderMonthlyProjection') {
-            args.totalSpent = totalSpentReal;
-            args.budget = req.user?.budget || 0; // Budget is stored as decimal, not cents
+            const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+            const dayOfMonth = today.getDate();
+            const dailyAverage = totalSpentReal / Math.max(1, dayOfMonth);
+            const projected = dailyAverage * daysInMonth;
+
+            args.spent = totalSpentReal;
+            args.budget = req.user?.budget || 0;
+            args.projected = projected;
+            args.dailyAverage = dailyAverage;
+            args.daysInMonth = daysInMonth;
+            args.dayOfMonth = dayOfMonth;
           } else if (call.name === 'renderIncomeOverview') {
             args.incomeSources = incomeData; // Already converted above
             args.totalIncome = totalIncomeReal;
