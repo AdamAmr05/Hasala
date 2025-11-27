@@ -12,6 +12,7 @@ import FunEquivalents from './FunEquivalents';
 const AnalyticsView: React.FC = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
+    const [activeDayIndex, setActiveDayIndex] = useState<number | null>(null);
 
     const month = currentDate.getMonth();
     const year = currentDate.getFullYear();
@@ -75,10 +76,16 @@ const AnalyticsView: React.FC = () => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const dayTotals = new Array(7).fill(0);
     data.dailyTrend.forEach(d => {
-        const dayIndex = new Date(d._id).getDay();
+        // Robust Date Parsing (YYYY-MM-DD) to avoid timezone shifts
+        const [y, m, day] = d._id.split('-').map(Number);
+        const date = new Date(y, m - 1, day); // Local Midnight
+        const dayIndex = date.getDay();
         dayTotals[dayIndex] += d.total;
     });
     const dayData = days.map((day, index) => ({ day, amount: dayTotals[index] }));
+
+    // Find max spending day for insight
+    const maxDay = dayData.reduce((max, current) => current.amount > max.amount ? current : max, dayData[0]);
 
 
     const COLORS = ['#007AFF', '#34C759', '#FF9500', '#FF3B30', '#5856D6', '#AF52DE'];
@@ -332,24 +339,66 @@ const AnalyticsView: React.FC = () => {
             {/* 3. Day of Week Analysis */}
             <div className="px-6">
                 <div className="bg-white dark:bg-[#1C1C1E] rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#2C2C2E]">
-                    <div className="flex items-center gap-2 mb-6">
-                        <div className="p-2 bg-purple-50 dark:bg-purple-500/10 rounded-full">
-                            <Calendar size={18} className="text-purple-500" />
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-2">
+                            <div className="p-2 bg-purple-50 dark:bg-purple-500/10 rounded-full">
+                                <Calendar size={18} className="text-purple-500" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-900 dark:text-white">Weekly Pattern</h3>
+                                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                    Most spending on <span className="font-bold text-purple-500">{maxDay.amount > 0 ? maxDay.day + 's' : '...'}</span> (Last 30 Days)
+                                </p>
+                            </div>
                         </div>
-                        <h3 className="font-bold text-gray-900 dark:text-white">Weekly Pattern</h3>
                     </div>
 
-                    <div className="h-40 w-full">
+                    <div className="h-48 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={dayData}>
-                                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#8E8E93' }} />
-                                <Tooltip
-                                    cursor={{ fill: 'rgba(242, 242, 247, 0.5)' }}
-                                    contentStyle={{ borderRadius: '8px', border: 'none' }}
+                            <BarChart data={dayData}
+                                onMouseMove={(state) => {
+                                    if (state.isTooltipActive && typeof state.activeTooltipIndex === 'number') {
+                                        setActiveDayIndex(state.activeTooltipIndex);
+                                    } else {
+                                        setActiveDayIndex(null);
+                                    }
+                                }}
+                                onMouseLeave={() => setActiveDayIndex(null)}
+                            >
+                                <XAxis
+                                    dataKey="day"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fontSize: 11, fill: '#8E8E93' }}
+                                    dy={10}
                                 />
-                                <Bar dataKey="amount" radius={[4, 4, 4, 4]}>
+                                <Tooltip
+                                    cursor={{ fill: 'transparent' }}
+                                    content={({ active, payload, label }) => {
+                                        if (active && payload && payload.length) {
+                                            return (
+                                                <div className="bg-white dark:bg-[#2C2C2E] p-3 rounded-2xl shadow-xl border border-gray-100 dark:border-[#3A3A3C]">
+                                                    <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 mb-1 uppercase tracking-wider">{label}</p>
+                                                    <p className="text-lg font-bold text-primary dark:text-white">
+                                                        {Number(payload[0].value).toLocaleString()} <span className="text-xs font-medium text-gray-400">EGP</span>
+                                                    </p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
+                                />
+                                <Bar dataKey="amount" radius={[8, 8, 8, 8]}>
                                     {dayData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.amount === Math.max(...dayData.map(d => d.amount)) ? '#AF52DE' : '#E5E5EA'} />
+                                        <Cell
+                                            key={`cell-${index}`}
+                                            fill="#AF52DE"
+                                            className="transition-all duration-300"
+                                            style={{
+                                                opacity: activeDayIndex === null || activeDayIndex === index ? 1 : 0.3,
+                                                outline: 'none'
+                                            }}
+                                        />
                                     ))}
                                 </Bar>
                             </BarChart>
