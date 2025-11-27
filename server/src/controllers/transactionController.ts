@@ -185,6 +185,8 @@ export const getAnalytics = async (req: AuthRequest, res: Response) => {
       { $sort: { total: -1 } }
     ]);
 
+    const timezone = (req.query.timezone as string) || 'UTC';
+
     // 3. Daily Trend
     const dailyTrend = await Transaction.aggregate([
       {
@@ -196,7 +198,7 @@ export const getAnalytics = async (req: AuthRequest, res: Response) => {
       },
       {
         $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date", timezone: timezone } },
           total: { $sum: '$amount' }
         }
       },

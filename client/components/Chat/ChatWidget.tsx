@@ -40,14 +40,36 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
 
   // 1. Spending Chart Widget (Area Chart)
   if (type === 'renderSpendingChart') {
-    const data = transactions
-      .slice(0, 7)
-      .filter(t => t.type === TransactionType.EXPENSE)
-      .map(t => ({
-        name: t.description.length > 10 ? t.description.substring(0, 8) + '..' : t.description,
-        amount: t.amount,
-        fullDesc: t.description
-      })).reverse();
+    let data = [];
+
+    // Check for server-side snapshot data (preferred)
+    if (propsData && propsData.trend && Array.isArray(propsData.trend)) {
+      data = propsData.trend;
+    } else {
+      // Fallback: Calculate Daily Trend (Last 7 Days) client-side
+      const today = new Date();
+      const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date();
+        d.setDate(today.getDate() - (6 - i));
+        return d;
+      });
+
+      data = last7Days.map(date => {
+        const dateStr = date.toLocaleDateString();
+        const dayTotal = transactions
+          .filter(t =>
+            t.type === TransactionType.EXPENSE &&
+            new Date(t.date).toLocaleDateString() === dateStr
+          )
+          .reduce((sum, t) => sum + t.amount, 0);
+
+        return {
+          name: date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+          amount: dayTotal,
+          fullDesc: date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+        };
+      });
+    }
 
     if (data.length === 0) return (
       <div className="p-3 bg-gray-50 dark:bg-[#2C2C2E] rounded-xl text-center text-gray-400 dark:text-gray-500 text-xs my-2">No recent spending to chart</div>
@@ -62,7 +84,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
         <div className="flex justify-between items-center mb-6">
           <div>
             <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Spending Trend</h3>
-            <p className="text-lg font-bold text-primary dark:text-white mt-0.5">Last 7 Transactions</p>
+            <p className="text-lg font-bold text-primary dark:text-white mt-0.5">Last 7 Days</p>
           </div>
           <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-white/10 flex items-center justify-center">
             <TrendingUp size={16} className="text-accent-blue dark:text-white" />
@@ -86,12 +108,14 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
               />
               <Tooltip
                 cursor={{ stroke: '#007AFF', strokeWidth: 1, strokeDasharray: '4 4' }}
-                content={({ active, payload }) => {
+                content={({ active, payload, label }) => {
                   if (active && payload && payload.length) {
                     return (
-                      <div className="bg-primary text-white text-xs rounded-lg py-2 px-3 shadow-xl">
-                        <span className="font-bold block mb-1">{payload[0].payload.fullDesc}</span>
-                        <span className="text-blue-200">{payload[0].value} EGP</span>
+                      <div className="bg-white dark:bg-[#2C2C2E] p-2 rounded-xl shadow-xl border border-gray-100 dark:border-[#3A3A3C]">
+                        <p className="text-[9px] font-medium text-gray-400 dark:text-gray-500 mb-0.5 uppercase tracking-wider">{payload[0].payload.fullDesc}</p>
+                        <p className="text-sm font-bold text-primary dark:text-white">
+                          {Number(payload[0].value).toLocaleString()} <span className="text-[9px] font-medium text-gray-400">EGP</span>
+                        </p>
                       </div>
                     );
                   }
@@ -105,6 +129,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
                 strokeWidth={3}
                 fillOpacity={1}
                 fill="url(#colorAmount)"
+                activeDot={{ r: 5, strokeWidth: 2, stroke: 'white', fill: '#007AFF' }}
               />
             </AreaChart>
           </ResponsiveContainer>

@@ -19,7 +19,7 @@ const AnalyticsView: React.FC = () => {
 
     const { data, isLoading, isError, refetch } = useQuery({
         queryKey: ['analytics', month, year],
-        queryFn: () => transactionsApi.getAnalytics(30, month, year),
+        queryFn: () => transactionsApi.getAnalytics(30, month, year, Intl.DateTimeFormat().resolvedOptions().timeZone),
         placeholderData: (previousData) => previousData,
     });
 
@@ -251,7 +251,7 @@ const AnalyticsView: React.FC = () => {
                                     strokeWidth={3}
                                     fillOpacity={1}
                                     fill="url(#colorAmount)"
-                                    activeDot={{ r: 6, strokeWidth: 0, fill: '#007AFF' }}
+                                    activeDot={{ r: 5, strokeWidth: 2, stroke: 'white', fill: '#007AFF' }}
                                 />
                             </AreaChart>
                         </ResponsiveContainer>

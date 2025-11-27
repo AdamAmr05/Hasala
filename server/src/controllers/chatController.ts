@@ -398,6 +398,40 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
     ]);
     const incomeData = incomeStats.map(s => ({ name: s._id, value: s.total }));
 
+    // Calculate Daily Trend (Last 7 Days) for Snapshot
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    const timezone = req.body.timezone || 'UTC';
+
+    const dailyTrendStats = await Transaction.aggregate([
+      {
+        $match: {
+          user: req.user._id,
+          type: TransactionType.EXPENSE,
+          date: { $gte: sevenDaysAgo },
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: timezone } },
+          total: { $sum: '$amount' },
+        },
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Map sparse data directly (match Analytics behavior)
+    const trendData: { name: string; amount: number; fullDesc: string }[] = dailyTrendStats.map(stat => {
+      const d = new Date(stat._id);
+      return {
+        name: d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+        amount: stat.total,
+        fullDesc: d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+      };
+    });
+
     const rawToolCalls: ToolCall[] =
       response.functionCalls
         ?.filter((call) => Boolean(call.name))
@@ -419,6 +453,8 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
           } else if (call.name === 'renderIncomeOverview') {
             args.incomeSources = incomeData; // Already converted above
             args.totalIncome = totalIncomeReal;
+          } else if (call.name === 'renderSpendingChart') {
+            args.trend = trendData; // Inject snapshot data
           }
 
           return {

@@ -138,6 +138,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         message: userMsg.text,
         history: previousMessages.filter(m => m.id !== 'welcome'), // Exclude welcome message
         threadId: activeThreadId || undefined,
+        clientTimestamp: new Date().toISOString(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
 
       // Update active thread if it was a new chat

@@ -18,5 +18,6 @@ export interface ChatRequestBody {
   history?: ChatMessage[];
   threadId?: string;
   clientTimestamp?: string;
+  timezone?: string;
 }
 

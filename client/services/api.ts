@@ -135,8 +135,8 @@ export const transactionsApi = {
   createBulk: (payloads: TransactionPayload[]) =>
     api.post<ApiTransaction[]>('/transactions/bulk', payloads).then((res) => res.data.map(normalizeTransaction)),
   remove: (id: string) => api.delete(`/transactions/${id}`),
-  getAnalytics: (period: number = 30, month?: number, year?: number) =>
-    api.get<AnalyticsResponse>('/transactions/analytics', { params: { period, month, year } }).then((res) => res.data),
+  getAnalytics: (period: number = 30, month?: number, year?: number, timezone?: string) =>
+    api.get<AnalyticsResponse>('/transactions/analytics', { params: { period, month, year, timezone } }).then((res) => res.data),
 };
 
 export interface AnalyticsResponse {
@@ -148,7 +148,7 @@ export interface AnalyticsResponse {
 }
 
 export const chatApi = {
-  send: (payload: { message: string; history?: ChatMessage[]; threadId?: string }) =>
+  send: (payload: { message: string; history?: ChatMessage[]; threadId?: string; clientTimestamp?: string; timezone?: string }) =>
     api
       .post<ChatResponse>('/chat', {
         message: payload.message,
@@ -157,7 +157,8 @@ export const chatApi = {
           sender: msg.sender,
           text: msg.text,
         })),
-        clientTimestamp: new Date().toISOString(),
+        clientTimestamp: payload.clientTimestamp,
+        timezone: payload.timezone,
       })
       .then((res) => ({
         ...res.data,

@@ -255,15 +255,22 @@
    RECHARTS OVERRIDES
    =================================== */
 
-/* Remove default focus outline from Recharts wrappers and surfaces */
+/* Kill all outlines on everything inside recharts */
 .recharts-wrapper,
+.recharts-wrapper *,
 .recharts-surface,
-.recharts-layer {
+.recharts-surface *,
+.recharts-layer,
+.recharts-layer *,
+.recharts-dot,
+.recharts-active-dot,
+.recharts-sector {
   outline: none !important;
+  box-shadow: none !important;
 }
 
-.recharts-wrapper:focus,
-.recharts-surface:focus,
-.recharts-layer:focus {
+/* Specific targeting for the active dot issue */
+.recharts-active-dot circle:focus,
+.recharts-dot circle:focus {
   outline: none !important;
 }
