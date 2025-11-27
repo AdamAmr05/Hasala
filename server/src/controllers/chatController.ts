@@ -198,18 +198,19 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       apiKey: process.env.GEMINI_API_KEY,
     });
 
+    // 1. Build Context (Lightweight)
     const transactions = await Transaction.find({ user: req.user._id })
       .sort({ date: -1 })
       .limit(20);
 
     // Fetch existing people for the current month
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
+    const startOfCurrentMonth = new Date();
+    startOfCurrentMonth.setDate(1);
+    startOfCurrentMonth.setHours(0, 0, 0, 0);
 
     const monthlyTransactions = await Transaction.find({
       user: req.user._id,
-      date: { $gte: startOfMonth },
+      date: { $gte: startOfCurrentMonth },
       relatedPerson: { $exists: true, $ne: null },
     }).select('relatedPerson amount');
 
@@ -230,12 +231,9 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
     const upcomingBills = recurringTransactions.filter(transaction => {
-      // Check if the due day is still to come this month (or is today)
-      // AND it is an expense
       return transaction.dayOfMonth >= today.getDate() && transaction.type === 'EXPENSE';
     });
 
-    // Recurring transactions stored as decimals
     const upcomingLiabilitiesTotal = upcomingBills.reduce((sum, exp) => sum + exp.amount, 0);
     const upcomingLiabilitiesText = upcomingBills.length > 0
       ? `${upcomingLiabilitiesTotal.toLocaleString()} EGP (${upcomingBills.map(b => `${b.description}: ${b.amount}`).join(', ')})`
@@ -258,23 +256,21 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       text: message,
     });
 
-    // Update Thread timestamp
     await ChatThread.findByIdAndUpdate(currentThreadId, { lastMessageAt: new Date() });
     // --- PERSISTENCE END ---
 
-    // Load history from DB if threadId exists, otherwise fallback to request body (legacy)
+    // Load history
     let contents: Content[] = [];
     if (currentThreadId) {
       const dbMessages = await ChatMessage.find({ thread: currentThreadId })
         .sort({ createdAt: 1 })
-        .limit(20); // Load last 20 messages
+        .limit(20);
 
       contents = dbMessages.map((msg) => {
         const parts = [];
         if (msg.text) {
           parts.push({ text: msg.text });
         }
-        // Synthesize tool calls into text context so Gemini remembers what it showed
         if (msg.toolCalls && msg.toolCalls.length > 0) {
           const toolDescriptions = msg.toolCalls.map(tc => {
             if (tc.name === 'addTransaction') return `(I added a transaction: ${JSON.stringify(tc.args)})`;
@@ -302,11 +298,7 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Calculate accurate monthly totals
-    const startOfCurrentMonth = new Date();
-    startOfCurrentMonth.setDate(1);
-    startOfCurrentMonth.setHours(0, 0, 0, 0);
-
+    // Calculate accurate monthly totals for Context
     const monthlyStats = await Transaction.aggregate([
       {
         $match: {
@@ -322,7 +314,6 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       },
     ]);
 
-    // Aggregated values are in decimals
     const totalSpentReal = monthlyStats.find((s) => s._id === TransactionType.EXPENSE)?.total || 0;
     const totalIncomeReal = monthlyStats.find((s) => s._id === TransactionType.INCOME)?.total || 0;
 
@@ -357,140 +348,169 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
     });
 
     const text = response.text || '';
-    // Calculate category breakdown for chart
-    const categoryStats = await Transaction.aggregate([
-      {
-        $match: {
-          user: req.user._id,
-          type: TransactionType.EXPENSE,
-          date: { $gte: startOfCurrentMonth },
-        },
-      },
-      {
-        $group: {
-          _id: '$category',
-          total: { $sum: '$amount' },
-        },
-      },
-      { $sort: { total: -1 } }
-    ]);
 
-    // Data already in decimals
-    const categoryData = categoryStats.map(s => ({ name: s._id, value: s.total }));
-    const peopleData = Object.entries(peopleMap).map(([name, value]) => ({ name, value }));
+    // --- OPTIMIZED TOOL EXECUTION ---
 
-    // Calculate Income Breakdown for tool
-    const incomeStats = await Transaction.aggregate([
-      {
-        $match: {
-          user: req.user._id,
-          type: TransactionType.INCOME,
-          date: { $gte: startOfCurrentMonth },
-        },
-      },
-      {
-        $group: {
-          _id: '$category',
-          total: { $sum: '$amount' },
-        },
-      },
-      { $sort: { total: -1 } }
-    ]);
-    const incomeData = incomeStats.map(s => ({ name: s._id, value: s.total }));
+    const rawToolCalls = response.functionCalls || [];
+    const actionCalls: ToolCall[] = [];
+    const viewCalls: ToolCall[] = [];
 
-    // Calculate Daily Trend (Last 7 Days) for Snapshot
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(today.getDate() - 6);
-    sevenDaysAgo.setHours(0, 0, 0, 0);
+    // 1. Split Calls
+    rawToolCalls.forEach(call => {
+      if (!call.name) return; // Skip if no name
 
-    const timezone = req.body.timezone || 'UTC';
-
-    const dailyTrendStats = await Transaction.aggregate([
-      {
-        $match: {
-          user: req.user._id,
-          type: TransactionType.EXPENSE,
-          date: { $gte: sevenDaysAgo },
-        },
-      },
-      {
-        $group: {
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: timezone } },
-          total: { $sum: '$amount' },
-        },
-      },
-      { $sort: { _id: 1 } }
-    ]);
-
-    // Map sparse data directly (match Analytics behavior)
-    const trendData: { name: string; amount: number; fullDesc: string }[] = dailyTrendStats.map(stat => {
-      const d = new Date(stat._id);
-      return {
-        name: d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
-        amount: stat.total,
-        fullDesc: d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-      };
+      if (call.name === 'addTransaction') {
+        actionCalls.push({ name: call.name, args: call.args as Record<string, unknown> });
+      } else {
+        viewCalls.push({ name: call.name, args: call.args as Record<string, unknown> });
+      }
     });
 
-    const rawToolCalls: ToolCall[] =
-      response.functionCalls
-        ?.filter((call) => Boolean(call.name))
-        .map((call) => {
-          const args = (call.args as Record<string, unknown>) || {};
+    // 2. Execute Actions First (Updates DB)
+    const { toolCalls: executedActionCalls, createdTransactions } = await executeToolCalls(actionCalls, req.user._id.toString(), clientTimestamp);
 
-          // Inject accurate server-side stats (already converted to decimals)
-          if (call.name === 'renderBudgetOverview') {
-            args.totalSpent = totalSpentReal;
-            args.totalIncome = totalIncomeReal;
-            args.budget = req.user?.budget || 0; // Budget is stored as decimal, not cents
-          } else if (call.name === 'renderCategoryBreakdown') {
-            args.categories = categoryData; // Already converted above
-          } else if (call.name === 'renderPeopleBreakdown') {
-            args.people = peopleData; // Already converted above
-          } else if (call.name === 'renderMonthlyProjection') {
-            const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-            const dayOfMonth = today.getDate();
-            const dailyAverage = totalSpentReal / Math.max(1, dayOfMonth);
-            const projected = dailyAverage * daysInMonth;
+    // 3. Lazy Load View Data (Using Fresh DB State)
+    const finalViewCalls: ToolCall[] = [];
 
-            args.spent = totalSpentReal;
-            args.budget = req.user?.budget || 0;
-            args.projected = projected;
-            args.dailyAverage = dailyAverage;
-            args.daysInMonth = daysInMonth;
-            args.dayOfMonth = dayOfMonth;
-          } else if (call.name === 'renderIncomeOverview') {
-            args.incomeSources = incomeData; // Already converted above
-            args.totalIncome = totalIncomeReal;
-          } else if (call.name === 'renderSpendingChart') {
-            args.trend = trendData; // Inject snapshot data
-          }
+    if (viewCalls.length > 0) {
+      // Re-fetch totals if actions occurred to ensure accuracy
+      let freshTotalSpent = totalSpentReal;
+      let freshTotalIncome = totalIncomeReal;
 
+      if (createdTransactions.length > 0) {
+        const freshMonthlyStats = await Transaction.aggregate([
+          {
+            $match: {
+              user: req.user._id,
+              date: { $gte: startOfCurrentMonth },
+            },
+          },
+          {
+            $group: {
+              _id: '$type',
+              total: { $sum: '$amount' },
+            },
+          },
+        ]);
+        freshTotalSpent = freshMonthlyStats.find((s) => s._id === TransactionType.EXPENSE)?.total || 0;
+        freshTotalIncome = freshMonthlyStats.find((s) => s._id === TransactionType.INCOME)?.total || 0;
+      }
+
+      // Check what data we need
+      const needsCategory = viewCalls.some(c => c.name === 'renderCategoryBreakdown');
+      const needsIncome = viewCalls.some(c => c.name === 'renderIncomeOverview');
+      const needsTrend = viewCalls.some(c => c.name === 'renderSpendingChart');
+      const needsPeople = viewCalls.some(c => c.name === 'renderPeopleBreakdown');
+
+      // Lazy Calculations
+      let categoryData: any[] = [];
+      if (needsCategory) {
+        const categoryStats = await Transaction.aggregate([
+          { $match: { user: req.user._id, type: TransactionType.EXPENSE, date: { $gte: startOfCurrentMonth } } },
+          { $group: { _id: '$category', total: { $sum: '$amount' } } },
+          { $sort: { total: -1 } }
+        ]);
+        categoryData = categoryStats.map(s => ({ name: s._id, value: s.total }));
+      }
+
+      let incomeData: any[] = [];
+      if (needsIncome) {
+        const incomeStats = await Transaction.aggregate([
+          { $match: { user: req.user._id, type: TransactionType.INCOME, date: { $gte: startOfCurrentMonth } } },
+          { $group: { _id: '$category', total: { $sum: '$amount' } } },
+          { $sort: { total: -1 } }
+        ]);
+        incomeData = incomeStats.map(s => ({ name: s._id, value: s.total }));
+      }
+
+      let trendData: any[] = [];
+      if (needsTrend) {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(today.getDate() - 6);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+        const timezone = req.body.timezone || 'UTC';
+
+        const dailyTrendStats = await Transaction.aggregate([
+          { $match: { user: req.user._id, type: TransactionType.EXPENSE, date: { $gte: sevenDaysAgo } } },
+          { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: timezone } }, total: { $sum: '$amount' } } },
+          { $sort: { _id: 1 } }
+        ]);
+
+        trendData = dailyTrendStats.map(stat => {
+          const d = new Date(stat._id);
           return {
-            name: call.name as string,
-            args,
+            name: d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+            amount: stat.total,
+            fullDesc: d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
           };
-        }) || [];
+        });
+      }
 
-    const { toolCalls, createdTransactions } = await executeToolCalls(rawToolCalls, req.user._id.toString(), clientTimestamp);
+      let peopleData: any[] = [];
+      if (needsPeople) {
+        // Re-fetch people map if needed, or just use the one from context if no new people-related transactions
+        // For simplicity and accuracy, let's re-aggregate if requested
+        const peopleStats = await Transaction.aggregate([
+          { $match: { user: req.user._id, date: { $gte: startOfCurrentMonth }, relatedPerson: { $exists: true, $ne: null } } },
+          { $group: { _id: '$relatedPerson', total: { $sum: '$amount' } } },
+          { $sort: { total: -1 } }
+        ]);
+        peopleData = peopleStats.map(s => ({ name: s._id, value: s.total }));
+      }
+
+      // Populate View Calls
+      for (const call of viewCalls) {
+        const args = call.args || {};
+
+        if (call.name === 'renderBudgetOverview') {
+          args.totalSpent = freshTotalSpent;
+          args.totalIncome = freshTotalIncome;
+          args.budget = req.user?.budget || 0;
+        } else if (call.name === 'renderCategoryBreakdown') {
+          args.categories = categoryData;
+        } else if (call.name === 'renderPeopleBreakdown') {
+          args.people = peopleData;
+        } else if (call.name === 'renderMonthlyProjection') {
+          const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+          const dayOfMonth = today.getDate();
+          const dailyAverage = freshTotalSpent / Math.max(1, dayOfMonth);
+          const projected = dailyAverage * daysInMonth;
+
+          args.spent = freshTotalSpent;
+          args.budget = req.user?.budget || 0;
+          args.projected = projected;
+          args.dailyAverage = dailyAverage;
+          args.daysInMonth = daysInMonth;
+          args.dayOfMonth = dayOfMonth;
+        } else if (call.name === 'renderIncomeOverview') {
+          args.incomeSources = incomeData;
+          args.totalIncome = freshTotalIncome;
+        } else if (call.name === 'renderSpendingChart') {
+          args.trend = trendData;
+        }
+
+        finalViewCalls.push({ name: call.name, args });
+      }
+    }
+
+    const finalToolCalls = [...executedActionCalls, ...finalViewCalls];
 
     // --- PERSISTENCE START ---
-    // Save AI Response
     const aiMessage = await ChatMessage.create({
       thread: currentThreadId,
       role: 'model',
       text: text,
-      toolCalls: toolCalls.length ? toolCalls : [],
+      toolCalls: finalToolCalls.length ? finalToolCalls : [],
     });
     // --- PERSISTENCE END ---
 
     return res.json({
       text,
-      toolCalls: toolCalls.length ? toolCalls : undefined,
+      toolCalls: finalToolCalls.length ? finalToolCalls : undefined,
       createdTransactions: createdTransactions.length
         ? createdTransactions.map((tx) => ({
           id: tx._id.toString(),
-          amount: tx.amount, // decimal
+          amount: tx.amount,
           description: tx.description,
           category: tx.category,
           type: tx.type,
