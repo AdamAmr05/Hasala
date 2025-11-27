@@ -221,10 +221,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           >
             {/* Unified Bubble */}
             <div className={`
-               px-4 py-3 shadow-sm text-[15px] leading-relaxed max-w-[90%] break-words
+               text-[15px] leading-relaxed max-w-[90%] break-words
                ${msg.sender === ChatSender.USER
-                ? 'bg-accent-blue text-white rounded-[22px] rounded-br-sm'
-                : 'bg-white dark:bg-[#1C1C1E] text-primary dark:text-white rounded-[22px] rounded-bl-sm border border-gray-100 dark:border-[#2C2C2E]'}
+                ? 'bg-accent-blue text-white rounded-[22px] rounded-br-sm px-4 py-3 shadow-sm'
+                : 'text-primary dark:text-white'}
             `}>
               {/* 1. Render Text */}
               {msg.text && (

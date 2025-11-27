@@ -477,7 +477,7 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
           { $group: { _id: '$relatedPerson', total: { $sum: '$amount' } } },
           { $sort: { total: -1 } }
         ]);
-        peopleData = peopleStats.map(s => ({ name: s._id, value: s.total }));
+        peopleData = peopleStats.map(s => ({ name: s._id || 'Unknown', value: s.total }));
       }
 
       let recurringData: any[] = [];

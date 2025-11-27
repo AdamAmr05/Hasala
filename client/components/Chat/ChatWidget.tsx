@@ -243,7 +243,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
       gradientClass = 'from-orange-400 to-pink-500';
     } else if (remaining < effectiveBudget * 0.2) {
       // Danger Zone (Low Remaining)
-      gradientClass = 'from-blue-400 to-blue-100';
+      gradientClass = 'from-blue-600 to-blue-300';
     } else {
       // Safe (High Remaining)
       gradientClass = 'from-green-400 to-emerald-500';
@@ -564,7 +564,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
                   index === 2 ? 'from-orange-300 to-orange-400' :
                     'from-blue-400 to-indigo-500'
                 }`}>
-                {person.name[0].toUpperCase()}
+                {person.name?.[0]?.toUpperCase() || '?'}
               </div>
               <div className="text-center">
                 <p className="text-xs font-bold text-gray-900 dark:text-white truncate max-w-[80px]">{person.name}</p>
