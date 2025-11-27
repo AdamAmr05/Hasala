@@ -18,6 +18,7 @@ import {
   renderSpendingChartTool,
   renderPeopleBreakdownTool,
   renderIncomeOverviewTool,
+  renderRecurringExpensesTool,
 } from '../utils/geminiConfig';
 import { TransactionService } from '../services/transactionService';
 
@@ -341,6 +342,7 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
               renderMonthlyProjectionTool,
               renderPeopleBreakdownTool,
               renderIncomeOverviewTool,
+              renderRecurringExpensesTool,
             ],
           },
         ],
@@ -478,6 +480,19 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
         peopleData = peopleStats.map(s => ({ name: s._id, value: s.total }));
       }
 
+      let recurringData: any[] = [];
+      if (viewCalls.some(c => c.name === 'renderRecurringExpenses')) {
+        const recurring = await RecurringTransaction.find({ user: req.user._id, isActive: true })
+          .sort({ amount: -1 });
+
+        recurringData = recurring.map(t => ({
+          description: t.description,
+          amount: t.amount,
+          dayOfMonth: t.dayOfMonth,
+          category: t.category
+        }));
+      }
+
       // Populate View Calls
       for (const call of viewCalls) {
         const args = call.args || {};
@@ -509,6 +524,8 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
           args.trend = trendData;
         } else if (call.name === 'renderRecentTransactions') {
           args.recentTransactions = recentTransactionsData;
+        } else if (call.name === 'renderRecurringExpenses') {
+          args.recurringExpenses = recurringData;
         }
 
         finalViewCalls.push({ name: call.name, args });

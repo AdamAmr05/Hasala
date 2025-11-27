@@ -8,7 +8,10 @@ import {
 import { motion } from 'framer-motion';
 import {
   TrendingUp, TrendingDown, Calendar, AlertCircle, CheckCircle2,
-  ShoppingBag, Coffee, Home, Car, Zap, MoreHorizontal, HandHeart, AlertTriangle
+  ShoppingBag, Coffee, Home, Car, Zap, MoreHorizontal, HandHeart, AlertTriangle,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Repeat
 } from 'lucide-react';
 
 import IncomeOverview from './Tools/IncomeOverview';
@@ -174,7 +177,48 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
     );
   }
 
-  // 3. Budget Overview Widget (3D Card)
+  // 3. Recurring Expenses Widget (List)
+  if (type === 'renderRecurringExpenses') {
+    const recurring = propsData?.recurringExpenses || [];
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white dark:bg-[#1C1C1E] rounded-[24px] overflow-hidden my-3 shadow-sm border border-gray-100 dark:border-[#2C2C2E]"
+      >
+        <div className="px-5 py-4 border-b border-gray-100 dark:border-[#2C2C2E] bg-indigo-50/50 dark:bg-indigo-500/10 flex justify-between items-center">
+          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Recurring Expenses</span>
+          <Repeat size={14} className="text-indigo-500" />
+        </div>
+        <div className="divide-y divide-gray-100 dark:divide-[#2C2C2E]">
+          {recurring.length > 0 ? (
+            recurring.map((t: any, i: number) => (
+              <div key={i} className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 dark:hover:bg-[#2C2C2E] transition-colors group">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400`}>
+                    {CATEGORY_ICONS[t.category] || <MoreHorizontal size={18} />}
+                  </div>
+                  <div className="min-w-0 flex flex-col">
+                    <p className="text-sm font-bold text-primary dark:text-white truncate">{t.description}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-300 font-medium">Due Day {t.dayOfMonth}</p>
+                  </div>
+                </div>
+                <span className="text-sm font-bold whitespace-nowrap text-primary dark:text-white">
+                  {t.amount.toLocaleString()} <span className="text-[10px] font-normal text-gray-400">EGP</span>
+                </span>
+              </div>
+            ))
+          ) : (
+            <div className="p-5 text-center text-sm text-gray-400 dark:text-gray-500">
+              No active recurring expenses found.
+            </div>
+          )}
+        </div>
+      </motion.div>
+    );
+  }
+
+  // 4. Budget Overview Widget (3D Card)
   if (type === 'renderBudgetOverview') {
     // Use injected data if available, otherwise fallback to local calculation (legacy)
     const spent = propsData?.totalSpent ?? transactions

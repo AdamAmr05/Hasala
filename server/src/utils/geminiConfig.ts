@@ -92,3 +92,9 @@ export const renderIncomeOverviewTool: FunctionDeclaration = {
   parameters: { type: Type.OBJECT, properties: {} },
 };
 
+export const renderRecurringExpensesTool: FunctionDeclaration = {
+  name: 'renderRecurringExpenses',
+  description: 'Display a list of active recurring expenses (subscriptions, bills).',
+  parameters: { type: Type.OBJECT, properties: {} },
+};
+
