@@ -6,7 +6,7 @@ import { getIcon } from '../../utils/icons';
 
 interface GoalCardProps {
     goal: SavingsGoal;
-    onUpdate: (amount: number) => void;
+    onUpdate: (delta: number) => void;
     onEdit: () => void;
     onDelete: () => void;
 }
@@ -23,12 +23,13 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onUpdate, onEdit, onDelete })
             setTimeout(() => setShowError(false), 2000);
             return;
         }
-        onUpdate(Math.min(goal.targetAmount, goal.currentAmount + 100));
+        onUpdate(100);
     };
 
     const handleSubtract = (e: React.MouseEvent) => {
         e.stopPropagation();
-        onUpdate(Math.max(0, goal.currentAmount - 100));
+        if (goal.currentAmount <= 0) return;
+        onUpdate(-100);
     };
 
     // Helper to convert hex to rgba for the gradient

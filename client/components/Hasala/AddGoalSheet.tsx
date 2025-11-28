@@ -165,7 +165,7 @@ const AddGoalSheet: React.FC<AddGoalSheetProps> = ({ isOpen, onClose, onGoalAdde
                             <button
                                 type="submit"
                                 disabled={!name || !amount || isSubmitting}
-                                className="w-full py-4 bg-primary text-white rounded-2xl font-bold text-lg shadow-lg shadow-primary/30 disabled:opacity-50 disabled:shadow-none transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                                className="w-full py-4 bg-primary text-white rounded-2xl font-bold text-lg shadow-lg shadow-primary/30 disabled:opacity-50 disabled:shadow-none transition-all active:scale-[0.98] hover:bg-blue-600 flex items-center justify-center gap-2"
                             >
                                 {isSubmitting ? (
                                     <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />

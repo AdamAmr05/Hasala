@@ -1,33 +1,50 @@
 import { Request, Response } from 'express';
-import SavingsGoal from '../models/SavingsGoal';
+import { SavingsService } from '../services/savingsService';
+import { IUser } from '../models/User';
 
-export const getGoals = async (req: Request, res: Response) => {
+interface AuthRequest extends Request {
+    user?: IUser;
+}
+
+export const getGoals = async (req: AuthRequest, res: Response) => {
     try {
-        // @ts-ignore
-        const userId = req.user._id;
-        const goals = await SavingsGoal.find({ userId }).sort({ createdAt: -1 });
+        const userId = req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ message: 'User not authorized' });
+        }
+        const goals = await SavingsService.getGoals(userId.toString());
         res.json(goals);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching savings goals' });
     }
 };
 
-export const createGoal = async (req: Request, res: Response) => {
+export const createGoal = async (req: AuthRequest, res: Response) => {
     try {
-        // @ts-ignore
-        const userId = req.user._id;
+        const userId = req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ message: 'User not authorized' });
+        }
+
         const { name, targetAmount, color, icon, deadline } = req.body;
 
-        const newGoal = new SavingsGoal({
-            userId,
-            name,
+        // Validation
+        if (!name || typeof name !== 'string' || name.trim().length === 0) {
+            return res.status(400).json({ message: 'Valid name is required' });
+        }
+        if (targetAmount === undefined || typeof targetAmount !== 'number' || targetAmount < 0) {
+            return res.status(400).json({ message: 'Valid target amount is required' });
+        }
+
+        const savedGoal = await SavingsService.createGoal({
+            userId: userId.toString(),
+            name: name.trim(),
             targetAmount,
             color,
             icon,
             deadline
         });
 
-        const savedGoal = await newGoal.save();
         res.status(201).json(savedGoal);
     } catch (error) {
         console.error('Error creating goal:', error);
@@ -35,18 +52,17 @@ export const createGoal = async (req: Request, res: Response) => {
     }
 };
 
-export const updateGoal = async (req: Request, res: Response) => {
+export const updateGoal = async (req: AuthRequest, res: Response) => {
     try {
-        // @ts-ignore
-        const userId = req.user._id;
+        const userId = req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ message: 'User not authorized' });
+        }
+
         const { id } = req.params;
         const updates = req.body;
 
-        const goal = await SavingsGoal.findOneAndUpdate(
-            { _id: id, userId },
-            { $set: updates },
-            { new: true }
-        );
+        const goal = await SavingsService.updateGoal(id, userId.toString(), updates);
 
         if (!goal) {
             return res.status(404).json({ message: 'Goal not found' });
@@ -58,13 +74,16 @@ export const updateGoal = async (req: Request, res: Response) => {
     }
 };
 
-export const deleteGoal = async (req: Request, res: Response) => {
+export const deleteGoal = async (req: AuthRequest, res: Response) => {
     try {
-        // @ts-ignore
-        const userId = req.user._id;
+        const userId = req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ message: 'User not authorized' });
+        }
+
         const { id } = req.params;
 
-        const goal = await SavingsGoal.findOneAndDelete({ _id: id, userId });
+        const goal = await SavingsService.deleteGoal(id, userId.toString());
 
         if (!goal) {
             return res.status(404).json({ message: 'Goal not found' });

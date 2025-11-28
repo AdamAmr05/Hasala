@@ -17,15 +17,15 @@ const HasalaPage: React.FC = () => {
     });
 
     const updateMutation = useMutation({
-        mutationFn: ({ id, amount }: { id: string; amount: number }) =>
-            savingsApi.update(id, { currentAmount: amount }),
-        onMutate: async ({ id, amount }) => {
+        mutationFn: ({ id, delta }: { id: string; delta: number }) =>
+            savingsApi.update(id, { delta }),
+        onMutate: async ({ id, delta }) => {
             await queryClient.cancelQueries({ queryKey: ['savingsGoals'] });
             const previousGoals = queryClient.getQueryData<SavingsGoal[]>(['savingsGoals']);
 
             queryClient.setQueryData<SavingsGoal[]>(['savingsGoals'], (old) =>
                 old?.map((goal) =>
-                    goal._id === id ? { ...goal, currentAmount: amount } : goal
+                    goal._id === id ? { ...goal, currentAmount: Math.max(0, goal.currentAmount + delta) } : goal
                 )
             );
 
@@ -46,8 +46,8 @@ const HasalaPage: React.FC = () => {
         },
     });
 
-    const handleUpdate = (id: string, amount: number) => {
-        updateMutation.mutate({ id, amount });
+    const handleUpdate = (id: string, delta: number) => {
+        updateMutation.mutate({ id, delta });
     };
 
     const handleDelete = (id: string) => {
@@ -74,7 +74,7 @@ const HasalaPage: React.FC = () => {
                 </div>
                 <button
                     onClick={() => setIsAddSheetOpen(true)}
-                    className="w-10 h-10 rounded-full bg-primary text-white shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-110 transition-transform"
+                    className="w-10 h-10 rounded-full bg-primary text-white shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-110 hover:bg-blue-600 transition-all"
                 >
                     <Plus size={24} />
                 </button>
@@ -111,7 +111,7 @@ const HasalaPage: React.FC = () => {
                         </p>
                         <button
                             onClick={() => setIsAddSheetOpen(true)}
-                            className="px-6 py-3 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/30 hover:scale-105 transition-transform"
+                            className="px-6 py-3 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/30 hover:scale-105 hover:bg-blue-600 transition-all"
                         >
                             Create First Goal
                         </button>
