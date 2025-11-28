@@ -60,9 +60,19 @@ export const updateGoal = async (req: AuthRequest, res: Response) => {
         }
 
         const { id } = req.params;
-        const updates = req.body;
 
-        const goal = await SavingsService.updateGoal(id, userId.toString(), updates);
+        // Whitelist allowed fields to prevent mass assignment
+        const { name, targetAmount, color, icon, delta, deadline } = req.body;
+        const safeUpdates: any = {};
+
+        if (name !== undefined) safeUpdates.name = name;
+        if (targetAmount !== undefined) safeUpdates.targetAmount = targetAmount;
+        if (color !== undefined) safeUpdates.color = color;
+        if (icon !== undefined) safeUpdates.icon = icon;
+        if (delta !== undefined) safeUpdates.delta = delta;
+        if (deadline !== undefined) safeUpdates.deadline = deadline;
+
+        const goal = await SavingsService.updateGoal(id, userId.toString(), safeUpdates);
 
         if (!goal) {
             return res.status(404).json({ message: 'Goal not found' });

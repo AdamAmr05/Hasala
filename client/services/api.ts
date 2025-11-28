@@ -222,7 +222,7 @@ export interface SavingsGoal {
 
 export const savingsApi = {
   list: () => api.get<SavingsGoal[]>('/savings').then((res) => res.data),
-  create: (data: Partial<SavingsGoal>) => api.post<SavingsGoal>('/savings', data).then((res) => res.data),
+  create: (data: Omit<SavingsGoal, '_id'>) => api.post<SavingsGoal>('/savings', data).then((res) => res.data),
   update: (id: string, data: Partial<SavingsGoal> & { delta?: number }) => api.patch<SavingsGoal>(`/savings/${id}`, data).then((res) => res.data),
   remove: (id: string) => api.delete(`/savings/${id}`),
 };

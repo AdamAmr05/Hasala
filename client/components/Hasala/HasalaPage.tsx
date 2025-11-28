@@ -59,9 +59,19 @@ const HasalaPage: React.FC = () => {
         setIsAddSheetOpen(true);
     };
 
+    const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+    // Cleanup timeout on unmount
+    React.useEffect(() => {
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
+    }, []);
+
     const handleCloseSheet = () => {
         setIsAddSheetOpen(false);
-        setTimeout(() => setEditingGoal(undefined), 300); // Clear after animation
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => setEditingGoal(undefined), 300); // Clear after animation
     };
 
     return (

@@ -66,6 +66,7 @@ const AddGoalSheet: React.FC<AddGoalSheetProps> = ({ isOpen, onClose, onGoalAdde
                 await savingsApi.create({
                     name: name.trim(),
                     targetAmount,
+                    currentAmount: 0,
                     color: selectedColor,
                     icon: selectedIcon,
                 });
