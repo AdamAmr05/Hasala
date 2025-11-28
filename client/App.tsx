@@ -9,6 +9,7 @@ import GroupsPage from './components/Groups/GroupsPage';
 import GroupView from './components/Groups/GroupView';
 import FamilyView from './components/Family/FamilyView';
 import AnalyticsView from './components/Analytics/AnalyticsView';
+import HasalaPage from './components/Hasala/HasalaPage';
 import { Transaction, TransactionType, User } from './types';
 import { authApi, transactionsApi, TransactionPayload } from './services/api';
 import { useMonthlyTransactions } from './hooks/useMonthlyTransactions';
@@ -229,6 +230,12 @@ const App: React.FC = () => {
                 <Route path="/analytics" element={
                   <div className="animate-[fadeIn_0.3s_ease-out]">
                     <AnalyticsView />
+                  </div>
+                } />
+
+                <Route path="/hasala" element={
+                  <div className="animate-[fadeIn_0.3s_ease-out]">
+                    <HasalaPage />
                   </div>
                 } />
 

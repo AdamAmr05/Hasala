@@ -210,6 +210,23 @@ export const recurringApi = {
   },
 };
 
+export interface SavingsGoal {
+  _id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  color: string;
+  icon: string;
+  deadline?: string;
+}
+
+export const savingsApi = {
+  list: () => api.get<SavingsGoal[]>('/savings').then((res) => res.data),
+  create: (data: Partial<SavingsGoal>) => api.post<SavingsGoal>('/savings', data).then((res) => res.data),
+  update: (id: string, data: Partial<SavingsGoal>) => api.patch<SavingsGoal>(`/savings/${id}`, data).then((res) => res.data),
+  remove: (id: string) => api.delete(`/savings/${id}`),
+};
+
 export const aiApi = {
   parseText: (input: string) =>
     api.post<ParsedTransactionResponse>('/ai/parse-text', { input }).then((res) => res.data),

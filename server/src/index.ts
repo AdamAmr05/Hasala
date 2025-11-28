@@ -72,6 +72,9 @@ app.use('/api/recurring', recurringRoutes);
 import groupRoutes from './routes/groupRoutes';
 app.use('/api/groups', groupRoutes);
 
+import savingsRoutes from './routes/savingsRoutes';
+app.use('/api/savings', savingsRoutes);
+
 app.get('/', (req, res) => {
   res.send('Hasala API is running...');
 });
