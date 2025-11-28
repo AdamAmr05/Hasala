@@ -20,6 +20,8 @@ const AddGoalSheet: React.FC<AddGoalSheetProps> = ({ isOpen, onClose, onGoalAdde
     const [selectedIcon, setSelectedIcon] = useState(AVAILABLE_ICONS[0]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const [error, setError] = useState<string | null>(null);
+
     // Initialize form when goal changes or sheet opens
     useEffect(() => {
         if (goal) {
@@ -33,25 +35,37 @@ const AddGoalSheet: React.FC<AddGoalSheetProps> = ({ isOpen, onClose, onGoalAdde
             setSelectedColor(COLORS[0]);
             setSelectedIcon(AVAILABLE_ICONS[0]);
         }
+        setError(null);
     }, [goal, isOpen]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name || !amount) return;
+        setError(null);
+
+        if (!name.trim()) {
+            setError('Please enter a goal name');
+            return;
+        }
+
+        const targetAmount = Number(amount);
+        if (!amount || !Number.isFinite(targetAmount) || targetAmount <= 0) {
+            setError('Please enter a valid amount greater than 0');
+            return;
+        }
 
         setIsSubmitting(true);
         try {
             if (goal) {
                 await savingsApi.update(goal._id, {
-                    name,
-                    targetAmount: Number(amount),
+                    name: name.trim(),
+                    targetAmount,
                     color: selectedColor,
                     icon: selectedIcon,
                 });
             } else {
                 await savingsApi.create({
-                    name,
-                    targetAmount: Number(amount),
+                    name: name.trim(),
+                    targetAmount,
                     color: selectedColor,
                     icon: selectedIcon,
                 });
@@ -60,6 +74,7 @@ const AddGoalSheet: React.FC<AddGoalSheetProps> = ({ isOpen, onClose, onGoalAdde
             onClose();
         } catch (error) {
             console.error('Failed to save goal', error);
+            setError('Failed to save goal. Please try again.');
         } finally {
             setIsSubmitting(false);
         }
@@ -162,9 +177,13 @@ const AddGoalSheet: React.FC<AddGoalSheetProps> = ({ isOpen, onClose, onGoalAdde
                                 </div>
                             </div>
 
+                            {error && (
+                                <p className="text-sm font-bold text-red-500 text-center animate-[fadeIn_0.2s_ease-out]">{error}</p>
+                            )}
+
                             <button
                                 type="submit"
-                                disabled={!name || !amount || isSubmitting}
+                                disabled={isSubmitting}
                                 className="w-full py-4 bg-primary text-white rounded-2xl font-bold text-lg shadow-lg shadow-primary/30 disabled:opacity-50 disabled:shadow-none transition-all active:scale-[0.98] hover:bg-blue-600 flex items-center justify-center gap-2"
                             >
                                 {isSubmitting ? (
