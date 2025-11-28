@@ -14,7 +14,9 @@ interface GoalCardProps {
 const GoalCard: React.FC<GoalCardProps> = ({ goal, onUpdate, onEdit, onDelete }) => {
     const [showMenu, setShowMenu] = useState(false);
     const [showError, setShowError] = useState(false);
-    const percentage = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
+    const percentage = goal.targetAmount > 0
+        ? Math.min((goal.currentAmount / goal.targetAmount) * 100, 100)
+        : 0;
 
     const handleAdd = (e: React.MouseEvent) => {
         e.stopPropagation();

@@ -53,6 +53,11 @@ export const SavingsService = {
         // Atomic update for amount changes
         if (delta !== undefined) {
             updateOp.$inc = { currentAmount: delta };
+            // If delta is present, we ignore direct currentAmount updates to prevent conflicts
+            // and ensure atomicity.
+            if (updates.currentAmount !== undefined) {
+                delete updates.currentAmount;
+            }
         }
 
         // Standard updates

@@ -32,7 +32,7 @@ export const createGoal = async (req: AuthRequest, res: Response) => {
         if (!name || typeof name !== 'string' || name.trim().length === 0) {
             return res.status(400).json({ message: 'Valid name is required' });
         }
-        if (targetAmount === undefined || typeof targetAmount !== 'number' || targetAmount < 0) {
+        if (targetAmount === undefined || typeof targetAmount !== 'number' || !Number.isFinite(targetAmount) || targetAmount < 0) {
             return res.status(400).json({ message: 'Valid target amount is required' });
         }
 
