@@ -145,35 +145,46 @@ const executeToolCalls = async (
     if (toolCall.name !== 'addTransaction') continue;
 
     const args = toolCall.args || {};
-    const amount =
-      typeof args.amount === 'number' ? args.amount : Number(args.amount ?? 0);
-    const description = typeof args.description === 'string' ? args.description : '';
-    const category = (typeof args.category === 'string'
-      ? args.category
-      : Category.OTHER) as Category;
-    const type = (typeof args.type === 'string'
-      ? args.type
-      : TransactionType.EXPENSE) as TransactionType;
-    const providedDate =
-      typeof args.date === 'string' || args.date instanceof Date ? args.date : undefined;
-    const relatedPerson = typeof args.relatedPerson === 'string' ? args.relatedPerson : undefined;
 
-    const created = await TransactionService.createTransaction({
-      user: userId,
-      amount,
-      description,
-      category,
-      type,
-      date: providedDate ? new Date(providedDate) : (clientTimestamp ? new Date(clientTimestamp) : new Date()),
-      isRecurring: Boolean(args.isRecurring),
-      relatedPerson,
-    });
+    // Handle Bulk (Array) or Single (Legacy/Fallback)
+    let transactionsToAdd: any[] = [];
 
-    createdTransactions.push(created);
-    additionalToolCalls.push({
-      name: 'renderRecentTransactions',
-      args: { highlightTransactionId: created._id.toString() },
-    });
+    if (Array.isArray(args.transactions)) {
+      transactionsToAdd = args.transactions;
+    } else {
+      // Fallback if model sends single object despite schema
+      transactionsToAdd = [args];
+    }
+
+    for (const tx of transactionsToAdd) {
+      const amount = typeof tx.amount === 'number' ? tx.amount : Number(tx.amount ?? 0);
+      const description = typeof tx.description === 'string' ? tx.description : '';
+      const category = (typeof tx.category === 'string' ? tx.category : Category.OTHER) as Category;
+      const type = (typeof tx.type === 'string' ? tx.type : TransactionType.EXPENSE) as TransactionType;
+      const providedDate = typeof tx.date === 'string' || tx.date instanceof Date ? tx.date : undefined;
+      const relatedPerson = typeof tx.relatedPerson === 'string' ? tx.relatedPerson : undefined;
+
+      const created = await TransactionService.createTransaction({
+        user: userId,
+        amount,
+        description,
+        category,
+        type,
+        date: providedDate ? new Date(providedDate) : (clientTimestamp ? new Date(clientTimestamp) : new Date()),
+        isRecurring: Boolean(tx.isRecurring),
+        relatedPerson,
+      });
+
+      createdTransactions.push(created);
+    }
+
+    // Add ONE render call for all added transactions
+    if (transactionsToAdd.length > 0) {
+      additionalToolCalls.push({
+        name: 'renderRecentTransactions',
+        args: { highlightTransactionId: createdTransactions[createdTransactions.length - 1]._id.toString() },
+      });
+    }
   }
 
   return { toolCalls: [...toolCalls, ...additionalToolCalls], createdTransactions };
@@ -318,36 +329,64 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
     const totalSpentReal = monthlyStats.find((s) => s._id === TransactionType.EXPENSE)?.total || 0;
     const totalIncomeReal = monthlyStats.find((s) => s._id === TransactionType.INCOME)?.total || 0;
 
+    const systemInstruction = buildSystemInstruction(
+      transactions,
+      req.user.name,
+      req.user.budget,
+      peopleStats,
+      totalSpentReal,
+      totalIncomeReal,
+      upcomingLiabilitiesText
+    );
+
+    console.log('--- SYSTEM INSTRUCTION ---');
+    console.log(systemInstruction);
+    console.log('--------------------------');
+
+    console.log('--- USER INPUT ---');
+    console.log('Message:', message);
+    console.log('History Length:', contents.length);
+    console.log('------------------');
+
+    const config = {
+      systemInstruction,
+      tools: [
+        {
+          functionDeclarations: [
+            addTransactionTool,
+            renderSpendingChartTool,
+            renderRecentTransactionsTool,
+            renderBudgetOverviewTool,
+            renderCategoryBreakdownTool,
+            renderMonthlyProjectionTool,
+            renderPeopleBreakdownTool,
+            renderIncomeOverviewTool,
+            renderRecurringExpensesTool,
+          ],
+        },
+      ],
+    };
+
+    console.log('--- FULL CONFIG (TOOLS) ---');
+    console.log(JSON.stringify(config, null, 2));
+    console.log('---------------------------');
+
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents,
-      config: {
-        systemInstruction: buildSystemInstruction(
-          transactions,
-          req.user.name,
-          req.user.budget,
-          peopleStats,
-          totalSpentReal,
-          totalIncomeReal,
-          upcomingLiabilitiesText
-        ),
-        tools: [
-          {
-            functionDeclarations: [
-              addTransactionTool,
-              renderSpendingChartTool,
-              renderRecentTransactionsTool,
-              renderBudgetOverviewTool,
-              renderCategoryBreakdownTool,
-              renderMonthlyProjectionTool,
-              renderPeopleBreakdownTool,
-              renderIncomeOverviewTool,
-              renderRecurringExpensesTool,
-            ],
-          },
-        ],
-      },
+      config,
     });
+
+    console.log('--- RAW AI RESPONSE ---');
+    console.log(JSON.stringify(response, null, 2));
+    if (response.usageMetadata) {
+      console.log('--- TOKEN USAGE ---');
+      console.log('Prompt Tokens:', response.usageMetadata.promptTokenCount);
+      console.log('Candidates Tokens:', response.usageMetadata.candidatesTokenCount);
+      console.log('Total Tokens:', response.usageMetadata.totalTokenCount);
+      console.log('-------------------');
+    }
+    console.log('-----------------------');
 
     const text = response.text || '';
 

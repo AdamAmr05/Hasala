@@ -46,8 +46,8 @@ export const MULTI_TRANSACTION_SCHEMA: Schema = {
 
 export const addTransactionTool: FunctionDeclaration = {
   name: 'addTransaction',
-  description: 'Add a new financial transaction (expense or income) to the database.',
-  parameters: TRANSACTION_SCHEMA,
+  description: 'Add one or more financial transactions (expense or income) to the database.',
+  parameters: MULTI_TRANSACTION_SCHEMA,
 };
 
 export const renderSpendingChartTool: FunctionDeclaration = {

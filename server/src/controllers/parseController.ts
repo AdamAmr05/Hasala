@@ -70,6 +70,7 @@ export const parseTransactionText = async (req: AuthRequest, res: Response) => {
 };
 
 export const parseTransactionVoice = async (req: AuthRequest, res: Response) => {
+  console.log('--- VOICE PARSE REQUEST RECEIVED ---');
   try {
     const { audio } = req.body || {};
 
@@ -88,22 +89,40 @@ export const parseTransactionVoice = async (req: AuthRequest, res: Response) => 
 
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
+        const contents = [
+          {
+            role: 'user',
+            parts: [
+              { inlineData: { mimeType: 'audio/webm', data: audio.split(',')[1] || audio } },
+              { text: `Extract ALL transactions (amount, description, category, type, relatedPerson) as JSON. Default to EGP currency if not specified. ${peopleContext}` },
+            ],
+          },
+        ];
+
+        const config = {
+          responseMimeType: 'application/json',
+          responseSchema: MULTI_TRANSACTION_SCHEMA,
+        };
+
+        console.log('--- VOICE INPUT CONTEXT ---');
+        // Don't log the full base64 audio data, it's too huge
+        console.log('Text Prompt:', contents[0].parts[1].text);
+        console.log('Config:', JSON.stringify(config, null, 2));
+        console.log('---------------------------');
+
         const response = await ai.models.generateContent({
           model: MODEL_NAME,
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                { inlineData: { mimeType: 'audio/webm', data: audio.split(',')[1] || audio } },
-                { text: `Extract ALL transactions (amount, description, category, type, relatedPerson) as JSON. Default to EGP currency if not specified. ${peopleContext}` },
-              ],
-            },
-          ],
-          config: {
-            responseMimeType: 'application/json',
-            responseSchema: MULTI_TRANSACTION_SCHEMA,
-          },
+          contents,
+          config,
         });
+
+        console.log('--- VOICE PARSE RESPONSE ---');
+        console.log(response.text);
+        if (response.usageMetadata) {
+          console.log('--- VOICE TOKEN USAGE ---');
+          console.log('Total Tokens:', response.usageMetadata.totalTokenCount);
+        }
+        console.log('----------------------------');
 
         return res.json(parseResponse(response.text));
       } catch (error: any) {
