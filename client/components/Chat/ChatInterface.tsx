@@ -219,15 +219,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             key={msg.id}
             className={`flex flex-col w-full ${msg.sender === ChatSender.USER ? 'items-end' : 'items-start'}`}
           >
-            {/* Unified Bubble */}
-            <div className={`
-               text-[15px] leading-relaxed max-w-[90%] break-words
-               ${msg.sender === ChatSender.USER
-                ? 'bg-accent-blue text-white rounded-[22px] rounded-br-sm px-4 py-3 shadow-sm'
-                : 'text-primary dark:text-white'}
-            `}>
-              {/* 1. Render Text */}
-              {msg.text && (
+            {/* Unified Bubble (Text Only) */}
+            {msg.text && (
+              <div className={`
+                 text-[15px] leading-relaxed max-w-[90%] break-words mb-1
+                 ${msg.sender === ChatSender.USER
+                  ? 'bg-accent-blue text-white rounded-[22px] rounded-br-sm px-4 py-3 shadow-sm'
+                  : 'text-primary dark:text-white px-1'}
+              `}>
                 <div className="prose dark:prose-invert prose-sm max-w-none leading-relaxed">
                   <ReactMarkdown
                     components={{
@@ -245,19 +244,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     {msg.text}
                   </ReactMarkdown>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* 2. Render Tools (Generative UI) */}
-              {msg.toolCalls?.map((tool, index) => (
+            {/* 2. Render Tools (Generative UI) - Outside Bubble for Full Width */}
+            {msg.toolCalls?.map((tool, index) => (
+              <div key={`${msg.id}-tool-${index}`} className="w-full max-w-[90%] mb-2">
                 <ChatWidget
-                  key={`${msg.id}-tool-${index}`}
                   type={tool.name}
                   transactions={transactions}
                   budget={budget}
                   data={tool.args}
                 />
-              ))}
-            </div>
+              </div>
+            ))}
 
             <span className={`text-[10px] text-gray-400 dark:text-gray-500 px-1 mt-1 ${msg.sender === ChatSender.USER ? 'text-right' : 'text-left'}`}>
               {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -297,7 +297,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

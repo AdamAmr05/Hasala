@@ -23,7 +23,8 @@ interface ChatWidgetProps {
   data?: Record<string, any>;
 }
 
-const COLORS = ['#007AFF', '#5E5CE6', '#FF2D55', '#FF9500', '#FFCC00', '#34C759', '#AF52DE'];
+// Curated Palette (Indigo, Blue, Emerald, Amber, Rose, Violet, Cyan, Orange)
+const CATEGORY_COLORS = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#06b6d4', '#f97316', '#34C759', '#AF52DE'];
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   [Category.FOOD]: <Coffee size={18} />,
@@ -323,28 +324,33 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
       >
         <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">Top Categories</h3>
         <div className="flex items-center gap-4">
-          <div className="w-32 h-32 relative outline-none" tabIndex={-1}>
+          <div className="relative h-[160px] w-[160px]">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart style={{ outline: 'none' }}>
+              <PieChart>
                 <Pie
                   data={data}
-                  innerRadius={35}
-                  outerRadius={55}
-                  paddingAngle={5}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={70}
+                  paddingAngle={4}
+                  cornerRadius={6}
+                  minAngle={15}
                   dataKey="value"
                   stroke="none"
                   onMouseEnter={(_, index) => setActiveIndex(index)}
                   onMouseLeave={() => setActiveIndex(null)}
-                  style={{ outline: 'none' }}
                 >
                   {data.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                      style={{ outline: 'none' }}
-                      className="transition-all duration-300 ease-out"
-                      stroke="none"
-                      fillOpacity={activeIndex === null || activeIndex === index ? 1 : 0.3}
+                      fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]}
+                      className="transition-all duration-300 outline-none"
+                      style={{
+                        filter: activeIndex !== null && activeIndex !== index ? 'opacity(0.3)' : 'opacity(1)',
+                        transform: activeIndex === index ? 'scale(1.05)' : 'scale(1)',
+                        transformOrigin: 'center',
+                      }}
                     />
                   ))}
                 </Pie>
@@ -365,9 +371,15 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
 
           <div className="flex-1 space-y-1.5">
             {data.map((entry, index) => (
-              <div key={index} className="flex items-center justify-between text-[9px]">
+              <div
+                key={index}
+                className="flex items-center justify-between text-[9px] transition-opacity duration-200"
+                style={{ opacity: activeIndex !== null && activeIndex !== index ? 0.3 : 1 }}
+                onMouseEnter={() => setActiveIndex(index)}
+                onMouseLeave={() => setActiveIndex(null)}
+              >
                 <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }} />
                   <span className="text-gray-600 dark:text-gray-300 font-medium truncate max-w-[70px]">{entry.name}</span>
                 </div>
                 <span className="font-bold text-primary dark:text-white">{entry.value}</span>

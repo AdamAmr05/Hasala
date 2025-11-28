@@ -88,7 +88,8 @@ const AnalyticsView: React.FC = () => {
     const maxDay = dayData.reduce((max, current) => current.amount > max.amount ? current : max, dayData[0]);
 
 
-    const COLORS = ['#007AFF', '#34C759', '#FF9500', '#FF3B30', '#5856D6', '#AF52DE'];
+    // Curated Palette (Indigo, Blue, Emerald, Amber, Rose, Violet, Cyan, Orange)
+    const CATEGORY_COLORS = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#06b6d4', '#f97316', '#34C759', '#AF52DE'];
 
     // Calculate Total Expense for Fun Equivalents
     const totalExpense = data.totals.find(t => t._id === 'EXPENSE')?.total || 0;
@@ -278,29 +279,33 @@ const AnalyticsView: React.FC = () => {
 
                     <div className="flex flex-col md:flex-row items-center gap-8">
                         {/* Donut Chart */}
-                        <div className="w-48 h-48 relative outline-none" tabIndex={-1}>
+                        <div className="relative h-[192px] w-[192px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <PieChart style={{ outline: 'none' }}>
+                                <PieChart>
                                     <Pie
                                         data={categoryData}
                                         cx="50%"
                                         cy="50%"
                                         innerRadius={60}
                                         outerRadius={80}
-                                        paddingAngle={5}
+                                        paddingAngle={4}
+                                        cornerRadius={6}
+                                        minAngle={15}
                                         dataKey="value"
+                                        stroke="none"
                                         onMouseEnter={(_, index) => setActiveIndex(index)}
                                         onMouseLeave={() => setActiveIndex(null)}
-                                        style={{ outline: 'none' }}
                                     >
                                         {categoryData.map((entry, index) => (
                                             <Cell
                                                 key={`cell-${index}`}
-                                                fill={COLORS[index % COLORS.length]}
-                                                style={{ outline: 'none' }}
-                                                className="transition-all duration-300 ease-out"
-                                                stroke="none"
-                                                fillOpacity={activeIndex === null || activeIndex === index ? 1 : 0.3}
+                                                fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]}
+                                                className="transition-all duration-300 outline-none"
+                                                style={{
+                                                    filter: activeIndex !== null && activeIndex !== index ? 'opacity(0.3)' : 'opacity(1)',
+                                                    transform: activeIndex === index ? 'scale(1.05)' : 'scale(1)',
+                                                    transformOrigin: 'center',
+                                                }}
                                             />
                                         ))}
                                     </Pie>
@@ -308,27 +313,29 @@ const AnalyticsView: React.FC = () => {
                             </ResponsiveContainer>
                             {/* Center Text */}
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-all duration-200">
-                                <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                                     {activeIndex !== null ? categoryData[activeIndex].name : 'Total'}
                                 </span>
-                                <span className="text-lg font-bold text-primary dark:text-white">
+                                <span className="text-xl font-bold text-primary dark:text-white">
                                     {activeIndex !== null
                                         ? categoryData[activeIndex].value.toLocaleString()
                                         : categoryData.reduce((acc, curr) => acc + curr.value, 0).toLocaleString()}
                                 </span>
-                                {activeIndex === null && <span className="text-[10px] text-gray-400">EGP</span>}
                             </div>
                         </div>
 
-                        {/* Legend */}
-                        <div className="flex-1 w-full space-y-3">
-                            {categoryData.slice(0, 4).map((cat, index) => (
-                                <div key={cat.name} className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{cat.name}</span>
-                                    </div>
-                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{cat.value.toLocaleString()}</span>
+                        {/* Legend (Top 6 Only, Name Only) */}
+                        <div className="flex-1 grid grid-cols-2 gap-x-8 gap-y-3">
+                            {categoryData.slice(0, 6).map((entry, index) => (
+                                <div
+                                    key={index}
+                                    className="flex items-center gap-2 text-xs transition-opacity duration-200"
+                                    style={{ opacity: activeIndex !== null && activeIndex !== index ? 0.3 : 1 }}
+                                    onMouseEnter={() => setActiveIndex(index)}
+                                    onMouseLeave={() => setActiveIndex(null)}
+                                >
+                                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }} />
+                                    <span className="text-gray-600 dark:text-gray-300 font-medium truncate">{entry.name}</span>
                                 </div>
                             ))}
                         </div>
