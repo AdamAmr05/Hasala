@@ -207,6 +207,25 @@ const AnalyticsView: React.FC = () => {
                 </div>
             )}
 
+            {/* Daily Average Banner */}
+            <div className="px-6">
+                <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-[#2C2C2E] flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-white/10 flex items-center justify-center">
+                            <TrendingUp className="text-accent-blue dark:text-white" size={16} />
+                        </div>
+                        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Daily Average</span>
+                    </div>
+                    <span className="font-bold text-primary dark:text-white">
+                        {Math.round(totalExpense / (
+                            currentDate.getMonth() === new Date().getMonth() && currentDate.getFullYear() === new Date().getFullYear()
+                                ? Math.max(1, new Date().getDate())
+                                : new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()
+                        )).toLocaleString()} <span className="text-xs font-normal text-gray-400 dark:text-gray-500">EGP</span>
+                    </span>
+                </div>
+            </div>
+
             {/* 1. Spending Trend Chart */}
             <div className="px-6">
                 <div className="bg-white dark:bg-[#1C1C1E] rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#2C2C2E]">
