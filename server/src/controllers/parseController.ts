@@ -105,7 +105,7 @@ export const parseTransactionVoice = async (req: AuthRequest, res: Response) => 
         };
 
         console.log('--- VOICE INPUT CONTEXT ---');
-        // Don't log the full base64 audio data, it's too huge
+        console.log('AUDIO_PAYLOAD:', audio); // Log full payload for testing
         console.log('Text Prompt:', contents[0].parts[1].text);
         console.log('Config:', JSON.stringify(config, null, 2));
         console.log('---------------------------');

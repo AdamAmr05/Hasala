@@ -29,6 +29,13 @@ export const SavingsService = {
     },
 
     /**
+     * Get a single savings goal
+     */
+    getGoalById: async (id: string, userId: string): Promise<ISavingsGoal | null> => {
+        return await SavingsGoal.findOne({ _id: id, userId });
+    },
+
+    /**
      * Create a new savings goal
      */
     createGoal: async (data: CreateGoalData): Promise<ISavingsGoal> => {

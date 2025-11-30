@@ -19,6 +19,26 @@ export const getGoals = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const getGoalById = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ message: 'User not authorized' });
+        }
+
+        const { id } = req.params;
+        const goal = await SavingsService.getGoalById(id, userId.toString());
+
+        if (!goal) {
+            return res.status(404).json({ message: 'Goal not found' });
+        }
+
+        res.json(goal);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching savings goal' });
+    }
+};
+
 export const createGoal = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?._id;

@@ -103,6 +103,23 @@
                             ]
                         }
                     }
+                },
+                {
+                    "name": "Delete User",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/auth/profile",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "profile"
+                            ]
+                        }
+                    }
                 }
             ]
         },
@@ -179,6 +196,32 @@
                             ],
                             "path": [
                                 "transactions"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Add Bulk Transactions",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"transactions\": [\n        {\n            \"amount\": 50,\n            \"description\": \"Bulk 1\",\n            \"category\": \"Food\",\n            \"type\": \"EXPENSE\",\n            \"date\": \"2023-10-27T10:00:00.000Z\"\n        },\n        {\n            \"amount\": 100,\n            \"description\": \"Bulk 2\",\n            \"category\": \"Transport\",\n            \"type\": \"EXPENSE\",\n            \"date\": \"2023-10-27T10:00:00.000Z\"\n        }\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/transactions/bulk",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "transactions",
+                                "bulk"
                             ]
                         }
                     }
@@ -283,6 +326,29 @@
                     }
                 },
                 {
+                    "name": "Get Goal (ID)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/savings/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "savings",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "REPLACE_WITH_GOAL_ID"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
                     "name": "Create Goal",
                     "request": {
                         "method": "POST",
@@ -306,8 +372,480 @@
                             ]
                         }
                     }
+                },
+                {
+                    "name": "Update Goal",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"currentAmount\": 6000\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/savings/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "savings",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "REPLACE_WITH_GOAL_ID"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Goal",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/savings/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "savings",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "REPLACE_WITH_GOAL_ID"
+                                }
+                            ]
+                        }
+                    }
                 }
             ]
+        },
+        {
+            "name": "Recurring",
+            "item": [
+                {
+                    "name": "Get Recurring",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/recurring",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "recurring"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Add Recurring",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"amount\": 100,\n    \"description\": \"Netflix\",\n    \"category\": \"Entertainment\",\n    \"type\": \"EXPENSE\",\n    \"dayOfMonth\": 1,\n    \"lastInjected\": \"2025-11-01\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/recurring",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "recurring"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Recurring",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/recurring/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "recurring",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "REPLACE_WITH_REC_ID"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Rewind Recurring",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/recurring/:id/rewind",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "recurring",
+                                ":id",
+                                "rewind"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "REPLACE_WITH_REC_ID"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Groups",
+            "item": [
+                {
+                    "name": "Create Group",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Trip to Dahab\",\n    \"description\": \"Summer 2024\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/groups",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "groups"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get My Groups",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/groups",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "groups"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Join Group",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"inviteCode\": \"REPLACE_WITH_CODE\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/groups/join",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "groups",
+                                "join"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Group Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/groups/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "groups",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "REPLACE_WITH_GROUP_ID"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Add Group Expense",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"amount\": 500,\n    \"description\": \"Dinner\",\n    \"splitMethod\": \"EQUAL\",\n    \"paidBy\": \"REPLACE_WITH_USER_ID\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/groups/:id/expenses",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "groups",
+                                ":id",
+                                "expenses"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "REPLACE_WITH_GROUP_ID"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Group Expenses",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/groups/:id/expenses",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "groups",
+                                ":id",
+                                "expenses"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "REPLACE_WITH_GROUP_ID"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Chat",
+            "item": [
+                {
+                    "name": "Send Message",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"message\": \"How much did I spend on food?\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/chat",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "chat"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Threads",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/chat",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "chat"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Thread History",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/chat/:threadId",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "chat",
+                                ":threadId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "threadId",
+                                    "value": "REPLACE_WITH_THREAD_ID"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Thread",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/chat/:threadId",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "chat",
+                                ":threadId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "threadId",
+                                    "value": "REPLACE_WITH_THREAD_ID"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "AI Parsing",
+            "item": [
+                {
+                    "name": "Parse Text",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"text\": \"Spent 500 egp on groceries\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/ai/parse-text",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "ai",
+                                "parse-text"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Parse Voice",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"audio\": \"PASTE_BASE64_HERE\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/ai/parse-voice",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "ai",
+                                "parse-voice"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Verify balances in detail",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/groups/:id",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "groups",
+                        ":id"
+                    ],
+                    "variable": [
+                        {
+                            "key": "id",
+                            "value": "REPLACE_WITH_GROUP_ID"
+                        }
+                    ]
+                }
+            }
         }
     ],
     "variable": [
