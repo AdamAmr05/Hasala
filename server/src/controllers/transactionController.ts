@@ -55,6 +55,30 @@ export const getTransactions = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// @desc    Get single transaction
+// @route   GET /api/transactions/:id
+// @access  Private
+export const getTransactionById = async (req: AuthRequest, res: Response) => {
+  try {
+    const transaction = await Transaction.findById(req.params.id);
+
+    if (!transaction) {
+      res.status(404).json({ message: 'Transaction not found' });
+      return;
+    }
+
+    // Ensure user owns the transaction
+    if (transaction.user.toString() !== req.user?._id.toString()) {
+      res.status(401).json({ message: 'User not authorized' });
+      return;
+    }
+
+    res.status(200).json(transaction);
+  } catch (error) {
+    res.status(500).json({ message: (error as Error).message });
+  }
+};
+
 // @desc    Add a new transaction
 // @route   POST /api/transactions
 // @access  Private
@@ -126,6 +150,42 @@ export const deleteTransaction = async (req: AuthRequest, res: Response) => {
     res.status(200).json({ id: req.params.id });
   } catch (error) {
     res.status(500).json({ message: (error as Error).message });
+  }
+};
+
+// @desc    Update a transaction
+// @route   PUT /api/transactions/:id
+// @access  Private
+export const updateTransaction = async (req: AuthRequest, res: Response) => {
+  try {
+    const transaction = await Transaction.findById(req.params.id);
+
+    if (!transaction) {
+      res.status(404).json({ message: 'Transaction not found' });
+      return;
+    }
+
+    // Ensure user owns the transaction
+    if (transaction.user.toString() !== req.user?._id.toString()) {
+      res.status(401).json({ message: 'User not authorized' });
+      return;
+    }
+
+    const { amount, description, category, type, date, isRecurring, relatedPerson } = req.body;
+
+    transaction.amount = amount || transaction.amount;
+    transaction.description = description || transaction.description;
+    transaction.category = category || transaction.category;
+    transaction.type = type || transaction.type;
+    transaction.date = date || transaction.date;
+    transaction.isRecurring = isRecurring !== undefined ? isRecurring : transaction.isRecurring;
+    transaction.relatedPerson = relatedPerson !== undefined ? relatedPerson : transaction.relatedPerson;
+
+    const updatedTransaction = await transaction.save();
+
+    res.status(200).json(updatedTransaction);
+  } catch (error) {
+    res.status(400).json({ message: (error as Error).message });
   }
 };
 

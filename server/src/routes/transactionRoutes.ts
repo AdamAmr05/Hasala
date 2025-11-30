@@ -1,5 +1,5 @@
 import express from 'express';
-import { getTransactions, addTransaction, addTransactionsBulk, deleteTransaction, getAnalytics } from '../controllers/transactionController';
+import { getTransactions, addTransaction, addTransactionsBulk, deleteTransaction, updateTransaction, getAnalytics, getTransactionById } from '../controllers/transactionController';
 import { protect } from '../middleware/authMiddleware';
 
 const router = express.Router();
@@ -14,7 +14,9 @@ router.post('/bulk', protect, addTransactionsBulk);
 router.get('/analytics', protect, getAnalytics);
 
 router.route('/:id')
-  .delete(protect, deleteTransaction);
+  .get(protect, getTransactionById)
+  .delete(protect, deleteTransaction)
+  .put(protect, updateTransaction);
 
 export default router;
 

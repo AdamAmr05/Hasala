@@ -137,3 +137,24 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// @desc    Delete user profile
+// @route   DELETE /api/auth/profile
+// @access  Private
+export const deleteUser = async (req: AuthRequest, res: Response) => {
+  try {
+    const user = await User.findById(req.user?._id);
+
+    if (user) {
+      await user.deleteOne();
+      res.cookie('jwt', '', {
+        httpOnly: true,
+        expires: new Date(0),
+      });
+      res.json({ message: 'User removed' });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: (error as Error).message });
+  }
+};
