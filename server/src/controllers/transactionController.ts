@@ -173,13 +173,13 @@ export const updateTransaction = async (req: AuthRequest, res: Response) => {
 
     const { amount, description, category, type, date, isRecurring, relatedPerson } = req.body;
 
-    transaction.amount = amount || transaction.amount;
-    transaction.description = description || transaction.description;
-    transaction.category = category || transaction.category;
-    transaction.type = type || transaction.type;
-    transaction.date = date || transaction.date;
-    transaction.isRecurring = isRecurring !== undefined ? isRecurring : transaction.isRecurring;
-    transaction.relatedPerson = relatedPerson !== undefined ? relatedPerson : transaction.relatedPerson;
+    if (amount !== undefined) transaction.amount = amount;
+    if (description !== undefined) transaction.description = description;
+    if (category !== undefined) transaction.category = category;
+    if (type !== undefined) transaction.type = type;
+    if (date !== undefined) transaction.date = date;
+    if (isRecurring !== undefined) transaction.isRecurring = isRecurring;
+    if (relatedPerson !== undefined) transaction.relatedPerson = relatedPerson;
 
     const updatedTransaction = await transaction.save();
 
