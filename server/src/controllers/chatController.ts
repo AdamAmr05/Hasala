@@ -19,8 +19,10 @@ import {
   renderPeopleBreakdownTool,
   renderIncomeOverviewTool,
   renderRecurringExpensesTool,
+  renderSavingsOverviewTool,
 } from '../utils/geminiConfig';
 import { TransactionService } from '../services/transactionService';
+import SavingsGoal from '../models/SavingsGoal';
 
 const buildSystemInstruction = (
   transactions: ITransaction[],
@@ -30,6 +32,7 @@ const buildSystemInstruction = (
   realTotalSpent: number = 0,
   realTotalIncome: number = 0,
   upcomingLiabilities: string = '',
+  savingsContext: string = '',
 ) => {
   // 1. Basic Totals
   const expenses = transactions.filter((t) => t.type === TransactionType.EXPENSE);
@@ -91,6 +94,7 @@ RICH CONTEXT (Use this to give specific advice):
 - Daily Average: ~${Math.round(dailyAverage)} EGP/day
 - End-of-Month Projection: ${Math.round(projectedTotal).toLocaleString()} EGP (Limit: ${effectiveBudget.toLocaleString()})
 - Upcoming Recurring Bills (This Month): ${upcomingLiabilities || 'None'}
+- Savings Status: ${savingsContext || 'No active savings goals.'}
 - ${peopleContext}
 
 INSTRUCTIONS:
@@ -251,6 +255,20 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       ? `${upcomingLiabilitiesTotal.toLocaleString()} EGP (${upcomingBills.map(b => `${b.description}: ${b.amount}`).join(', ')})`
       : '';
 
+    // Calculate Savings Context
+    const savingsGoals = await SavingsGoal.find({ userId: req.user._id });
+    const totalSaved = savingsGoals.reduce((sum, g) => sum + g.currentAmount, 0);
+    const totalTarget = savingsGoals.reduce((sum, g) => sum + g.targetAmount, 0);
+    const topGoals = savingsGoals
+      .sort((a, b) => (b.currentAmount / b.targetAmount) - (a.currentAmount / a.targetAmount))
+      .slice(0, 3)
+      .map(g => `${g.name}: ${g.currentAmount}/${g.targetAmount} (${Math.round((g.currentAmount / g.targetAmount) * 100)}%)`)
+      .join(', ');
+
+    const savingsContext = savingsGoals.length > 0
+      ? `Total Saved: ${totalSaved.toLocaleString()} / ${totalTarget.toLocaleString()} EGP. Top Goals: ${topGoals}.`
+      : 'No active savings goals.';
+
     // --- PERSISTENCE START ---
     let currentThreadId = threadId;
     if (!currentThreadId) {
@@ -336,7 +354,8 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       peopleStats,
       totalSpentReal,
       totalIncomeReal,
-      upcomingLiabilitiesText
+      upcomingLiabilitiesText,
+      savingsContext
     );
 
     console.log('--- SYSTEM INSTRUCTION ---');
@@ -362,6 +381,7 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
             renderPeopleBreakdownTool,
             renderIncomeOverviewTool,
             renderRecurringExpensesTool,
+            renderSavingsOverviewTool,
           ],
         },
       ],
@@ -532,6 +552,33 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
         }));
       }
 
+      let savingsData: any = {};
+      if (viewCalls.some(c => c.name === 'renderSavingsOverview')) {
+        const goals = await SavingsGoal.find({ userId: req.user._id });
+        const totalSaved = goals.reduce((sum, g) => sum + g.currentAmount, 0);
+        const totalTarget = goals.reduce((sum, g) => sum + g.targetAmount, 0);
+
+        // Sort by progress % descending
+        const topGoals = goals
+          .map(g => ({
+            name: g.name,
+            current: g.currentAmount,
+            target: g.targetAmount,
+            progress: Math.min((g.currentAmount / g.targetAmount) * 100, 100),
+            color: g.color,
+            icon: g.icon
+          }))
+          .sort((a, b) => b.progress - a.progress)
+          .slice(0, 3);
+
+        savingsData = {
+          totalSaved,
+          totalTarget,
+          overallProgress: totalTarget > 0 ? Math.min((totalSaved / totalTarget) * 100, 100) : 0,
+          topGoals
+        };
+      }
+
       // Populate View Calls
       for (const call of viewCalls) {
         const args = call.args || {};
@@ -565,6 +612,8 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
           args.recentTransactions = recentTransactionsData;
         } else if (call.name === 'renderRecurringExpenses') {
           args.recurringExpenses = recurringData;
+        } else if (call.name === 'renderSavingsOverview') {
+          args.savings = savingsData;
         }
 
         finalViewCalls.push({ name: call.name, args });

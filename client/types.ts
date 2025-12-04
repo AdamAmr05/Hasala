@@ -69,3 +69,12 @@ export interface ChatResponse {
   threadId?: string;
   messageId?: string;
 }
+
+export interface SavingsGoal {
+  name: string;
+  current: number;
+  target: number;
+  progress: number;
+  color: string;
+  icon: string;
+}

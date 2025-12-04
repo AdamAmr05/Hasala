@@ -8,6 +8,8 @@ import { transactionsApi } from '../../services/api';
 import { TrendingUp, Calendar, PieChart as PieIcon, Users, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FunEquivalents from './FunEquivalents';
+import SavingsOverview from '../Chat/Tools/SavingsOverview';
+import { savingsApi } from '../../services/api';
 
 const AnalyticsView: React.FC = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -22,6 +24,11 @@ const AnalyticsView: React.FC = () => {
         queryKey: ['analytics', month, year],
         queryFn: () => transactionsApi.getAnalytics(30, month, year, Intl.DateTimeFormat().resolvedOptions().timeZone),
         placeholderData: (previousData) => previousData,
+    });
+
+    const { data: savingsGoals } = useQuery({
+        queryKey: ['savingsGoals'],
+        queryFn: savingsApi.list,
     });
 
     const onPrevMonth = () => {
@@ -88,6 +95,32 @@ const AnalyticsView: React.FC = () => {
     const maxDay = dayData.reduce((max, current) => current.amount > max.amount ? current : max, dayData[0]);
 
 
+
+    // Transform Savings Data
+    let savingsData = undefined;
+    if (savingsGoals) {
+        const totalSaved = savingsGoals.reduce((sum, g) => sum + g.currentAmount, 0);
+        const totalTarget = savingsGoals.reduce((sum, g) => sum + g.targetAmount, 0);
+
+        const topGoals = savingsGoals
+            .map(g => ({
+                name: g.name,
+                current: g.currentAmount,
+                target: g.targetAmount,
+                progress: Math.min((g.currentAmount / g.targetAmount) * 100, 100),
+                color: g.color,
+                icon: g.icon
+            }))
+            .sort((a, b) => b.progress - a.progress)
+            .slice(0, 3);
+
+        savingsData = {
+            totalSaved,
+            totalTarget,
+            overallProgress: totalTarget > 0 ? Math.min((totalSaved / totalTarget) * 100, 100) : 0,
+            topGoals
+        };
+    }
     // Curated Palette (Indigo, Blue, Emerald, Amber, Rose, Violet, Cyan, Orange)
     const CATEGORY_COLORS = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#06b6d4', '#f97316', '#34C759', '#AF52DE'];
 
@@ -172,6 +205,13 @@ const AnalyticsView: React.FC = () => {
                             })}
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Savings Overview Section */}
+            {savingsData && (
+                <div className="px-6">
+                    <SavingsOverview data={savingsData} />
                 </div>
             )}
 

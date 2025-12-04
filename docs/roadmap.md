@@ -135,5 +135,3 @@ Phase 4: Future / Post-Submission
 React Native Port: Move to Expo for true native voice integration.
 
 Client-Side Regex: Implement the hybrid categorization layer for cost reduction.
-
-Payments: Integrate Fawry API/Basata Connections for bill payments.

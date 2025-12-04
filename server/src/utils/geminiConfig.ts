@@ -98,3 +98,9 @@ export const renderRecurringExpensesTool: FunctionDeclaration = {
   parameters: { type: Type.OBJECT, properties: {} },
 };
 
+export const renderSavingsOverviewTool: FunctionDeclaration = {
+  name: 'renderSavingsOverview',
+  description: 'Display a visual summary of the user’s savings goals, total saved, and progress.',
+  parameters: { type: Type.OBJECT, properties: {} },
+};
+
