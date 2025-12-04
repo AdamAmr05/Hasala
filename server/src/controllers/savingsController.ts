@@ -46,7 +46,7 @@ export const createGoal = async (req: AuthRequest, res: Response) => {
             return res.status(401).json({ message: 'User not authorized' });
         }
 
-        const { name, targetAmount, color, icon, deadline } = req.body;
+        const { name, targetAmount, color, icon, deadline, stepAmount } = req.body;
 
         // Validation
         if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -62,7 +62,8 @@ export const createGoal = async (req: AuthRequest, res: Response) => {
             targetAmount,
             color,
             icon,
-            deadline
+            deadline,
+            stepAmount: stepAmount || 100
         });
 
         res.status(201).json(savedGoal);
@@ -82,7 +83,7 @@ export const updateGoal = async (req: AuthRequest, res: Response) => {
         const { id } = req.params;
 
         // Whitelist allowed fields to prevent mass assignment
-        const { name, targetAmount, color, icon, delta, deadline } = req.body;
+        const { name, targetAmount, color, icon, delta, deadline, stepAmount } = req.body;
         const safeUpdates: any = {};
 
         if (name !== undefined) safeUpdates.name = name;
@@ -91,6 +92,7 @@ export const updateGoal = async (req: AuthRequest, res: Response) => {
         if (icon !== undefined) safeUpdates.icon = icon;
         if (delta !== undefined) safeUpdates.delta = delta;
         if (deadline !== undefined) safeUpdates.deadline = deadline;
+        if (stepAmount !== undefined) safeUpdates.stepAmount = stepAmount;
 
         const goal = await SavingsService.updateGoal(id, userId.toString(), safeUpdates);
 

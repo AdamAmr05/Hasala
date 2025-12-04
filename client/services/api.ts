@@ -217,6 +217,7 @@ export interface SavingsGoal {
   currentAmount: number;
   color: string;
   icon: string;
+  stepAmount?: number;
   deadline?: string;
 }
 

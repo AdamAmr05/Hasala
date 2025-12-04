@@ -16,6 +16,7 @@ const COLORS = ['#007AFF', '#34C759', '#FF9500', '#FF3B30', '#AF52DE', '#5856D6'
 const AddGoalSheet: React.FC<AddGoalSheetProps> = ({ isOpen, onClose, onGoalAdded, goal }) => {
     const [name, setName] = useState('');
     const [amount, setAmount] = useState('');
+    const [stepAmount, setStepAmount] = useState('100');
     const [selectedColor, setSelectedColor] = useState(COLORS[0]);
     const [selectedIcon, setSelectedIcon] = useState(AVAILABLE_ICONS[0]);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,11 +28,14 @@ const AddGoalSheet: React.FC<AddGoalSheetProps> = ({ isOpen, onClose, onGoalAdde
         if (goal) {
             setName(goal.name);
             setAmount(goal.targetAmount.toString());
+            setStepAmount(goal.stepAmount?.toString() || '100');
             setSelectedColor(goal.color);
             setSelectedIcon(goal.icon);
         } else {
             setName('');
+            setName('');
             setAmount('');
+            setStepAmount('100');
             setSelectedColor(COLORS[0]);
             setSelectedIcon(AVAILABLE_ICONS[0]);
         }
@@ -53,6 +57,12 @@ const AddGoalSheet: React.FC<AddGoalSheetProps> = ({ isOpen, onClose, onGoalAdde
             return;
         }
 
+        const stepVal = Number(stepAmount);
+        if (!stepAmount || !Number.isFinite(stepVal) || stepVal <= 0) {
+            setError('Please enter a valid quick add amount');
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             if (goal) {
@@ -61,6 +71,7 @@ const AddGoalSheet: React.FC<AddGoalSheetProps> = ({ isOpen, onClose, onGoalAdde
                     targetAmount,
                     color: selectedColor,
                     icon: selectedIcon,
+                    stepAmount: stepVal,
                 });
             } else {
                 await savingsApi.create({
@@ -69,6 +80,7 @@ const AddGoalSheet: React.FC<AddGoalSheetProps> = ({ isOpen, onClose, onGoalAdde
                     currentAmount: 0,
                     color: selectedColor,
                     icon: selectedIcon,
+                    stepAmount: stepVal,
                 });
             }
             onGoalAdded();
@@ -135,6 +147,23 @@ const AddGoalSheet: React.FC<AddGoalSheetProps> = ({ isOpen, onClose, onGoalAdde
                                     />
                                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">EGP</span>
                                 </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Quick Add Amount</label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        value={stepAmount}
+                                        onChange={(e) => setStepAmount(e.target.value)}
+                                        placeholder="100"
+                                        className="w-full bg-gray-50 dark:bg-[#2C2C2E] rounded-2xl p-4 text-lg font-bold text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                    />
+                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">EGP</span>
+                                </div>
+                                <p className="text-[10px] text-gray-400 font-medium px-1">
+                                    Amount to add or remove when clicking + / - buttons
+                                </p>
                             </div>
 
                             <div className="space-y-2">

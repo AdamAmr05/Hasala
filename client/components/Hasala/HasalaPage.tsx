@@ -9,6 +9,18 @@ import AddGoalSheet from './AddGoalSheet';
 const HasalaPage: React.FC = () => {
     const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
     const [editingGoal, setEditingGoal] = useState<SavingsGoal | undefined>(undefined);
+
+    // Session-based state for robust "handoff" animation
+    // We track the total local change relative to the "frozen" base amount
+    type Session = {
+        baseAmount: number;      // The server amount when interaction started
+        localTotalDelta: number; // Total change applied by user in this session
+        syncedTotalDelta: number;// Total change that has been successfully sent to server
+    };
+    const [sessions, setSessions] = useState<Record<string, Session>>({});
+    const sessionsRef = React.useRef<Record<string, Session>>({});
+    const debounceTimers = React.useRef<Record<string, NodeJS.Timeout>>({});
+
     const queryClient = useQueryClient();
 
     const { data: goals, isLoading } = useQuery({
@@ -19,24 +31,36 @@ const HasalaPage: React.FC = () => {
     const updateMutation = useMutation({
         mutationFn: ({ id, delta }: { id: string; delta: number }) =>
             savingsApi.update(id, { delta }),
-        onMutate: async ({ id, delta }) => {
-            await queryClient.cancelQueries({ queryKey: ['savingsGoals'] });
-            const previousGoals = queryClient.getQueryData<SavingsGoal[]>(['savingsGoals']);
-
+        onSuccess: (updatedGoal, variables) => {
+            // 1. Update Cache with authoritative data
             queryClient.setQueryData<SavingsGoal[]>(['savingsGoals'], (old) =>
-                old?.map((goal) =>
-                    goal._id === id ? { ...goal, currentAmount: Math.max(0, goal.currentAmount + delta) } : goal
-                )
+                old?.map((g) => (g._id === updatedGoal._id ? updatedGoal : g))
             );
 
-            return { previousGoals };
+            // 2. Manage Session Handoff
+            setSessions(prev => {
+                const session = prev[updatedGoal._id];
+                if (!session) return prev;
+
+                // If user hasn't clicked more since we sent this request
+                // (i.e., localTotalDelta matches the syncedTotalDelta we just finished)
+                // Then we can safely end the session and switch to server data.
+                if (session.localTotalDelta === session.syncedTotalDelta) {
+                    const next = { ...prev };
+                    delete next[updatedGoal._id];
+                    return next;
+                }
+
+                // If user clicked more, keep session alive.
+                // The next debounce flush will handle the remaining delta.
+                return prev;
+            });
         },
-        onError: (err, newTodo, context) => {
-            queryClient.setQueryData(['savingsGoals'], context?.previousGoals);
-        },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ['savingsGoals'] });
-        },
+        onError: (err, variables) => {
+            // On error, we might want to revert the synced status or show error
+            // For now, we keep the session so user doesn't lose their local state visual
+            console.error("Failed to sync savings update", err);
+        }
     });
 
     const deleteMutation = useMutation({
@@ -46,8 +70,53 @@ const HasalaPage: React.FC = () => {
         },
     });
 
-    const handleUpdate = (id: string, delta: number) => {
-        updateMutation.mutate({ id, delta });
+    const handleUpdate = (id: string, step: number) => {
+        // 1. Get or Initialize Session
+        setSessions(prev => {
+            const currentSession = prev[id] || {
+                baseAmount: goals?.find(g => g._id === id)?.currentAmount || 0,
+                localTotalDelta: 0,
+                syncedTotalDelta: 0
+            };
+
+            const newSession = {
+                ...currentSession,
+                localTotalDelta: currentSession.localTotalDelta + step
+            };
+
+            // Keep ref in sync for timer access
+            sessionsRef.current[id] = newSession;
+
+            return { ...prev, [id]: newSession };
+        });
+
+        // 2. Debounce Network Sync
+        if (debounceTimers.current[id]) {
+            clearTimeout(debounceTimers.current[id]);
+        }
+
+        debounceTimers.current[id] = setTimeout(() => {
+            const session = sessionsRef.current[id];
+            if (!session) return;
+
+            // Calculate what needs to be sent
+            const deltaToSend = session.localTotalDelta - session.syncedTotalDelta;
+
+            if (deltaToSend !== 0) {
+                // Mark as syncing
+                setSessions(prev => {
+                    const s = prev[id];
+                    if (!s) return prev;
+                    const updated = { ...s, syncedTotalDelta: s.localTotalDelta };
+                    sessionsRef.current[id] = updated;
+                    return { ...prev, [id]: updated };
+                });
+
+                updateMutation.mutate({ id, delta: deltaToSend });
+            }
+
+            delete debounceTimers.current[id];
+        }, 500);
     };
 
     const handleDelete = (id: string) => {
@@ -61,10 +130,11 @@ const HasalaPage: React.FC = () => {
 
     const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-    // Cleanup timeout on unmount
+    // Cleanup timeouts on unmount
     React.useEffect(() => {
         return () => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            Object.values(debounceTimers.current).forEach(timer => clearTimeout(timer));
         };
     }, []);
 
@@ -99,15 +169,30 @@ const HasalaPage: React.FC = () => {
                 ) : goals && goals.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <AnimatePresence mode="popLayout">
-                            {goals.map((goal) => (
-                                <GoalCard
-                                    key={goal._id}
-                                    goal={goal}
-                                    onUpdate={(amount) => handleUpdate(goal._id, amount)}
-                                    onEdit={() => handleEdit(goal)}
-                                    onDelete={() => handleDelete(goal._id)}
-                                />
-                            ))}
+                            {goals.map((goal) => {
+                                // Robust Display Logic:
+                                // If we have an active session, use (FrozenBase + LocalTotalDelta)
+                                // Otherwise, use the server's currentAmount
+                                const session = sessions[goal._id];
+                                const displayAmount = session
+                                    ? Math.max(0, session.baseAmount + session.localTotalDelta)
+                                    : goal.currentAmount;
+
+                                const displayGoal = {
+                                    ...goal,
+                                    currentAmount: displayAmount
+                                };
+
+                                return (
+                                    <GoalCard
+                                        key={goal._id}
+                                        goal={displayGoal}
+                                        onUpdate={(amount) => handleUpdate(goal._id, amount)}
+                                        onEdit={() => handleEdit(goal)}
+                                        onDelete={() => handleDelete(goal._id)}
+                                    />
+                                );
+                            })}
                         </AnimatePresence>
                     </div>
                 ) : (

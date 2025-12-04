@@ -259,10 +259,14 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
     const savingsGoals = await SavingsGoal.find({ userId: req.user._id });
     const totalSaved = savingsGoals.reduce((sum, g) => sum + g.currentAmount, 0);
     const totalTarget = savingsGoals.reduce((sum, g) => sum + g.targetAmount, 0);
+
+    // Helper to safely calculate progress
+    const getProgress = (current: number, target: number) => target > 0 ? current / target : 0;
+
     const topGoals = savingsGoals
-      .sort((a, b) => (b.currentAmount / b.targetAmount) - (a.currentAmount / a.targetAmount))
+      .sort((a, b) => getProgress(b.currentAmount, b.targetAmount) - getProgress(a.currentAmount, a.targetAmount))
       .slice(0, 3)
-      .map(g => `${g.name}: ${g.currentAmount}/${g.targetAmount} (${Math.round((g.currentAmount / g.targetAmount) * 100)}%)`)
+      .map(g => `${g.name}: ${g.currentAmount}/${g.targetAmount} (${Math.round(getProgress(g.currentAmount, g.targetAmount) * 100)}%)`)
       .join(', ');
 
     const savingsContext = savingsGoals.length > 0
@@ -358,14 +362,30 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       savingsContext
     );
 
-    console.log('--- SYSTEM INSTRUCTION ---');
-    console.log(systemInstruction);
-    console.log('--------------------------');
+    // Secure Logger Helper
+    const secureLog = (label: string, data: any) => {
+      if (process.env.NODE_ENV === 'production') {
+        // In production, only log essential info or redacted data
+        if (label === 'Token Usage') {
+          console.log(`[${label}]`, JSON.stringify(data));
+        }
+      } else {
+        // In development, log debug info but redact sensitive fields
+        const redact = (obj: any): any => {
+          if (typeof obj !== 'object' || obj === null) return obj;
+          if (Array.isArray(obj)) return obj.map(redact);
+          const newObj = { ...obj };
+          ['systemInstruction', 'history', 'text', 'message'].forEach(key => {
+            if (key in newObj) newObj[key] = '[REDACTED]';
+          });
+          return newObj;
+        };
+        console.log(`[DEBUG] ${label}:`, JSON.stringify(redact(data), null, 2));
+      }
+    };
 
-    console.log('--- USER INPUT ---');
-    console.log('Message:', message);
-    console.log('History Length:', contents.length);
-    console.log('------------------');
+    secureLog('System Instruction', { systemInstruction });
+    secureLog('User Input', { message, historyLength: contents.length });
 
     const config = {
       systemInstruction,
@@ -387,9 +407,7 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       ],
     };
 
-    console.log('--- FULL CONFIG (TOOLS) ---');
-    console.log(JSON.stringify(config, null, 2));
-    console.log('---------------------------');
+    secureLog('Config', config);
 
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
@@ -397,16 +415,15 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       config,
     });
 
-    console.log('--- RAW AI RESPONSE ---');
-    console.log(JSON.stringify(response, null, 2));
+    secureLog('AI Response', response);
+
     if (response.usageMetadata) {
-      console.log('--- TOKEN USAGE ---');
-      console.log('Prompt Tokens:', response.usageMetadata.promptTokenCount);
-      console.log('Candidates Tokens:', response.usageMetadata.candidatesTokenCount);
-      console.log('Total Tokens:', response.usageMetadata.totalTokenCount);
-      console.log('-------------------');
+      secureLog('Token Usage', {
+        prompt: response.usageMetadata.promptTokenCount,
+        candidates: response.usageMetadata.candidatesTokenCount,
+        total: response.usageMetadata.totalTokenCount
+      });
     }
-    console.log('-----------------------');
 
     const text = response.text || '';
 
@@ -564,7 +581,8 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
             name: g.name,
             current: g.currentAmount,
             target: g.targetAmount,
-            progress: Math.min((g.currentAmount / g.targetAmount) * 100, 100),
+            // Safe progress calculation
+            progress: Math.min((g.targetAmount > 0 ? g.currentAmount / g.targetAmount : 0) * 100, 100),
             color: g.color,
             icon: g.icon
           }))
@@ -574,6 +592,7 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
         savingsData = {
           totalSaved,
           totalTarget,
+          // Safe overall progress calculation
           overallProgress: totalTarget > 0 ? Math.min((totalSaved / totalTarget) * 100, 100) : 0,
           topGoals
         };

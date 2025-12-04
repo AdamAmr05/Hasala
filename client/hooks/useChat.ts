@@ -6,6 +6,15 @@ interface UseChatProps {
     onAddTransaction: () => void;
 }
 
+// 2. Strict Type Safety for API Responses
+interface ApiChatMessage {
+    _id: string;
+    role: 'user' | 'model';
+    text: string;
+    createdAt: string;
+    toolCalls?: ToolCall[];
+}
+
 export const useChat = ({ onAddTransaction }: UseChatProps) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [threads, setThreads] = useState<ChatThread[]>([]);
@@ -14,10 +23,37 @@ export const useChat = ({ onAddTransaction }: UseChatProps) => {
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
 
+    // 3. Stable Hooks Dependencies
+    const loadThreads = useCallback(async () => {
+        try {
+            const data = await chatApi.getThreads();
+            setThreads(data);
+        } catch (error) {
+            console.error('Failed to load threads', error);
+        }
+    }, []);
+
+    const loadMessages = useCallback(async (threadId: string) => {
+        try {
+            const data = await chatApi.getMessages(threadId);
+            // Map API messages to UI messages using strict interface
+            const uiMessages: ChatMessage[] = (data as any[]).map((msg: ApiChatMessage) => ({
+                id: msg._id,
+                sender: msg.role === 'user' ? ChatSender.USER : ChatSender.AI,
+                text: msg.text,
+                timestamp: new Date(msg.createdAt).getTime(),
+                toolCalls: msg.toolCalls
+            }));
+            setMessages(uiMessages);
+        } catch (error) {
+            console.error('Failed to load messages', error);
+        }
+    }, []);
+
     // Fetch threads on mount
     useEffect(() => {
         loadThreads();
-    }, []);
+    }, [loadThreads]);
 
     // Fetch messages when thread changes
     useEffect(() => {
@@ -32,33 +68,7 @@ export const useChat = ({ onAddTransaction }: UseChatProps) => {
                 timestamp: Date.now()
             }]);
         }
-    }, [activeThreadId]);
-
-    const loadThreads = async () => {
-        try {
-            const data = await chatApi.getThreads();
-            setThreads(data);
-        } catch (error) {
-            console.error('Failed to load threads', error);
-        }
-    };
-
-    const loadMessages = async (threadId: string) => {
-        try {
-            const data = await chatApi.getMessages(threadId);
-            // Map API messages to UI messages
-            const uiMessages: ChatMessage[] = data.map((msg: any) => ({
-                id: msg._id,
-                sender: msg.role === 'user' ? ChatSender.USER : ChatSender.AI,
-                text: msg.text,
-                timestamp: new Date(msg.createdAt).getTime(),
-                toolCalls: msg.toolCalls
-            }));
-            setMessages(uiMessages);
-        } catch (error) {
-            console.error('Failed to load messages', error);
-        }
-    };
+    }, [activeThreadId, loadMessages]);
 
     const handleNewChat = useCallback(() => {
         setActiveThreadId(null);
@@ -81,8 +91,12 @@ export const useChat = ({ onAddTransaction }: UseChatProps) => {
         if (!inputValue.trim()) return;
 
         const previousMessages = [...messages];
+
+        // 1. Robust ID Generation
+        const userMsgId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString();
+
         const userMsg: ChatMessage = {
-            id: Date.now().toString(),
+            id: userMsgId,
             sender: ChatSender.USER,
             text: inputValue,
             timestamp: Date.now()
@@ -118,8 +132,10 @@ export const useChat = ({ onAddTransaction }: UseChatProps) => {
                 onAddTransaction();
             }
 
+            const aiMsgId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : (Date.now() + 1).toString();
+
             const aiMsg: ChatMessage = {
-                id: (Date.now() + 1).toString(),
+                id: aiMsgId,
                 sender: ChatSender.AI,
                 text: finalText,
                 timestamp: Date.now(),

@@ -20,18 +20,30 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onUpdate, onEdit, onDelete })
 
     const handleAdd = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (goal.currentAmount >= goal.targetAmount) {
+        const remaining = goal.targetAmount - goal.currentAmount;
+
+        // Use a small epsilon for float comparison or just check if effectively zero
+        if (remaining <= 0.01) {
             setShowError(true);
             setTimeout(() => setShowError(false), 2000);
             return;
         }
-        onUpdate(100);
+
+        // Clamp addition to remaining amount if less than stepAmount
+        // Use Math.min to ensure we don't overshoot
+        // Round to 2 decimal places to avoid floating point weirdness
+        const step = goal.stepAmount || 100;
+        const amountToAdd = Math.min(step, Number(remaining.toFixed(2)));
+        onUpdate(amountToAdd);
     };
 
     const handleSubtract = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (goal.currentAmount <= 0) return;
-        onUpdate(-100);
+        // Clamp subtraction to current amount if less than stepAmount
+        const step = goal.stepAmount || 100;
+        const amountToSubtract = Math.min(step, Number(goal.currentAmount.toFixed(2)));
+        onUpdate(-amountToSubtract);
     };
 
     // Helper to convert hex to rgba for the gradient
@@ -58,7 +70,7 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onUpdate, onEdit, onDelete })
                     }}
                     initial={{ height: 0 }}
                     animate={{ height: `${percentage}%` }}
-                    transition={{ type: 'spring', stiffness: 50, damping: 20 }}
+                    transition={{ type: 'tween', ease: 'easeOut', duration: 0.5 }}
                 />
             </div>
 
@@ -156,7 +168,7 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onUpdate, onEdit, onDelete })
                         style={{ backgroundColor: goal.color }}
                         initial={{ width: 0 }}
                         animate={{ width: `${percentage}%` }}
-                        transition={{ type: 'spring', stiffness: 50, damping: 20 }}
+                        transition={{ type: 'tween', ease: 'easeOut', duration: 0.5 }}
                     />
                 </div>
 

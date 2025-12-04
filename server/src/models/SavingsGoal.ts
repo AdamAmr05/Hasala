@@ -19,6 +19,7 @@ const SavingsGoalSchema: Schema = new Schema({
     currentAmount: { type: Number, default: 0 },
     color: { type: String, default: '#007AFF' },
     icon: { type: String, default: '💰' },
+    stepAmount: { type: Number, default: 100 },
     deadline: { type: Date },
 }, {
     timestamps: true

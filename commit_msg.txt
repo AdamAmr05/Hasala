@@ -1,0 +1,32 @@
+Backend (Robustness & Precision)
+
+Decimal Math: Replaced Math.round with decimal.js in createGoal for precise storage.
+
+Atomic Updates: Replaced Math.round with decimal.js in updateGoal (increments).
+
+Non-Negative Check: Added a guard to prevent savings balances from dropping below zero.
+
+ObjectId Validation (Get): Added check to prevent crashes on invalid IDs.
+
+ObjectId Validation (Update): Added check to prevent crashes on invalid IDs.
+
+ObjectId Validation (Delete): Added check to prevent crashes on invalid IDs.
+
+Secure Logging: Replaced console.log with a PII-redacting logger.
+
+Math Safety (Top Goals): Fixed division-by-zero when targetAmount is 0.
+
+Math Safety (Overall Progress): Fixed division-by-zero in overall savings progress.
+
+
+
+Frontend (Client Safety)
+10. ChatWidget Safety: Wrapped money displays in safeFormat to prevent white-screen crashes.
+11. Recurring Widget Safety: Specifically fixed the Recurring Expenses widget (which was missed initially).
+12. SavingsOverview Safety: Applied safeFormat to the standalone Savings component.
+13. Projection Logic: Fixed bug where "0 spent" was treated as "missing data".
+14. Client IDs: Switched from Date.now() to crypto.randomUUID() for unique message IDs.
+15. Type Safety: Enforced ApiChatMessage interface in useChat.ts.
+16. Hooks Stability: Fixed useEffect dependencies and wrapped handlers in useCallback.
+
+Also: Fixed the savings animation feature. It now follows a "handoff" method of updating: when the user stops rapidly clicking, it continues to show their local numbers. Only once the server fully confirms it has the latest state do we clear the local session and switch to the live server data.

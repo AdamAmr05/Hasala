@@ -77,4 +77,5 @@ export interface SavingsGoal {
   progress: number;
   color: string;
   icon: string;
+  stepAmount?: number;
 }

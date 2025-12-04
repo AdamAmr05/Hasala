@@ -44,6 +44,9 @@ const SavingsOverview: React.FC<SavingsOverviewProps> = ({ data }) => {
 
     const { totalSaved, totalTarget, overallProgress, topGoals } = data;
 
+    // Safe numeric formatting helper
+    const safeFormat = (val: any) => (Number.isFinite(Number(val)) ? Number(val).toLocaleString() : '0');
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -73,11 +76,11 @@ const SavingsOverview: React.FC<SavingsOverviewProps> = ({ data }) => {
                     <div className="space-y-1">
                         <p className="text-[10px] font-bold text-emerald-50 uppercase tracking-widest opacity-80">Total Saved</p>
                         <div className="flex items-baseline gap-1">
-                            <span className="text-3xl font-bold tracking-tight">{totalSaved.toLocaleString()}</span>
+                            <span className="text-3xl font-bold tracking-tight">{safeFormat(totalSaved)}</span>
                             <span className="text-sm font-medium text-emerald-100">EGP</span>
                         </div>
                         <p className="text-[11px] font-medium text-emerald-50/80">
-                            of {totalTarget.toLocaleString()} EGP goal
+                            of {safeFormat(totalTarget)} EGP goal
                         </p>
                     </div>
 
@@ -117,7 +120,7 @@ const SavingsOverview: React.FC<SavingsOverviewProps> = ({ data }) => {
             <div className="space-y-5">
                 <h4 className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-1">Top Goals</h4>
                 {topGoals.length > 0 ? (
-                    topGoals.map((goal, index) => (
+                    topGoals.map((goal: any, index: number) => (
                         <div key={index} className="group">
                             <div className="flex justify-between items-center mb-2.5">
                                 <div className="flex items-center gap-3.5">
@@ -130,9 +133,9 @@ const SavingsOverview: React.FC<SavingsOverviewProps> = ({ data }) => {
                                     <div>
                                         <p className="text-sm font-bold text-gray-900 dark:text-white leading-tight mb-0.5">{goal.name}</p>
                                         <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
-                                            <span className="text-gray-900 dark:text-gray-200 font-bold">{goal.current.toLocaleString()}</span>
+                                            <span className="text-gray-900 dark:text-gray-200 font-bold">{safeFormat(goal.current)}</span>
                                             <span className="mx-1 opacity-50">/</span>
-                                            {goal.target.toLocaleString()}
+                                            {safeFormat(goal.target)}
                                         </p>
                                     </div>
                                 </div>
