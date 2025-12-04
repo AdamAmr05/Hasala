@@ -7,6 +7,7 @@ export interface ISavingsGoal extends Document {
     currentAmount: number;
     color: string;
     icon: string;
+    stepAmount: number;
     deadline?: Date;
     createdAt: Date;
     updatedAt: Date;
