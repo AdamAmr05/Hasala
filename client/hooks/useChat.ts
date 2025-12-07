@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChatMessage, ChatSender, ToolCall } from '../types';
 import { chatApi, ChatThread } from '../services/api';
 
@@ -22,6 +22,9 @@ export const useChat = ({ onAddTransaction }: UseChatProps) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
+
+    // Track if the current thread was created by us (to skip reload)
+    const locallyCreatedThreadRef = useRef<string | null>(null);
 
     // 3. Stable Hooks Dependencies
     const loadThreads = useCallback(async () => {
@@ -55,9 +58,14 @@ export const useChat = ({ onAddTransaction }: UseChatProps) => {
         loadThreads();
     }, [loadThreads]);
 
-    // Fetch messages when thread changes
+    // Fetch messages when thread changes (but skip if we just created it locally)
     useEffect(() => {
         if (activeThreadId) {
+            // Skip reload if this thread was just created by us in handleSend
+            if (locallyCreatedThreadRef.current === activeThreadId) {
+                locallyCreatedThreadRef.current = null; // Reset for future switches
+                return;
+            }
             loadMessages(activeThreadId);
         } else {
             // New Chat State
@@ -118,6 +126,8 @@ export const useChat = ({ onAddTransaction }: UseChatProps) => {
 
             // Update active thread if it was a new chat
             if (!activeThreadId && response.threadId) {
+                // Mark as locally created to prevent the useEffect from reloading messages
+                locallyCreatedThreadRef.current = response.threadId;
                 setActiveThreadId(response.threadId);
                 loadThreads(); // Refresh list to show new thread title
             }

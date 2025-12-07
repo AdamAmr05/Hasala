@@ -22,86 +22,33 @@ import {
   renderSavingsOverviewTool,
 } from '../utils/geminiConfig';
 import { TransactionService } from '../services/transactionService';
+import { FinancialContextService } from '../services/financialContextService'; // Imported Service
 import SavingsGoal from '../models/SavingsGoal';
 
-const buildSystemInstruction = (
-  transactions: ITransaction[],
-  userName?: string,
-  budget: number = 0,
-  peopleStats: string = '',
-  realTotalSpent: number = 0,
-  realTotalIncome: number = 0,
-  upcomingLiabilities: string = '',
-  savingsContext: string = '',
-) => {
-  // 1. Basic Totals
-  const expenses = transactions.filter((t) => t.type === TransactionType.EXPENSE);
-
-  // Use real totals if provided (which they should be), otherwise fallback to slice (legacy behavior safety)
-  const totalSpent = realTotalSpent > 0 ? realTotalSpent : expenses.reduce((sum, t) => sum + t.amount, 0);
-  const totalIncome = realTotalIncome > 0 ? realTotalIncome : 0; // Income might be 0, that's fine
-
-  const effectiveBudget = budget > 0 ? budget : totalIncome; // Use budget if set, otherwise income
-  const remaining = effectiveBudget - totalSpent;
-  const remainingIncome = totalIncome - totalSpent;
-
-  // 2. Budget Health
-  let healthStatus = 'Healthy';
-  if (remaining < 0) healthStatus = 'Critical (Over Budget Goal)';
-  else if (remaining < effectiveBudget * 0.2) healthStatus = 'Low (Caution)';
-
-  // 3. Top Category (transaction amounts are stored as decimals)
-  const categoryTotals = expenses.reduce((acc, t) => {
-    acc[t.category] = (acc[t.category] || 0) + t.amount;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const topCategory = Object.entries(categoryTotals)
-    .sort(([, a], [, b]) => b - a)[0];
-  const topCategoryName = topCategory ? topCategory[0] : 'None';
-  const topCategoryAmount = topCategory ? topCategory[1] : 0;
-
-  // 4. Projections
-  const today = new Date();
-  const dayOfMonth = today.getDate();
-  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-  const dailyAverage = totalSpent / Math.max(1, dayOfMonth);
-  const projectedTotal = dailyAverage * daysInMonth;
-
-  const summary = transactions
-    .slice(0, 15)
-    .map(
-      (t) => `${t.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}: ${t.description} (${t.amount} EGP) - ${t.category}`,
-    )
-    .join('\n');
-
-  const peopleContext = peopleStats
-    ? `People tracked this month: ${peopleStats}.`
-    : 'No people tracked yet this month.';
-
+const buildSystemInstruction = (data: any) => {
   return `
-You are Hasala AI, a witty, insightful, and friendly financial companion for ${userName || 'friend'}.
+You are Hasala AI, a witty, insightful, and friendly financial companion for ${data.userName}.
 Your goal is to help the user understand their financial habits, not just report numbers.
 
 RICH CONTEXT (Use this to give specific advice):
-- Budget Goal: ${budget > 0 ? `${budget.toLocaleString()} EGP` : 'Not set (using Income)'}
-- Total Income: ${totalIncome.toLocaleString()} EGP
-- Total Spent: ${totalSpent.toLocaleString()} EGP
-- Remaining (vs Goal): ${remaining.toLocaleString()} EGP
-- Remaining (vs Income): ${remainingIncome.toLocaleString()} EGP
-- Budget Status: ${healthStatus}
-- Top Spending: ${topCategoryName} (${topCategoryAmount.toLocaleString()} EGP)
-- Daily Average: ~${Math.round(dailyAverage)} EGP/day
-- End-of-Month Projection: ${Math.round(projectedTotal).toLocaleString()} EGP (Limit: ${effectiveBudget.toLocaleString()})
-- Upcoming Recurring Bills (This Month): ${upcomingLiabilities || 'None'}
-- Savings Status: ${savingsContext || 'No active savings goals.'}
-- ${peopleContext}
+- Budget Goal: ${data.budget > 0 ? `${data.budget.toLocaleString()} ${data.currency}` : 'Not set (using Income)'}
+- Total Income: ${data.totalIncome.toLocaleString()} ${data.currency}
+- Total Spent: ${data.totalSpent.toLocaleString()} ${data.currency}
+- Remaining (vs Goal): ${data.remainingOverBudget.toLocaleString()} ${data.currency}
+- Remaining (vs Income): ${data.remainingOverIncome.toLocaleString()} ${data.currency}
+- Budget Status: ${data.healthStatus}
+- Top Spending: ${data.topCategoryName} (${data.topCategoryAmount.toLocaleString()} ${data.currency})
+- Daily Average: ~${Math.round(data.dailyAverage)} ${data.currency}/day
+- End-of-Month Projection: ${Math.round(data.projectedTotal).toLocaleString()} ${data.currency} (Limit: ${data.effectiveBudget.toLocaleString()})
+- Upcoming Recurring Bills (This Month): ${data.upcomingLiabilitiesText || 'None'}
+- Savings Status: ${data.savingsContext}
+- ${data.peopleContext}
 
 INSTRUCTIONS:
 1. **Be a Financial Advisor**: Don't just say "Here is your chart." Explain the *why*.
    - Compare their spending to BOTH their Income and their Budget Goal.
    - If they are under their Budget Goal but over their Income, warn them!
-   - If they are overspending, warn them kindly and suggest cutting back on ${topCategoryName}.
+   - If they are overspending, warn them kindly and suggest cutting back on ${data.topCategoryName}.
    - If they are safe, celebrate their good habits!
    - Use the "Projection" to warn them about the future if they keep spending like this.
 2. **Conversational Style**: Use natural, encouraging language. You can use light Egyptian slang ("Ya basha", "Ahlan", "Tamam", "Ma3lesh") to sound local and friendly.
@@ -214,64 +161,13 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       apiKey: process.env.GEMINI_API_KEY,
     });
 
-    // 1. Build Context (Lightweight)
-    const transactions = await Transaction.find({ user: req.user._id })
-      .sort({ date: -1 })
-      .limit(20);
+    // 2. Build Context using Shared Service (Raw Data)
+    const contextData = await FinancialContextService.buildFinancialContextData(req.user);
+    const systemInstruction = buildSystemInstruction(contextData);
 
-    // Fetch existing people for the current month
-    const startOfCurrentMonth = new Date();
-    startOfCurrentMonth.setDate(1);
-    startOfCurrentMonth.setHours(0, 0, 0, 0);
-
-    const monthlyTransactions = await Transaction.find({
-      user: req.user._id,
-      date: { $gte: startOfCurrentMonth },
-      relatedPerson: { $exists: true, $ne: null },
-    }).select('relatedPerson amount');
-
-    const peopleMap = monthlyTransactions.reduce((acc, t) => {
-      if (t.relatedPerson) {
-        acc[t.relatedPerson] = (acc[t.relatedPerson] || 0) + t.amount;
-      }
-      return acc;
-    }, {} as Record<string, number>);
-
-    const peopleStats = Object.entries(peopleMap)
-      .map(([name, total]) => `${name}: ${total} EGP`)
-      .join(', ');
-
-    // Calculate Upcoming Recurring Expenses
-    const recurringTransactions = await RecurringTransaction.find({ user: req.user._id, isActive: true });
-    const today = new Date();
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-    const upcomingBills = recurringTransactions.filter(transaction => {
-      return transaction.dayOfMonth >= today.getDate() && transaction.type === 'EXPENSE';
-    });
-
-    const upcomingLiabilitiesTotal = upcomingBills.reduce((sum, exp) => sum + exp.amount, 0);
-    const upcomingLiabilitiesText = upcomingBills.length > 0
-      ? `${upcomingLiabilitiesTotal.toLocaleString()} EGP (${upcomingBills.map(b => `${b.description}: ${b.amount}`).join(', ')})`
-      : '';
-
-    // Calculate Savings Context
-    const savingsGoals = await SavingsGoal.find({ userId: req.user._id });
-    const totalSaved = savingsGoals.reduce((sum, g) => sum + g.currentAmount, 0);
-    const totalTarget = savingsGoals.reduce((sum, g) => sum + g.targetAmount, 0);
-
-    // Helper to safely calculate progress
-    const getProgress = (current: number, target: number) => target > 0 ? current / target : 0;
-
-    const topGoals = savingsGoals
-      .sort((a, b) => getProgress(b.currentAmount, b.targetAmount) - getProgress(a.currentAmount, a.targetAmount))
-      .slice(0, 3)
-      .map(g => `${g.name}: ${g.currentAmount}/${g.targetAmount} (${Math.round(getProgress(g.currentAmount, g.targetAmount) * 100)}%)`)
-      .join(', ');
-
-    const savingsContext = savingsGoals.length > 0
-      ? `Total Saved: ${totalSaved.toLocaleString()} / ${totalTarget.toLocaleString()} EGP. Top Goals: ${topGoals}.`
-      : 'No active savings goals.';
+    const { totalSpent, totalIncome } = contextData;
+    const totalSpentReal = totalSpent;
+    const totalIncomeReal = totalIncome;
 
     // --- PERSISTENCE START ---
     let currentThreadId = threadId;
@@ -332,35 +228,16 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Calculate accurate monthly totals for Context
-    const monthlyStats = await Transaction.aggregate([
-      {
-        $match: {
-          user: req.user._id,
-          date: { $gte: startOfCurrentMonth },
-        },
-      },
-      {
-        $group: {
-          _id: '$type',
-          total: { $sum: '$amount' },
-        },
-      },
-    ]);
+    // Data for re-calculation after tools is already in contextData or refreshed below if needed
+    // Logic for refreshing totals is preserved below in the "Optimized Tool Execution" section
 
-    const totalSpentReal = monthlyStats.find((s) => s._id === TransactionType.EXPENSE)?.total || 0;
-    const totalIncomeReal = monthlyStats.find((s) => s._id === TransactionType.INCOME)?.total || 0;
+    // Restore Date Helpers for Lazy Loading Logic below
+    const startOfCurrentMonth = new Date();
+    startOfCurrentMonth.setDate(1);
+    startOfCurrentMonth.setHours(0, 0, 0, 0);
 
-    const systemInstruction = buildSystemInstruction(
-      transactions,
-      req.user.name,
-      req.user.budget,
-      peopleStats,
-      totalSpentReal,
-      totalIncomeReal,
-      upcomingLiabilitiesText,
-      savingsContext
-    );
+    const today = new Date();
+
 
     // Secure Logger Helper
     const secureLog = (label: string, data: any) => {

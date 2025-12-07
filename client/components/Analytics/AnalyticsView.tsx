@@ -9,6 +9,7 @@ import { TrendingUp, Calendar, PieChart as PieIcon, Users, AlertCircle, ChevronL
 import { motion, AnimatePresence } from 'framer-motion';
 import FunEquivalents from './FunEquivalents';
 import SavingsOverview from '../Chat/Tools/SavingsOverview';
+import InfographicGenerator from './InfographicGenerator';
 import { savingsApi } from '../../services/api';
 
 const AnalyticsView: React.FC = () => {
@@ -152,7 +153,12 @@ const AnalyticsView: React.FC = () => {
                         <ChevronRight size={20} className="text-gray-500 dark:text-gray-400" />
                     </button>
                 </div>
-            </div>
+            </div >
+
+            {/* AI Infographic Generator - Disabled: Requires paid API key for gemini-2.5-flash-image */}
+            {/* <div className="px-6">
+                <InfographicGenerator />
+            </div> */}
 
             {/* Fun Equivalents Section */}
             {totalExpense > 0 && (

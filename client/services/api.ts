@@ -233,4 +233,6 @@ export const aiApi = {
     api.post<ParsedTransactionResponse>('/ai/parse-text', { input }).then((res) => res.data),
   parseVoice: (audio: string) =>
     api.post<ParsedTransactionResponse>('/ai/parse-voice', { audio }).then((res) => res.data),
+  generateInfographic: () =>
+    api.post<{ image: string }>('/ai/generate-infographic').then((res) => res.data),
 };
