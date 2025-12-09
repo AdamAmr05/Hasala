@@ -39,15 +39,17 @@ const ThinkingIndicator: React.FC = () => {
                             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                             className="absolute inset-0 rounded-full border-2 border-purple-100 dark:border-purple-900 border-t-purple-500"
                         />
-                        <motion.div
-                            key={step}
-                            initial={{ scale: 0.5, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.5, opacity: 0 }}
-                            className="text-purple-500"
-                        >
-                            {steps[step].icon}
-                        </motion.div>
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={step}
+                                initial={{ scale: 0.5, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.5, opacity: 0 }}
+                                className="text-purple-500"
+                            >
+                                {steps[step].icon}
+                            </motion.div>
+                        </AnimatePresence>
                     </div>
 
                     {/* Text Carousel */}
