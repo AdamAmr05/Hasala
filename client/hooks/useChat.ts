@@ -80,6 +80,13 @@ export const useChat = ({ onAddTransaction }: UseChatProps) => {
 
     const handleNewChat = useCallback(() => {
         setActiveThreadId(null);
+        // Explicitly reset to welcome state (don't rely on useEffect when already null)
+        setMessages([{
+            id: 'welcome',
+            sender: ChatSender.AI,
+            text: "Ahlan! I'm Hasala. I can visualize your spending or help you add new expenses. Just tell me what you bought!",
+            timestamp: Date.now()
+        }]);
         setIsSidebarOpen(false);
     }, []);
 
@@ -130,7 +137,6 @@ export const useChat = ({ onAddTransaction }: UseChatProps) => {
                 // Mark as locally created to prevent the useEffect from reloading messages
                 locallyCreatedThreadRef.current = response.threadId;
                 setActiveThreadId(response.threadId);
-                loadThreads(); // Refresh list to show new thread title
             }
 
             const finalText =
@@ -154,6 +160,11 @@ export const useChat = ({ onAddTransaction }: UseChatProps) => {
             };
 
             setMessages((prev) => [...prev, aiMsg]);
+
+            // Refresh threads list AFTER message is added (avoids animation stutter)
+            if (!activeThreadId && response.threadId) {
+                loadThreads();
+            }
         } catch (error) {
             console.error(error);
             setMessages(prev => [...prev, {

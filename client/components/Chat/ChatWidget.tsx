@@ -40,7 +40,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   'Other': <MoreHorizontal size={18} />,
 };
 
-const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, data: propsData }) => {
+const ChatWidget: React.FC<ChatWidgetProps> = React.memo(({ type, transactions, budget, data: propsData }) => {
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
 
   // 1. Spending Chart Widget (Area Chart)
@@ -757,6 +757,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ type, transactions, budget, dat
   }
 
   return null;
-};
+});
 
 export default ChatWidget;
