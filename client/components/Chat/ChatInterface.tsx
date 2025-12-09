@@ -5,7 +5,8 @@ import { Sparkles, History } from 'lucide-react';
 import { useChat } from '../../hooks/useChat';
 import ChatInput from './ChatInput';
 import MessageBubble from './MessageBubble';
-import TypingIndicator from './TypingIndicator';
+import ThinkingIndicator from './ThinkingIndicator';
+import SuggestionButtons from './SuggestionButtons';
 
 interface ChatInterfaceProps {
   transactions: Transaction[];
@@ -34,14 +35,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   } = useChat({ onAddTransaction });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Scroll on new messages or typing
+  const scrollToTop = () => {
+    messagesContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Scroll to top for new chats, scroll to bottom for ongoing conversations
   useEffect(() => {
-    scrollToBottom();
+    if (messages.length === 1 && messages[0].id === 'welcome') {
+      scrollToTop();
+    } else {
+      scrollToBottom();
+    }
   }, [messages, isTyping]);
 
   return (
@@ -76,7 +86,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       />
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 pb-10 space-y-6 scroll-smooth no-scrollbar">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-6 pb-10 space-y-6 scroll-smooth no-scrollbar">
         {messages.map((msg) => (
           <MessageBubble
             key={msg.id}
@@ -86,7 +96,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           />
         ))}
 
-        {isTyping && <TypingIndicator />}
+        {/* Show suggestions only when there's just the welcome message */}
+        {messages.length === 1 && messages[0].id === 'welcome' && !isTyping && (
+          <SuggestionButtons onSelect={(question) => handleSend(question)} />
+        )}
+
+        {isTyping && <ThinkingIndicator />}
         <div ref={messagesEndRef} className="h-4" />
       </div>
 

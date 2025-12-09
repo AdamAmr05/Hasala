@@ -95,8 +95,9 @@ export const useChat = ({ onAddTransaction }: UseChatProps) => {
         }
     };
 
-    const handleSend = async () => {
-        if (!inputValue.trim()) return;
+    const handleSend = async (directMessage?: string) => {
+        const messageToSend = directMessage || inputValue;
+        if (!messageToSend.trim()) return;
 
         const previousMessages = [...messages];
 
@@ -106,7 +107,7 @@ export const useChat = ({ onAddTransaction }: UseChatProps) => {
         const userMsg: ChatMessage = {
             id: userMsgId,
             sender: ChatSender.USER,
-            text: inputValue,
+            text: messageToSend,
             timestamp: Date.now()
         };
 
