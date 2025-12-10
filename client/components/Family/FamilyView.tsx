@@ -174,40 +174,40 @@ const MemberCard: React.FC<{ member: FamilyMemberSummary; isExpanded: boolean; o
       {/* Main Row */}
       <button
         onClick={onToggle}
-        className="w-full p-4 flex items-center gap-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+        className="w-full p-4 flex items-center gap-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
       >
         {/* Avatar */}
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center text-primary font-bold text-lg">
+        <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center text-primary font-bold">
           {member.user.name.charAt(0).toUpperCase()}
         </div>
 
         {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-gray-900 dark:text-white truncate">{member.user.name}</h3>
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-semibold text-gray-900 dark:text-white">{member.user.name}</h3>
             {member.role === 'ADMIN' && (
-              <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-medium">
+              <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-medium shrink-0">
                 Admin
               </span>
             )}
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{member.insight}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{member.insight}</p>
         </div>
 
         {/* Status */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 shrink-0">
           <div className="text-right">
-            <p className="font-bold text-gray-900 dark:text-white">
+            <p className="font-bold text-gray-900 dark:text-white text-sm whitespace-nowrap">
               {member.totalSpent.toLocaleString()}
-              <span className="text-xs text-gray-400 ml-1">EGP</span>
+              <span className="text-[10px] text-gray-400 ml-0.5">EGP</span>
             </p>
-            <p className="text-xs text-gray-500">{Math.round(member.budgetPercentUsed)}% of budget</p>
+            <p className="text-[10px] text-gray-500 whitespace-nowrap">{Math.round(member.budgetPercentUsed)}% of budget</p>
           </div>
-          <div className={`p-2 rounded-full ${STATUS_CONFIG[member.status].bg}`}>
-            <StatusIcon size={18} className={STATUS_CONFIG[member.status].color} />
+          <div className={`p-1.5 rounded-full ${STATUS_CONFIG[member.status].bg}`}>
+            <StatusIcon size={16} className={STATUS_CONFIG[member.status].color} />
           </div>
           <ChevronRight
-            size={18}
+            size={16}
             className={`text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
           />
         </div>
@@ -379,9 +379,9 @@ const FamilyDetailView: React.FC<{ familyId: string; onBack: () => void }> = ({ 
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-white/60 dark:bg-gray-800/60 rounded-xl p-3 text-center">
             <p className="text-xs text-gray-500">Total Spent</p>
-            <p className="font-bold text-lg text-gray-900 dark:text-white">
+            <p className="font-bold text-base text-gray-900 dark:text-white">
               {data.members.reduce((sum, m) => sum + m.totalSpent, 0).toLocaleString()}
-              <span className="text-xs text-gray-400 ml-1">EGP</span>
+              <span className="text-[10px] text-gray-400 ml-0.5">EGP</span>
             </p>
           </div>
           <div className="bg-white/60 dark:bg-gray-800/60 rounded-xl p-3 text-center">
