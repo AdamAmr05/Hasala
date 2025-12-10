@@ -49,58 +49,45 @@ const CreateFamilyModal: React.FC<{ onClose: () => void; onSuccess: () => void }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-white dark:bg-[#1C1C1E] rounded-3xl p-6 shadow-xl"
-      >
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Create Family</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
-            <X size={20} className="text-gray-500" />
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
+      <div className="bg-white dark:bg-[#1C1C1E] w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-[slideUp_0.3s_ease-out]">
+        <h2 className="text-xl font-bold text-primary dark:text-white mb-4">Create Family</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Family Name
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Amr Family"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2C2C2E] text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-              autoFocus
-            />
+        {createMutation.error && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 text-red-600 text-sm rounded-xl font-medium flex items-start gap-2">
+            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+            {(createMutation.error as any)?.response?.data?.message || 'Failed to create family'}
           </div>
+        )}
 
-          {createMutation.error && (
-            <p className="text-red-500 text-sm text-center">
-              {(createMutation.error as any)?.response?.data?.message || 'Failed to create family'}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={!name.trim() || createMutation.isPending}
-            className="w-full py-3 px-4 bg-primary text-white font-semibold rounded-xl disabled:opacity-50 transition-all hover:bg-primary/90"
-          >
-            {createMutation.isPending ? 'Creating...' : 'Create Family'}
-          </button>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Family Name (e.g., Amr Family)"
+            className="w-full bg-gray-50 dark:bg-[#2C2C2E] border border-gray-200 dark:border-[#3A3A3C] rounded-xl px-4 py-3 text-primary dark:text-white font-semibold mb-4 focus:outline-none focus:border-primary dark:focus:border-accent-blue focus:ring-2 focus:ring-primary/10 dark:focus:ring-accent-blue/10 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+            autoFocus
+          />
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-3 bg-gray-100 dark:bg-[#2C2C2E] text-gray-600 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-[#3A3A3C] transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!name.trim() || createMutation.isPending}
+              className="flex-1 py-3 bg-primary dark:bg-white text-white dark:text-primary rounded-xl font-bold hover:bg-black/80 dark:hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {createMutation.isPending ? 'Creating...' : 'Create'}
+            </button>
+          </div>
         </form>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 };
 
@@ -129,57 +116,45 @@ const JoinFamilyModal: React.FC<{ onClose: () => void; onSuccess: () => void }> 
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-white dark:bg-[#1C1C1E] rounded-3xl p-6 shadow-xl"
-      >
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Join Family</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
-            <X size={20} className="text-gray-500" />
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
+      <div className="bg-white dark:bg-[#1C1C1E] w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-[slideUp_0.3s_ease-out]">
+        <h2 className="text-xl font-bold text-primary dark:text-white mb-4">Join Family</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Invite Code
-            </label>
-            <input
-              type="text"
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="Enter code (e.g., ABC123)"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2C2C2E] text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent font-mono text-center text-lg tracking-widest"
-              autoFocus
-              maxLength={8}
-            />
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 text-red-600 text-sm rounded-xl font-medium flex items-start gap-2">
+            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+            {error}
           </div>
+        )}
 
-          {error && (
-            <p className="text-red-500 text-sm text-center">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={!code.trim() || joinMutation.isPending}
-            className="w-full py-3 px-4 bg-primary text-white font-semibold rounded-xl disabled:opacity-50 transition-all hover:bg-primary/90"
-          >
-            {joinMutation.isPending ? 'Joining...' : 'Join Family'}
-          </button>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            placeholder="Enter Invite Code"
+            className="w-full bg-gray-50 dark:bg-[#2C2C2E] border border-gray-200 dark:border-[#3A3A3C] rounded-xl px-4 py-3 text-primary dark:text-white font-semibold mb-4 focus:outline-none focus:border-primary dark:focus:border-accent-blue focus:ring-2 focus:ring-primary/10 dark:focus:ring-accent-blue/10 transition-all uppercase tracking-widest placeholder:text-gray-400 dark:placeholder:text-gray-500"
+            autoFocus
+          />
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => { onClose(); setError(''); }}
+              className="flex-1 py-3 bg-gray-100 dark:bg-[#2C2C2E] text-gray-600 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-[#3A3A3C] transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!code.trim() || joinMutation.isPending}
+              className="flex-1 py-3 bg-primary dark:bg-white text-white dark:text-primary rounded-xl font-bold hover:bg-black/80 dark:hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {joinMutation.isPending ? 'Joining...' : 'Join'}
+            </button>
+          </div>
         </form>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 };
 
