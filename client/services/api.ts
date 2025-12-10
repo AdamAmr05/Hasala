@@ -236,3 +236,54 @@ export const aiApi = {
   generateInfographic: () =>
     api.post<{ image: string }>('/ai/generate-infographic').then((res) => res.data),
 };
+
+// ============================================================================
+// Family API
+// ============================================================================
+
+export interface FamilyCategoryBreakdown {
+  name: string;
+  amount: number;
+}
+
+export interface FamilyMemberSummary {
+  user: {
+    _id: string;
+    name: string;
+  };
+  role: 'ADMIN' | 'MEMBER';
+  joinedAt: string;
+  totalSpent: number;
+  totalIncome: number;
+  budget: number;
+  budgetPercentUsed: number;
+  topCategory: FamilyCategoryBreakdown | null;
+  categoryBreakdown: FamilyCategoryBreakdown[];
+  status: 'safe' | 'warning' | 'critical';
+  insight: string;
+}
+
+export interface FamilyGroup {
+  _id: string;
+  name: string;
+  inviteCode: string;
+  members: Array<{
+    user: { _id: string; name: string; email?: string } | string;
+    role: 'ADMIN' | 'MEMBER';
+    joinedAt: string;
+  }>;
+}
+
+export interface FamilyDetailsResponse {
+  family: FamilyGroup;
+  members: FamilyMemberSummary[];
+}
+
+export const familyApi = {
+  list: () => api.get<FamilyGroup[]>('/family').then((res) => res.data),
+  create: (name: string) => api.post<FamilyGroup>('/family', { name }).then((res) => res.data),
+  join: (inviteCode: string) => api.post<FamilyGroup>('/family/join', { inviteCode }).then((res) => res.data),
+  getDetails: (id: string) => api.get<FamilyDetailsResponse>(`/family/${id}`).then((res) => res.data),
+  leave: (id: string) => api.post<{ message: string }>(`/family/${id}/leave`).then((res) => res.data),
+};
+

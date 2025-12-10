@@ -239,6 +239,12 @@ const App: React.FC = () => {
                   </div>
                 } />
 
+                <Route path="/family" element={
+                  <div className="animate-[fadeIn_0.3s_ease-out]">
+                    <FamilyView />
+                  </div>
+                } />
+
                 <Route path="/groups" element={<GroupsPage />} />
                 <Route path="/groups/:id" element={<GroupView />} />
                 <Route path="/settings" element={

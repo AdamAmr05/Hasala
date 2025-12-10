@@ -135,25 +135,28 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout, onBack }) =
                     <RecurringExpensesList />
                 </motion.div>
 
-                {/* Family Sync (Placeholder) */}
+                {/* Family Sync */}
                 <motion.div variants={itemVariants}>
                     <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3 ml-1">Family & Household</h3>
-                    <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-[#2C2C2E] relative overflow-hidden">
-                        <div className="absolute top-0 right-0 bg-accent-blue/10 text-accent-blue text-[10px] font-bold px-2 py-1 rounded-bl-lg">
-                            COMING SOON
-                        </div>
-                        <div className="flex items-start gap-4">
-                            <div className="p-3 bg-blue-50 dark:bg-white/10 rounded-xl text-accent-blue dark:text-white">
-                                <Users size={24} />
+                    <button
+                        onClick={() => navigate('/family')}
+                        className="w-full bg-white dark:bg-[#1C1C1E] rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-[#2C2C2E] text-left hover:shadow-md transition-all"
+                    >
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-start gap-4">
+                                <div className="p-3 bg-blue-50 dark:bg-white/10 rounded-xl text-accent-blue dark:text-white">
+                                    <Users size={24} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-gray-900 dark:text-white">Family Sync</h4>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                                        Coordinate spending with your household.
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h4 className="font-bold text-gray-900 dark:text-white">Family Sync</h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
-                                    Coordinate spending with your household without sharing everything.
-                                </p>
-                            </div>
+                            <ChevronRight size={20} className="text-gray-400 dark:text-gray-500" />
                         </div>
-                    </div>
+                    </button>
                 </motion.div>
 
                 {/* Preferences */}
@@ -176,7 +179,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout, onBack }) =
                         </div>
 
                         {/* Theme Toggle */}
-                        <button 
+                        <button
                             onClick={toggleTheme}
                             className="p-4 flex items-center justify-between w-full"
                         >
@@ -187,7 +190,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout, onBack }) =
                                 <span className="font-medium text-gray-700 dark:text-gray-200">Dark Mode</span>
                             </div>
                             <div className={`w-11 h-6 rounded-full relative transition-colors ${isDark ? 'bg-white' : 'bg-gray-200'}`}>
-                                <motion.div 
+                                <motion.div
                                     className={`w-5 h-5 rounded-full absolute top-0.5 shadow-sm ${isDark ? 'bg-primary' : 'bg-white'}`}
                                     animate={{ left: isDark ? '22px' : '2px' }}
                                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}

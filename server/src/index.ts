@@ -75,6 +75,9 @@ app.use('/api/groups', groupRoutes);
 import savingsRoutes from './routes/savingsRoutes';
 app.use('/api/savings', savingsRoutes);
 
+import familyRoutes from './routes/familyRoutes';
+app.use('/api/family', familyRoutes);
+
 app.get('/', (req, res) => {
   res.send('Hasala API is running...');
 });
