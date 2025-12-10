@@ -85,6 +85,12 @@ const CreateFamilyModal: React.FC<{ onClose: () => void; onSuccess: () => void }
             />
           </div>
 
+          {createMutation.error && (
+            <p className="text-red-500 text-sm text-center">
+              {(createMutation.error as any)?.response?.data?.message || 'Failed to create family'}
+            </p>
+          )}
+
           <button
             type="submit"
             disabled={!name.trim() || createMutation.isPending}

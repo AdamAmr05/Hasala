@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IFamilyGroup extends Document {
     name: string;
     members: {
-        user: mongoose.Schema.Types.ObjectId;
+        user: mongoose.Types.ObjectId;
         role: 'ADMIN' | 'MEMBER';
         joinedAt: Date;
     }[];

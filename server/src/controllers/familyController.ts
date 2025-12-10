@@ -147,7 +147,7 @@ export const createFamily = async (req: AuthRequest, res: Response) => {
         return res.status(201).json(family);
     } catch (error) {
         console.error('Create family error:', error);
-        return res.status(500).json({ message: (error as Error).message });
+        return res.status(500).json({ message: 'Internal server error' });
     }
 };
 
@@ -168,7 +168,7 @@ export const getUserFamilies = async (req: AuthRequest, res: Response) => {
         return res.json(families);
     } catch (error) {
         console.error('Get families error:', error);
-        return res.status(500).json({ message: (error as Error).message });
+        return res.status(500).json({ message: 'Internal server error' });
     }
 };
 
@@ -209,7 +209,7 @@ export const joinFamily = async (req: AuthRequest, res: Response) => {
             user: req.user._id,
             role: 'MEMBER',
             joinedAt: new Date(),
-        } as any);
+        });
 
         await family.save();
 
@@ -220,7 +220,7 @@ export const joinFamily = async (req: AuthRequest, res: Response) => {
         return res.json(populated);
     } catch (error) {
         console.error('Join family error:', error);
-        return res.status(500).json({ message: (error as Error).message });
+        return res.status(500).json({ message: 'Internal server error' });
     }
 };
 
@@ -340,7 +340,7 @@ export const getFamilyDetails = async (req: AuthRequest, res: Response) => {
         return res.json(response);
     } catch (error) {
         console.error('Get family details error:', error);
-        return res.status(500).json({ message: (error as Error).message });
+        return res.status(500).json({ message: 'Internal server error' });
     }
 };
 
@@ -393,6 +393,6 @@ export const leaveFamily = async (req: AuthRequest, res: Response) => {
         return res.json({ message: 'Successfully left the family' });
     } catch (error) {
         console.error('Leave family error:', error);
-        return res.status(500).json({ message: (error as Error).message });
+        return res.status(500).json({ message: 'Internal server error' });
     }
 };
