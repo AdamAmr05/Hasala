@@ -310,7 +310,7 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
     const actionCalls: ToolCall[] = [];
     const viewCalls: ToolCall[] = [];
 
-    // 1. Split Calls
+    // 1. Split Calls, if the tool name is addTransaction it is an action call, meaning it will update the database, otherwise it is a view call, meaning it will only update the context data or "get hydrated" (reads from the db or gets data injected into it)
     rawToolCalls.forEach(call => {
       if (!call.name) return; // Skip if no name
 
@@ -377,7 +377,7 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       const needsTrend = viewCalls.some(c => c.name === 'renderSpendingChart');
       const needsPeople = viewCalls.some(c => c.name === 'renderPeopleBreakdown');
 
-      // Lazy Calculations
+      // Lazy Calculations, lazy just means we calculate only what we need, and not calculate the numbers for each chart at once..
       let categoryData: any[] = [];
       if (needsCategory) {
         const categoryStats = await Transaction.aggregate([
@@ -424,7 +424,6 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
       let peopleData: any[] = [];
       if (needsPeople) {
         // Re-fetch people map if needed, or just use the one from context if no new people-related transactions
-        // For simplicity and accuracy, let's re-aggregate if requested
         const peopleStats = await Transaction.aggregate([
           { $match: { user: req.user._id, date: { $gte: startOfCurrentMonth }, relatedPerson: { $exists: true, $ne: null } } },
           { $group: { _id: '$relatedPerson', total: { $sum: '$amount' } } },

@@ -111,18 +111,30 @@ export const FinancialContextService = {
         if (remainingOverBudget < 0) healthStatus = 'Critical (Over Budget Goal)';
         else if (remainingOverBudget < effectiveBudget * 0.2) healthStatus = 'Low (Caution)';
 
-        // Top Category
-        const categoryTotals = transactions
-            .filter(t => t.type === TransactionType.EXPENSE)
-            .reduce((acc, t) => {
-                acc[t.category] = (acc[t.category] || 0) + t.amount;
-                return acc;
-            }, {} as Record<string, number>);
+        // Top Category (This Month)
+        // NOTE: Previously this was derived from the last 20 transactions, which can drift away
+        // from the monthly totals above. We compute it from the current month's expenses to keep
+        // the injected AI context consistent and trustworthy.
+        const monthlyTopCategory = await Transaction.aggregate([
+            {
+                $match: {
+                    user: user._id,
+                    type: TransactionType.EXPENSE,
+                    date: { $gte: startOfCurrentMonth },
+                },
+            },
+            {
+                $group: {
+                    _id: '$category',
+                    total: { $sum: '$amount' },
+                },
+            },
+            { $sort: { total: -1 } },
+            { $limit: 1 },
+        ]);
 
-        const topCategory = Object.entries(categoryTotals)
-            .sort(([, a], [, b]) => b - a)[0];
-        const topCategoryName = topCategory ? topCategory[0] : 'None';
-        const topCategoryAmount = topCategory ? topCategory[1] : 0;
+        const topCategoryName = monthlyTopCategory[0]?._id || 'None';
+        const topCategoryAmount = monthlyTopCategory[0]?.total || 0;
 
         // Projections
         const dayOfMonth = today.getDate();

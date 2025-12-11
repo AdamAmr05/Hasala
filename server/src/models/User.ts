@@ -32,14 +32,14 @@ const UserSchema: Schema = new Schema({
 });
 
 // Hash password before saving
-UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    next();
-  }
+UserSchema.pre('save', async function (this: IUser) {
+  // Only hash when the password field is newly set or changed.
+  // This prevents re-hashing an already-hashed password during profile updates
+  // (e.g., budget/email/name changes).
+  if (!this.isModified('password')) return;
 
-  const user = this as unknown as IUser;
   const salt = await bcrypt.genSalt(10);
-  user.password = await bcrypt.hash(user.password, salt);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
 // Method to check password
