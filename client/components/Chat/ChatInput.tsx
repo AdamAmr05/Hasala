@@ -22,7 +22,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ value, onChange, onSend, disabled
                     disabled={disabled}
                 />
                 <button
-                    onClick={onSend}
+                    onClick={() => onSend()}
                     disabled={!value.trim() || disabled}
                     className="bg-accent-blue text-white p-3 rounded-full shadow-lg shadow-blue-500/30 hover:bg-blue-600 disabled:opacity-50 disabled:shadow-none transition-all transform hover:scale-105 active:scale-95"
                 >

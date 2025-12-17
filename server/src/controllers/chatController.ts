@@ -20,6 +20,7 @@ import {
   renderIncomeOverviewTool,
   renderRecurringExpensesTool,
   renderSavingsOverviewTool,
+  GENERATION_CONFIG,
 } from '../utils/geminiConfig';
 import { TransactionService } from '../services/transactionService';
 import { FinancialContextService } from '../services/financialContextService'; // Imported Service
@@ -289,7 +290,10 @@ export const chatWithAI = async (req: AuthRequest, res: Response) => {
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents,
-      config,
+      config: {
+        ...config,
+        ...GENERATION_CONFIG,
+      },
     });
 
     secureLog('AI Response', response);

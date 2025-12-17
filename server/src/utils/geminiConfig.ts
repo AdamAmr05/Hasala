@@ -1,7 +1,7 @@
 import { Type, FunctionDeclaration, Schema } from '@google/genai';
 import { Category, TransactionType } from '../models/Transaction';
 
-export const MODEL_NAME = process.env.GEMINI_MODEL || 'gemini-flash-latest';
+export const MODEL_NAME = process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
 
 export const TRANSACTION_SCHEMA: Schema = {
   type: Type.OBJECT,
@@ -102,5 +102,9 @@ export const renderSavingsOverviewTool: FunctionDeclaration = {
   name: 'renderSavingsOverview',
   description: 'Display a visual summary of the user’s savings goals, total saved, and progress.',
   parameters: { type: Type.OBJECT, properties: {} },
+};
+
+export const GENERATION_CONFIG = {
+  thinkingLevel: 'HIGH', // Options: 'LOW', 'HIGH' (SDK only supports these two)
 };
 
