@@ -80,7 +80,7 @@ Database: MongoDB (Mongoose).
 
 Role: Flexible document storage for complex transaction metadata and chat history.
 
-AI Core: Gemini 2.5 Flash-Lite.
+AI Core: Gemini 3 Flash.
 
 Why: Best price-performance ratio for structured JSON output.
 
@@ -294,7 +294,7 @@ Backend: Node.js + Express.
 
 Database: MongoDB (Mongoose).
 
-AI Model: Gemini 2.5 Flash-Lite (chosen for lowest cost-per-token ratio for structured output).
+AI Model: Gemini 3 Flash (chosen for lowest cost-per-token ratio for structured output).
 
 Core Data Models
 
