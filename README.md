@@ -137,4 +137,53 @@ const RecurringTransactionSchema = new mongoose.Schema({
 
 ---
 
+## 6. Getting Started
+
+### Prerequisites
+
+- **Node.js** (v18+)
+- **MongoDB** (local or Atlas connection string)
+
+### Environment Variables
+
+Create a `.env` file in the `server/` directory:
+
+```bash
+MONGODB_URI=mongodb://localhost:27017/hasala  # or your MongoDB Atlas URI
+JWT_SECRET=your-secure-secret-key
+GEMINI_API_KEY=your-gemini-api-key
+```
+
+**Optional** (client-side, only if not using defaults): Create `.env` in `client/`:
+
+```bash
+VITE_API_BASE_URL=http://localhost:5001/api
+```
+
+### Installation & Running
+
+**1. Install dependencies:**
+
+```bash
+# Server
+cd server && npm install
+
+# Client (in a new terminal)
+cd client && npm install
+```
+
+**2. Start the application:**
+
+```bash
+# Terminal 1 - Start server (runs on port 5001)
+cd server && npm run dev
+
+# Terminal 2 - Start client (runs on port 5173)
+cd client && npm run dev
+```
+
+**3. Open** [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
 **Note:** These schemas will likely be iterated on, this is not final.
