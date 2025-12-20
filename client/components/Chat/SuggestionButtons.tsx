@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { TrendingUp, Lightbulb, PiggyBank, Sparkles } from 'lucide-react';
 
 interface SuggestionButtonsProps {
@@ -36,11 +35,8 @@ const SuggestionButtons: React.FC<SuggestionButtonsProps> = ({ onSelect }) => {
                 Try asking
             </p>
             {suggestions.map((suggestion, index) => (
-                <motion.button
+                <button
                     key={index}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
                     onClick={() => onSelect(suggestion.text)}
                     className="w-full max-w-sm flex items-center gap-3 px-4 py-3 rounded-2xl 
             bg-white dark:bg-[#1C1C1E] 
@@ -61,7 +57,7 @@ const SuggestionButtons: React.FC<SuggestionButtonsProps> = ({ onSelect }) => {
                             {suggestion.description}
                         </p>
                     </div>
-                </motion.button>
+                </button>
             ))}
         </div>
     );
