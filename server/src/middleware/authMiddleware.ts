@@ -7,7 +7,13 @@ export interface AuthRequest extends Request {
 }
 
 export const protect = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const token = req.cookies.jwt;
+  // Check for token in cookies (web) or Authorization header (mobile)
+  let token = req.cookies.jwt;
+
+  // If no cookie, check Authorization header for Bearer token
+  if (!token && req.headers.authorization?.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
 
   if (token) {
     try {

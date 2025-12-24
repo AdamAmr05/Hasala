@@ -3,19 +3,23 @@ import jwt from 'jsonwebtoken';
 import User, { IUser } from '../models/User';
 import { AuthRequest } from '../middleware/authMiddleware';
 
-const generateToken = (res: Response, userId: string) => {
+const generateToken = (res: Response, userId: string): string => {
   const token = jwt.sign({ userId }, process.env.JWT_SECRET!, {
     expiresIn: '30d',
   });
 
   const isProduction = process.env.NODE_ENV === 'production';
 
+  // Set cookie for web clients
   res.cookie('jwt', token, {
     httpOnly: true,
     secure: isProduction, // Only send cookie over HTTPS in production
     sameSite: isProduction ? 'strict' : 'lax', // Stricter in production
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
+
+  // Return token for mobile clients
+  return token;
 };
 
 // @desc    Register a new user
@@ -39,12 +43,13 @@ export const registerUser = async (req: Request, res: Response) => {
     });
 
     if (user) {
-      generateToken(res, (user._id as unknown) as string);
+      const token = generateToken(res, (user._id as unknown) as string);
       res.status(201).json({
         _id: user._id,
         name: user.name,
         email: user.email,
         budget: user.budget,
+        token, // Include token for mobile clients
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
@@ -64,12 +69,13 @@ export const loginUser = async (req: Request, res: Response) => {
     const user = await User.findOne({ email });
 
     if (user && (await user.matchPassword(password))) {
-      generateToken(res, (user._id as unknown) as string);
+      const token = generateToken(res, (user._id as unknown) as string);
       res.json({
         _id: user._id,
         name: user.name,
         email: user.email,
         budget: user.budget,
+        token, // Include token for mobile clients
       });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });

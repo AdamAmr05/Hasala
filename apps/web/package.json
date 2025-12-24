@@ -1,7 +1,7 @@
 {
-  "name": "hasala",
+  "name": "@hasala/web",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hasala/shared": "*",
     "@google/genai": "^1.30.0",
     "@tanstack/react-query": "^5.90.10",
     "axios": "^1.13.2",

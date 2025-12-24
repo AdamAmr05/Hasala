@@ -23,7 +23,7 @@ export const getTransactions = async (req: AuthRequest, res: Response) => {
 
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
-    const month = parseInt(req.query.month as string); // 0-11
+    const month = parseInt(req.query.month as string); // 0-11 (JavaScript month format)
     const year = parseInt(req.query.year as string);
 
     const query: any = { user: req.user?._id };
