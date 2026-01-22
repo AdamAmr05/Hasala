@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply bg-background text-primary overflow-hidden;
+    }
+}
+
+.slide-content {
+    perspective: 1000px;
+}

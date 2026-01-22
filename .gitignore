@@ -30,3 +30,9 @@ dist-ssr
 *.njsproj
 *.sln
 voice_data.txt
+
+# Presentation Assets
+presentation/assets/videos/*.mp4
+presentation/assets/videos/*.mov
+presentation/assets/screenshots/*.png
+presentation/assets/screenshots/*.jpg

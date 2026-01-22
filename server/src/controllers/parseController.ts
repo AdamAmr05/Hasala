@@ -94,7 +94,7 @@ export const parseTransactionVoice = async (req: AuthRequest, res: Response) => 
             role: 'user',
             parts: [
               { inlineData: { mimeType: 'audio/webm', data: audio.split(',')[1] || audio } },
-              { text: `Extract ALL transactions (amount, description, category, type, relatedPerson) as JSON. Default to EGP currency if not specified. ${peopleContext}` },
+              { text: `Extract ALL transactions (amount, description, category, type, relatedPerson) as JSON. Default to EGP currency if not specified. Always translate the description to English. ${peopleContext}` },
             ],
           },
         ];
