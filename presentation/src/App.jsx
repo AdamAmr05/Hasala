@@ -9,6 +9,7 @@ import S1_Poster from './slides/S1_Intro';
 import S2_VoiceInput from './slides/S2_VoiceInput';
 import S3_Splitting from './slides/S3_Splitting';
 import S4_Management from './slides/S4_Management';
+import S4b_Family from './slides/S4b_Family';
 import S5_Analytics from './slides/S5_Analytics';
 import S6_Savings from './slides/S6_Savings';
 import S7_Learning from './slides/S7_Learning';
@@ -21,9 +22,10 @@ const SLIDES = [
     { component: S0_Title, title: 'Title' },
     { component: S1_Poster, title: 'Poster' },
     { component: S2_VoiceInput, title: 'Voice Input' },
-    { component: S3_Splitting, title: 'Splitting' },
-    { component: S4_Management, title: 'Management' },
     { component: S5_Analytics, title: 'Analytics' },
+    { component: S4_Management, title: 'Management' },
+    { component: S4b_Family, title: 'Family' },
+    { component: S3_Splitting, title: 'Splitting' },
     { component: S6_Savings, title: 'Savings' },
     { component: S7_Learning, title: 'Learning' },
     { component: S8_AIChat, title: 'AI Chat' },
@@ -157,8 +159,8 @@ function App() {
                                 key={index}
                                 onClick={() => !isAnimating && setCurrentSlide(index)}
                                 className={`h-1.5 rounded-full transition-all duration-300 ${index === currentSlide
-                                        ? 'w-4 bg-white'
-                                        : 'w-1.5 bg-white/30 hover:bg-white/60'
+                                    ? 'w-4 bg-white'
+                                    : 'w-1.5 bg-white/30 hover:bg-white/60'
                                     }`}
                             />
                         ))}

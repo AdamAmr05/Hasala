@@ -82,7 +82,7 @@ export default function S8_AIChat({ isActive }) {
                 <div className="rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 bg-black">
                     <video
                         ref={videoRef}
-                        src="/assets/videos/AI chat hasala demo.mp4"
+                        src="/assets/videos/AI demo hasala.mp4"
                         className="h-[58vh] w-auto block transform scale-[1.01]"
                         loop
                         muted
@@ -91,17 +91,7 @@ export default function S8_AIChat({ isActive }) {
                 </div>
             </div>
 
-            <div className="mt-6 flex gap-4">
-                {['LLM Queries Data', 'Streaming Responses', 'Inline Charts'].map((feature, i) => (
-                    <div
-                        key={i}
-                        className="px-4 py-2 bg-white/80 rounded-full shadow text-sm font-medium text-gray-600 flex items-center gap-2"
-                    >
-                        <div className="w-1.5 h-1.5 rounded-full bg-accent-blue" />
-                        {feature}
-                    </div>
-                ))}
-            </div>
+
         </div>
     );
 }
