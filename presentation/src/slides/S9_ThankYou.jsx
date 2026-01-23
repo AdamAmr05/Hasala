@@ -35,7 +35,7 @@ export default function S9_ThankYou({ isActive }) {
     return (
         <div ref={containerRef} className="h-full w-full flex flex-col items-center justify-center p-8 bg-gradient-to-b from-background to-accent-blue/5">
             <div ref={logoRef} className="mb-8">
-                <h1 className="text-7xl font-bold bg-gradient-to-r from-accent-blue via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                <h1 className="text-7xl font-bold bg-gradient-to-r from-green-400 via-emerald-500 via-orange-400 to-pink-500 bg-clip-text text-transparent">
                     Hasala
                 </h1>
                 <p className="text-center text-2xl text-gray-400 mt-2 font-arabic">حصالة</p>
@@ -43,7 +43,7 @@ export default function S9_ThankYou({ isActive }) {
 
             <div ref={textRef} className="text-center mb-16 max-w-2xl">
                 <p className="text-2xl text-gray-600 mb-2">
-                    AI-Powered Finance for Egyptian Students
+                    AI-Powered Finance for Everyone
                 </p>
             </div>
 
