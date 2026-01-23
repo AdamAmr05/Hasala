@@ -46,10 +46,14 @@ function App() {
             switch (e.key) {
                 case 'ArrowRight':
                 case ' ':
+                case 'PageDown':
+                case 'ArrowDown':
                     e.preventDefault();
                     goToNext();
                     break;
                 case 'ArrowLeft':
+                case 'PageUp':
+                case 'ArrowUp':
                     e.preventDefault();
                     goToPrev();
                     break;
