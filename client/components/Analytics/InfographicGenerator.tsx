@@ -13,7 +13,7 @@ const InfographicGenerator: React.FC = () => {
         setLoading(true);
 
         try {
-            // Generate Image using Gemini 2.5 Flash Image (No extra key required)
+            // Generate image using Gemini image model
             const response = await aiApi.generateInfographic();
 
             if (response && response.image) {
@@ -58,7 +58,7 @@ const InfographicGenerator: React.FC = () => {
                                 </div>
                             </div>
                             <div className="px-4 py-2 bg-gray-50 dark:bg-white/5 rounded-full text-xs font-bold text-gray-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                                Gemini 2.5 Flash
+                                AI Infographic
                             </div>
                         </button>
                         {error && (
@@ -71,9 +71,9 @@ const InfographicGenerator: React.FC = () => {
                     // LOADING STATE
                     <motion.div
                         key="loading"
-                        initial={{ opacity: 0, height: 100 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="relative bg-white dark:bg-[#1C1C1E] rounded-[2rem] p-8 text-center shadow-sm border border-gray-100 dark:border-[#2C2C2E]"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="relative bg-white dark:bg-[#1C1C1E] rounded-[2rem] p-8 text-center shadow-sm border border-gray-100 dark:border-[#2C2C2E] min-h-[170px]"
                     >
                         <div className="flex flex-col items-center justify-center">
                             <div className="w-16 h-16 mb-4 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">

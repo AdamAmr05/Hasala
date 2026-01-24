@@ -155,10 +155,10 @@ const AnalyticsView: React.FC = () => {
                 </div>
             </div >
 
-            {/* AI Infographic Generator - Disabled: Requires paid API key for gemini-2.5-flash-image */}
-            {/* <div className="px-6">
+            {/* AI Infographic Generator */}
+            <div className="px-6">
                 <InfographicGenerator />
-            </div> */}
+            </div>
 
             {/* Fun Equivalents Section */}
             {totalExpense > 0 && (

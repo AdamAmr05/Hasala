@@ -40,7 +40,7 @@ export default function S0_Title({ isActive }) {
                 ref={taglineRef}
                 className="mt-8 text-xl text-gray-500"
             >
-                AI-Powered Finance for Egyptian Students
+                AI-Powered Finance for Everyone
             </p>
         </div>
     );

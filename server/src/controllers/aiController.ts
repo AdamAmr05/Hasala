@@ -22,18 +22,20 @@ export const generateInfographic = async (req: AuthRequest, res: Response) => {
 
         // 2. Wrap data in a VISUAL prompt
         const prompt = `
-      Create a visually stunning, vertically vivid minimalist infographic summarizing this financial data.
-      Make it look like a high-end fintech dashboard summary (like Apple Card or Revolut).
-      Focus on the "Health Status" and "Top Spending" and "Projections".
-      Use a dark mode aesthetic with neon accents (green for good, red/orange for warning).
-      Do not include text that is too small. Keep it bold and punchy.
-      
+      Create a clean, minimalist FINANCIAL INFOGRAPHIC in landscape 16:9.
+      Style: high-end fintech dashboard (Apple Card/Revolut). Elegant, calm, and readable.
+      Color: light, warm off-white background with subtle gradients; rich but soft accents (teal/coral/indigo), no neon, no glow.
+      Layout: 3–4 panels in a grid, plenty of whitespace, consistent typography.
+      Content focus: Health Status, Top Spending, Projections.
+      Charts only (no photos/illustrations). Use clear labels and bold, readable text.
+      Avoid clutter and tiny text.
+
       DATA CONTEXT:
       ${JSON.stringify(contextData, null, 2)}
     `;
 
-        // 3. Call Gemini 2.5 Flash Image
-        const model = 'gemini-2.5-flash-image';
+        // 3. Call Gemini 3 Pro Image (Preview)
+        const model = 'gemini-3-pro-image-preview';
 
         console.log(`[InfoGen] Generating infographic with model: ${model}`);
 
@@ -46,7 +48,13 @@ export const generateInfographic = async (req: AuthRequest, res: Response) => {
                         parts: [{ text: prompt }],
                     },
                 ],
-                // Note: No responseMimeType needed. The image model returns image data in inline parts automatically.
+                config: {
+                    responseModalities: ['IMAGE'],
+                    imageConfig: {
+                        aspectRatio: '16:9',
+                        imageSize: '2K',
+                    },
+                },
             });
 
             if (!response || !response.candidates || !response.candidates[0]?.content?.parts?.[0]?.inlineData) {
