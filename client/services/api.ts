@@ -233,8 +233,8 @@ export const aiApi = {
     api.post<ParsedTransactionResponse>('/ai/parse-text', { input }).then((res) => res.data),
   parseVoice: (audio: string) =>
     api.post<ParsedTransactionResponse>('/ai/parse-voice', { audio }).then((res) => res.data),
-  generateInfographic: () =>
-    api.post<{ image: string }>('/ai/generate-infographic').then((res) => res.data),
+  generateInfographic: (params?: { month?: number; year?: number; timezone?: string }) =>
+    api.post<{ image: string }>('/ai/generate-infographic', params).then((res) => res.data),
 };
 
 // ============================================================================
@@ -286,4 +286,3 @@ export const familyApi = {
   getDetails: (id: string) => api.get<FamilyDetailsResponse>(`/family/${id}`).then((res) => res.data),
   leave: (id: string) => api.post<{ message: string }>(`/family/${id}/leave`).then((res) => res.data),
 };
-

@@ -22,23 +22,57 @@ export interface FinancialContextData {
     currency: string;
 }
 
+type FinancialContextOptions = {
+    month?: number; // 0-based (0 = Jan)
+    year?: number;
+    timezone?: string;
+};
+
+const getTimeZoneParts = (date: Date, timezone: string) => {
+    const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+    }).formatToParts(date);
+
+    const map = new Map(parts.filter(p => p.type !== 'literal').map(p => [p.type, p.value]));
+    return {
+        year: Number(map.get('year')),
+        month: Number(map.get('month')), // 1-based
+        day: Number(map.get('day')),
+    };
+};
+
 export const FinancialContextService = {
-    buildFinancialContextData: async (user: IUser): Promise<FinancialContextData> => {
-        // 1. Fetch Transactions (Context: Last 20, plus specific month data)
+    buildFinancialContextData: async (user: IUser, options?: FinancialContextOptions): Promise<FinancialContextData> => {
+        const timezone = options?.timezone || 'UTC';
+        const nowParts = getTimeZoneParts(new Date(), timezone);
+        const resolvedMonth = Number.isInteger(options?.month) ? (options!.month as number) : (nowParts.month - 1);
+        const resolvedYear = Number.isInteger(options?.year) ? (options!.year as number) : nowParts.year;
+        const month = resolvedMonth >= 0 && resolvedMonth <= 11 ? resolvedMonth : (nowParts.month - 1);
+        const year = resolvedYear > 1900 ? resolvedYear : nowParts.year;
+
+        // 1. Fetch Transactions (Context: Last 20)
         const transactions = await Transaction.find({ user: user._id })
             .sort({ date: -1 })
             .limit(20);
 
-        const startOfCurrentMonth = new Date();
-        startOfCurrentMonth.setDate(1);
-        startOfCurrentMonth.setHours(0, 0, 0, 0);
+        const monthMatchExpr = {
+            $expr: {
+                $and: [
+                    { $eq: [{ $year: { date: '$date', timezone } }, year] },
+                    { $eq: [{ $month: { date: '$date', timezone } }, month + 1] },
+                ],
+            },
+        };
 
         // Monthly Stats Aggregation
         const monthlyStats = await Transaction.aggregate([
             {
                 $match: {
                     user: user._id,
-                    date: { $gte: startOfCurrentMonth },
+                    ...monthMatchExpr,
                 },
             },
             {
@@ -55,8 +89,8 @@ export const FinancialContextService = {
         // 2. People Context
         const monthlyPeopleTransactions = await Transaction.find({
             user: user._id,
-            date: { $gte: startOfCurrentMonth },
             relatedPerson: { $exists: true, $ne: null },
+            ...monthMatchExpr,
         }).select('relatedPerson amount');
 
         const peopleMap = monthlyPeopleTransactions.reduce((acc, t) => {
@@ -120,7 +154,7 @@ export const FinancialContextService = {
                 $match: {
                     user: user._id,
                     type: TransactionType.EXPENSE,
-                    date: { $gte: startOfCurrentMonth },
+                    ...monthMatchExpr,
                 },
             },
             {
@@ -137,8 +171,9 @@ export const FinancialContextService = {
         const topCategoryAmount = monthlyTopCategory[0]?.total || 0;
 
         // Projections
-        const dayOfMonth = today.getDate();
-        const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const isCurrentMonth = (month + 1) === nowParts.month && year === nowParts.year;
+        const dayOfMonth = isCurrentMonth ? nowParts.day : daysInMonth;
         const dailyAverage = totalSpentReal / Math.max(1, dayOfMonth);
         const projectedTotal = dailyAverage * daysInMonth;
 

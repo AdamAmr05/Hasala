@@ -19,11 +19,12 @@ const AnalyticsView: React.FC = () => {
 
     const month = currentDate.getMonth();
     const year = currentDate.getFullYear();
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
     const { data, isLoading, isError, refetch } = useQuery({
         queryKey: ['analytics', month, year],
-        queryFn: () => transactionsApi.getAnalytics(30, month, year, Intl.DateTimeFormat().resolvedOptions().timeZone),
+        queryFn: () => transactionsApi.getAnalytics(30, month, year, timezone),
         placeholderData: (previousData) => previousData,
     });
 
@@ -157,7 +158,7 @@ const AnalyticsView: React.FC = () => {
 
             {/* AI Infographic Generator */}
             <div className="px-6">
-                <InfographicGenerator />
+                <InfographicGenerator month={month} year={year} timezone={timezone} />
             </div>
 
             {/* Fun Equivalents Section */}

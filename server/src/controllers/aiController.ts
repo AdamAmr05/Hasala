@@ -13,8 +13,16 @@ export const generateInfographic = async (req: AuthRequest, res: Response) => {
             return res.status(500).json({ message: 'GEMINI_API_KEY is not configured.' });
         }
 
+        const timezone = req.body?.timezone || 'UTC';
+        const month = typeof req.body?.month === 'number' ? req.body.month : Number.parseInt(req.body?.month, 10);
+        const year = typeof req.body?.year === 'number' ? req.body.year : Number.parseInt(req.body?.year, 10);
+
         // 1. Get RAW Data (No system instruction text)
-        const contextData = await FinancialContextService.buildFinancialContextData(req.user);
+        const contextData = await FinancialContextService.buildFinancialContextData(req.user, {
+            month: Number.isFinite(month) ? month : undefined,
+            year: Number.isFinite(year) ? year : undefined,
+            timezone,
+        });
 
         const ai = new GoogleGenAI({
             apiKey: process.env.GEMINI_API_KEY,

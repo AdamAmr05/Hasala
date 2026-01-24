@@ -3,7 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Image as ImageIcon, Loader2, Download, X as XIcon } from 'lucide-react';
 import { aiApi } from '../../services/api';
 
-const InfographicGenerator: React.FC = () => {
+type InfographicGeneratorProps = {
+    month: number;
+    year: number;
+    timezone: string;
+};
+
+const InfographicGenerator: React.FC<InfographicGeneratorProps> = ({ month, year, timezone }) => {
     const [loading, setLoading] = useState(false);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -14,7 +20,7 @@ const InfographicGenerator: React.FC = () => {
 
         try {
             // Generate image using Gemini image model
-            const response = await aiApi.generateInfographic();
+            const response = await aiApi.generateInfographic({ month, year, timezone });
 
             if (response && response.image) {
                 setImageUrl(response.image);
